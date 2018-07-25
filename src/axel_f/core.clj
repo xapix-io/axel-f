@@ -2,10 +2,6 @@
   (:require [instaparse.core :as insta]
             [clojure.string :as str]))
 
-
-
-
-
 (defn- set->regex [string-set]
   (str "#'("
        (str/join "|" string-set)
@@ -45,11 +41,11 @@
 (def parser
   (insta/parser grammar :output-format :enlive))
 
-(clojure.pprint/pprint (parser "SUM(foo.baz.bar - min(1,2) + 11)"))
+
 
 (comment
   (parser "foo.bar")
   (parser "foo(1 + 1)")
   (parser "1 + 1")
-
+  (parser "SUM(foo.baz.bar - min(1,2) + 11)")
   )
