@@ -24,25 +24,32 @@
 (def grammar
   (str
    "
-   EXPR = '(' EXPR ')' | FNCALL | NUMBER | EXPR <whitespace> OPERATOR <whitespace> EXPR | REF
-   FNCALL = FNNAME '(' ARGLIST ')'
-   FNNAME = WORDNUMBER
-   ARGLIST = EXPR | EXPR ',' ARGLIST
+   EXPR = <paren_op> EXPR <paren_close> | FNCALL | number | EXPR <whitespace> OPERATOR <whitespace> EXPR | REF
+   FNCALL = FNNAME <paren_op> ARGLIST <paren_close>
+   FNNAME = wordnumber
+   ARGLIST = ARG | ARG <comma> ARGLIST
+   <ARG> = EXPR
    OPERATOR = " (set->rule operators) "
-   REF = OBJ '.' FIELD | REF '.' FIELD
-   OBJ = WORDNUMBER
-   FIELD = WORDNUMBER
+   REF = OBJ <dot> FIELD | REF <dot> FIELD
+   OBJ = wordnumber
+   FIELD = wordnumber
+   <comma> = ','
+   <dot> = '.'
+   <paren_op> = '('
+   <paren_close> = ')'
    <whitespace> = " (set->regex whitespace-symbols) "
-   WORDNUMBER = #'[a-zA-Z0-9_]+'
-   NUMBER = #'[0-9]+'
+   <wordnumber> = #'[a-zA-Z0-9_]+'
+   <number> = #'[0-9]+'
 
   "))
 (def parser
   (insta/parser grammar :output-format :enlive))
 
+(clojure.pprint/pprint (parser "SUM(foo.baz.bar - min(1,2) + 11)"))
+
 (comment
   (parser "foo.bar")
   (parser "foo(1 + 1)")
   (parser "1 + 1")
-  (clojure.pprint/pprint (parser "SUM(foo.baz.bar - min(1,2) + 11)"))
+
   )
