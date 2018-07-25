@@ -24,14 +24,17 @@
 (def grammar
   (str
    "
-   EXPR = '(' EXPR ')' | FNCALL | <number> | EXPR <whitespace> OPERATOR <whitespace> EXPR | REF
-   FNCALL = <wordnumber> '(' ARGLIST ')'
+   EXPR = '(' EXPR ')' | FNCALL | NUMBER | EXPR <whitespace> OPERATOR <whitespace> EXPR | REF
+   FNCALL = FNNAME '(' ARGLIST ')'
+   FNNAME = WORDNUMBER
    ARGLIST = EXPR | EXPR ',' ARGLIST
    OPERATOR = " (set->rule operators) "
-   REF = <wordnumber> '.' <wordnumber> | REF '.' <wordnumber>
+   REF = OBJ '.' FIELD | REF '.' FIELD
+   OBJ = WORDNUMBER
+   FIELD = WORDNUMBER
    <whitespace> = " (set->regex whitespace-symbols) "
-   <wordnumber> = #'[a-zA-Z0-9_]+'
-   <number> = #'[0-9]+'
+   WORDNUMBER = #'[a-zA-Z0-9_]+'
+   NUMBER = #'[0-9]+'
 
   "))
 (def parser
@@ -41,5 +44,5 @@
   (parser "foo.bar")
   (parser "foo(1 + 1)")
   (parser "1 + 1")
-  (parser "SUM(foo.baz.bar - 11)")
+  (clojure.pprint/pprint (parser "SUM(foo.baz.bar - min(1,2) + 11)"))
   )
