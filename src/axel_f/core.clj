@@ -65,14 +65,11 @@
   (Integer/parseInt number-str))
 
 (defmethod run :MULT_EXPR [[node-name & child-nodes]]
-  (println [node-name child-nodes])
   (if (= (count child-nodes) 3)
     (let [[expr1 [_ str-op] expr2] child-nodes]
       (operation
        str-op (run expr1) (run expr2)))
     (run (first child-nodes))))
-
-
 
 (comment
   (parser "foo.bar")
@@ -86,5 +83,7 @@
   (run
     (parser "1+1-2"))
 
+  (run
+    (parser "11 > 2"))
 
   )
