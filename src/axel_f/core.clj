@@ -46,13 +46,45 @@
 
 
 (def parser
-  (insta/parser grammar :output-format :enlive))
+  (insta/parser grammar))
+
+;; (clojure.pprint/pprint (parser "SUM(foo.baz.bar - MIN(1,2) + 11)"))
+
+;; (parser "obj.")
+
+(defn operation [str-op & args]
+  (let [op (-> str-op symbol resolve)]
+    (apply op args)))
+
+(defmulti run #(first %))
+
+(defmethod run :EXPR [nodes]
+  (run (second nodes)))
+
+(defmethod run :number [[node-name number-str]]
+  (Integer/parseInt number-str))
+
+(defmethod run :MULT_EXPR [[node-name & child-nodes]]
+  (println [node-name child-nodes])
+  (if (= (count child-nodes) 3)
+    (let [[expr1 [_ str-op] expr2] child-nodes]
+      (operation
+       str-op (run expr1) (run expr2)))
+    (run (first child-nodes))))
 
 
 
 (comment
   (parser "foo.bar")
   (parser "foo(1 + 1)")
-  (parser "1 + 1")
+  (parser "1 + 1 - 1")
   (parser "SUM(foo.baz.bar - min(1,2) + 11)")
+
+  (clojure.pprint/pprint
+   (parser "1 + 1"))
+
+  (run
+    (parser "1+1-2"))
+
+
   )
