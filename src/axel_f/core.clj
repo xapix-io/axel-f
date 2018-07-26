@@ -58,24 +58,47 @@
 
 (defmulti run #(first %))
 
-(defmethod run :EXPR [nodes]
+(defmethod run :EXPR EXPR [nodes]
   (run (second nodes)))
 
-(defmethod run :number [[node-name number-str]]
+(defmethod run :number number [[_ number-str]]
   (Integer/parseInt number-str))
 
-(defmethod run :MULT_EXPR [[node-name & child-nodes]]
+(defmethod run :MULT_EXPR MULT_EXPR [[_ & child-nodes]]
   (if (= (count child-nodes) 3)
     (let [[expr1 [_ str-op] expr2] child-nodes]
       (operation
        str-op (run expr1) (run expr2)))
     (run (first child-nodes))))
 
+(defmulti fncall #(first %))
+
+(defmethod fncall :MIN MIN [[_ arglist]]
+  (apply min arglist))
+
+(defmethod fncall :SUM SUM [[_ arglist]]
+  (apply + arglist))
+
+(defmethod run :FNCALL FNCALL [[_ & [[_ fn-name] arglist-node]]]
+  (fncall  [(keyword fn-name)
+            (flatten (run arglist-node))]))
+
+(defmethod run :ARGLIST ARGLIST [[node-name & arglist]]
+  (map run arglist))
+
 (comment
   (parser "foo.bar")
   (parser "foo(1 + 1)")
   (parser "1 + 1 - 1")
-  (parser "SUM(foo.baz.bar - min(1,2) + 11)")
+  (clojure.pprint/pprint
+   (parser "SUM(foo.baz.bar - MIN(1,2) + 11)"))
+
+  (clojure.pprint/pprint
+   (parser "MIN(1,2)"))
+
+  (run (parser "MIN(1,2,2,3,4,5,11,1,2,3,4)"))
+
+  (run (parser "SUM(0 - MIN(1,2) + 11)"))
 
   (clojure.pprint/pprint
    (parser "1 + 1"))
