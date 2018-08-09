@@ -121,10 +121,17 @@
       (parser "abc.foo.bar.baz * 2")
       ))
 
+  (binding [*object-context* {"foo" {"baz" {"bar" 42}}}]
+    (run
+      (parser "SUM(foo.baz.bar, 8, 10) - MIN(1,2) + 11")
+
+      ))
+
+  (run (parser "2*3 + 2 - 3 * 4 - 1*2"))
+
   (clojure.pprint/pprint
    (parser "1 + 2 - 3 + 4"))
-  (clojure.pprint/pprint
-   (parser "SUM(foo.baz.bar - MIN(1,2) + 11)"))
+
 
   (clojure.pprint/pprint
   (parser "MIN(1,2)"))
