@@ -70,8 +70,6 @@
 (defmethod run :MULT_EXPR MULT_EXPR [[_ & child-nodes]]
   (if (= (count child-nodes) 3)
     (let [[expr1 [_ str-op] expr2] child-nodes]
-      (println (run expr1))
-      (println  (run expr2 ))
       (operation
        str-op (run expr1) (run expr2)))
     (run (first child-nodes))))
