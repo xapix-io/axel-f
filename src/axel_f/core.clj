@@ -15,21 +15,18 @@
 (def whitespace-symbols
   #{"\\s"})
 
-(def operators #{"+" "-" "/" "*"
-                 "=" "!=" "<" ">" "<=" ">="})
-
 (def functions #{"IF" "SUM" "MIN"})
 
 (def grammar
   (str
    "
-   EXPR = <paren_op> EXPR <paren_close> | FNCALL | MULT_EXPR | number |  OBJREF
-   MULT_EXPR = EXPR | MULT_EXPR <whitespace>* OPERATOR <whitespace>* EXPR
+   EXPR = <paren_op> EXPR <paren_close> | FNCALL | ADD_EXPR | number | OBJREF
+   ADD_EXPR = MULT_EXPR | ADD_EXPR <whitespace>* ('+' | '-' ) <whitespace>* MULT_EXPR
+   MULT_EXPR = number | MULT_EXPR <whitespace>* ('*' | '/') <whitespace>* EXPR
    FNCALL = FNNAME <paren_op> ARGLIST <paren_close>
    FNNAME = " (set->rule functions) "
    ARGLIST = ARG | ARG <whitespace>* <comma> <whitespace>* ARGLIST
    <ARG> = EXPR
-   OPERATOR = " (set->rule operators) "
    OBJREF = REF
    REF = OBJ | REF <dot> FIELD
    OBJ = identifier
@@ -41,7 +38,7 @@
    <paren_close> = ')'
    <whitespace> = " (set->regex whitespace-symbols) "
    identifier = #'[a-zA-Z_]+[a-zA-Z0-9_]*'
-   number = #'[0-9]+'
+   number = #'-?[0-9]+'
 
   "))
 
@@ -67,12 +64,18 @@
 (defmethod run :number number [[_ number-str]]
   (Integer/parseInt number-str))
 
-(defmethod run :MULT_EXPR MULT_EXPR [[_ & child-nodes]]
+(defn math-expr [child-nodes]
   (if (= (count child-nodes) 3)
-    (let [[expr1 [_ str-op] expr2] child-nodes]
+    (let [[expr1 str-op expr2] child-nodes]
       (operation
        str-op (run expr1) (run expr2)))
     (run (first child-nodes))))
+
+(defmethod run :ADD_EXPR ADD_EXPR [[_ & child-nodes]]
+  (math-expr child-nodes))
+
+(defmethod run :MULT_EXPR MULT_EXPR [[_ & child-nodes]]
+  (math-expr child-nodes))
 
 (defmulti fncall #(first %))
 
@@ -105,14 +108,12 @@
   [(second (first arglist))])
 
 
-
-
-
 (comment
   (parser "abc.foo.bar.baz")
   (parser "foo(1 + 1)")
   (parser "1")
-  (parser "1 + 2 - 3 + 4")
+  (run (parser "-1"))
+  (run (parser "1 + 2 - 3 + 4"))
   (parser "1 + 2 - 3 + 4")
 
   (binding [*object-context* {"abc" {"foo" {"bar" {"baz" 42}}}}]
