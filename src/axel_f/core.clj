@@ -105,26 +105,28 @@
   [(second (first arglist))])
 
 
-(binding [*object-context* {"abc" {"foo" {"bar" {"baz" 42}}}}]
-  (run
-    (parser "abc.foo.bar.baz * 2")
-    ))
+
 
 
 (comment
-  ;; (parser "abc.foo.bar.baz")
-  ;; (parser "foo(1 + 1)")
-  ;; (parser "1")
-  ;; (parser "1 + 2 - 3 + 4")
-  ;; (parser "1 + 2 - 3 + 4")
+  (parser "abc.foo.bar.baz")
+  (parser "foo(1 + 1)")
+  (parser "1")
+  (parser "1 + 2 - 3 + 4")
+  (parser "1 + 2 - 3 + 4")
 
-  ;; (clojure.pprint/pprint
-  ;;  (parser "1 + 2 - 3 + 4"))
-  ;; (clojure.pprint/pprint
-  ;;  (parser "SUM(foo.baz.bar - MIN(1,2) + 11)"))
+  (binding [*object-context* {"abc" {"foo" {"bar" {"baz" 42}}}}]
+    (run
+      (parser "abc.foo.bar.baz * 2")
+      ))
 
-  ;; (clojure.pprint/pprint
-  ;; (parser "MIN(1,2)"))
+  (clojure.pprint/pprint
+   (parser "1 + 2 - 3 + 4"))
+  (clojure.pprint/pprint
+   (parser "SUM(foo.baz.bar - MIN(1,2) + 11)"))
+
+  (clojure.pprint/pprint
+  (parser "MIN(1,2)"))
 
   (run (parser "MIN(1,2,2,3,4,5,11,1,2,3,4)"))
 
