@@ -9,6 +9,8 @@
 
   :master {:override-deps {org.clojure/clojure {:mvn/version "1.10.0-master-SNAPSHOT"}}}
 
+  :bench {:extra-deps {criterium {:mvn/version "0.4.4"}}}
+
   :test {:extra-paths ["test"]
          :extra-deps  {org.clojure/test.check {:mvn/version "RELEASE"}}}
 
