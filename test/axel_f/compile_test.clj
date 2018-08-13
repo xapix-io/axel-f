@@ -7,13 +7,11 @@
   (t/testing "can parse normal formulas"
 
     (let [sample1 "1 + 1"
-          sample2 "=1 + 1"
-          sample3 "{=1 + 1}"]
+          sample2 "=1 + 1"]
       (let [result1 (sut/compile sample1)
-            result2 (sut/compile sample2)
-            result3 (sut/compile sample3)]
+            result2 (sut/compile sample2)]
 
-        (t/is (= result1 result2 result3 [:ADD_EXPR 1 1])))))
+        (t/is (= result1 result2 [:ADD_EXPR 1 1])))))
 
   (t/testing "can parse formulas with missing whitespaces"
 
@@ -75,9 +73,9 @@
     (t/testing "all possible unary operators"
 
       (t/is (= (sut/compile "+1")
-               [:SIGN_EXPR "+" 1]))
+               1))
       (t/is (= (sut/compile "-1")
-               [:SIGN_EXPR "-" 1]))
+               -1))
       (t/is (= (sut/compile "1%")
                [:PERCENT_EXPR 1])))
 
