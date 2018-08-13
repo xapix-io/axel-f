@@ -2,7 +2,7 @@
   (:require [instaparse.core :as insta])
   (:refer-clojure :exclude [compile]))
 
-(def parser
+(def ^:private parser
   (insta/parser
    "
 FORMULA                  ::= EXPR | <eq-op> EXPR | <formula-begining> EXPR <formula-ending>
@@ -62,7 +62,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
 <dot>                    ::= '.'
   "))
 
-(defn round2
+(defn- round2
   "Round a double to the given precision (number of significant digits)"
   [d precision]
   (let [factor (Math/pow 10 precision)
@@ -71,7 +71,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
       res
       (int res))))
 
-(defn optimize-token [token]
+(defn- optimize-token [token]
   (fn
     ([arg] arg)
     ([arg & args]
@@ -79,7 +79,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
       (cons token
             (cons arg args))))))
 
-(def optimize-transforms
+(def ^:private optimize-transforms
   {:EXPR                identity
    :ARGUMENTS           vector
    :ARGUMENT            identity
@@ -128,7 +128,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
 
 (declare run*)
 
-(defn run-fncall* [f args context]
+(defn- run-fncall* [f args context]
   (case f
     "SUM"         (reduce +' (flatten (map #(run* % context) args)))
     "LEN"         (count (flatten (map #(run* % context) args)))
@@ -149,7 +149,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
     "AND"         (every? identity (map #(run* % context) args))
     "OR"          (some identity (map #(run* % context) args))))
 
-(defn run* [arg context]
+(defn- run* [arg context]
   (let [token (if (vector? arg)
                 (first arg)
                 arg)
