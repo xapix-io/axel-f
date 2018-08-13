@@ -5,7 +5,7 @@
 (def ^:private parser
   (insta/parser
    "
-FORMULA                  ::= EXPR | <eq-op> EXPR | <formula-begining> EXPR <formula-ending>
+FORMULA                  ::= EXPR | <eq-op> EXPR
 EXPR                     ::= COMPARISON_EXPS
 COMPARISON_EXPS          ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
 MORE_EXPR                ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-op> COMPARISON_EXPS }
@@ -22,15 +22,16 @@ MULTIPLICATIVE_EXPS      ::= MULT_EXPR | DIV_EXPR
 MULT_EXPR                ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<mult-op> EXP_EXPR}
 DIV_EXPR                 ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<div-op> EXP_EXPR}
 EXP_EXPR                 ::= PRIMARY {<exp-op> PRIMARY}
-PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR ) <whitespace> *
+PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR ) <whitespace> *
 SIGN_EXPR                ::= ( '+' | '-' ) PRIMARY
 PERCENT_EXPR             ::= PRIMARY <percent-op>
+ARRAY_EXPR               ::= <opening-curly-bracket> EXPR {<comma> EXPR} <closing-curly-bracket>
 CONST                    ::= NUMBER | STRING | BOOL
 NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
 STRING                   ::= #'\"[^\"]+\"'
 BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
 FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
-FN                       ::= #'(SUM|IF|MIN|MAX|ROUND|LEN|CONCATENATE|AVERAGE|AND|OR)'
+FN                       ::= #'(SUM|IF|MIN|MAX|ROUND|COUNT|CONCATENATE|AVERAGE|AND|OR)'
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
 OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <opening-square-bracket> NUMBER_FIELD <closing-square-bracket> ) )*
@@ -40,8 +41,8 @@ SYMBOL_FIELD             ::= #'[a-zA-Z0-9-_]+'
 NUMBER_FIELD             ::= #'[0-9]+'
 <opening-square-bracket> ::= '['
 <closing-square-bracket> ::= ']'
-<formula-begining>       ::= '{='
-<formula-ending>         ::= '}'
+<opening-curly-bracket>  ::= '{'
+<closing-curly-bracket>  ::= '}'
 <whitespace>             ::= #'(\\s)+'
 <opening-parenthesis>    ::= '('
 <closing-parenthesis>    ::= ')'
@@ -81,8 +82,11 @@ NUMBER_FIELD             ::= #'[0-9]+'
 
 (def ^:private optimize-transforms
   {:EXPR                identity
-   :ARGUMENTS           vector
-   :ARGUMENT            identity
+   :ARGUMENTS           (fn [& args]
+                          (vec (remove #(= % :empty) args)))
+   :ARGUMENT            (fn
+                          ([] :empty)
+                          ([arg] arg))
    :FORMULA             identity
    :PRIMARY             identity
    :CONST               identity
@@ -115,7 +119,18 @@ NUMBER_FIELD             ::= #'[0-9]+'
    :DIV_EXPR            (optimize-token :DIV_EXPR)
    :EQ_EXPR             (optimize-token :EQ_EXPR)
    :LESS_EXPR           (optimize-token :LESS_EXPR)
-   :MORE_OR_EQ_EXPR     (optimize-token :MORE_OR_EQ_EXPR)})
+   :SIGN_EXPR           (fn [& args]
+                          (let [operand (second args)
+                                sign    (if (= "-" (first args)) -1 1)]
+                            (cond
+                              (boolean? operand) (* sign (if operand 1 0))
+                              (number? operand) (* sign operand)
+                              (and (seqable? operand)
+                                   (keyword? (first operand))) (vec (cons :SIGN_EXPR args))
+                              :otherwise (throw (Exception. (str "The operator “" (first args) "” expects a number or boolean but found " operand "."))))))
+   :MORE_OR_EQ_EXPR     (optimize-token :MORE_OR_EQ_EXPR)
+   :ARRAY_EXPR          (fn [& args]
+                          (vec (cons :VECTOR args)))})
 
 (defn compile [formula-str]
   (let [res (insta/transform
@@ -131,7 +146,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
 (defn- run-fncall* [f args context]
   (case f
     "SUM"         (reduce +' (flatten (map #(run* % context) args)))
-    "LEN"         (count (flatten (map #(run* % context) args)))
+    "COUNT"       (count (flatten (map #(run* % context) args)))
     "MIN"         (reduce min (flatten (map #(run* % context) args)))
     "MAX"         (reduce max (flatten (map #(run* % context) args)))
     "CONCATENATE" (reduce str (flatten (map #(run* % context) args)))
@@ -186,11 +201,15 @@ NUMBER_FIELD             ::= #'[0-9]+'
                                 (map #(run* % context) args))
         :ADD_EXPR        (apply +'
                                 (map #(run* % context) args))
-        :SIGN_EXPR       (let [r (run* (second args) context)]
+        :SIGN_EXPR       (let [r (run* (second args) context)
+                               r (if (boolean? r)
+                                   (if r 1 0)
+                                   r)]
                            (if (= (first args) "-")
                              (* -1 r)
                              r))
         :OBJREF          (get-in context (map #(run* % context) args))
+        :VECTOR          (mapv #(run* % context) args)
         :FNCALL          (run-fncall* (first args) (second args) context)))))
 
 (defn run

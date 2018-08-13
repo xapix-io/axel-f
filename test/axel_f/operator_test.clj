@@ -113,3 +113,22 @@
 
     (t/is (= [:MULT_EXPR 1 [:LESS_EXPR 1 1]]
              (sut/compile "1*(1<1)")))))
+
+(t/deftest sign-operator
+
+  (t/testing "applying sign operator to constants resolved during compile time"
+
+    (t/is (= -1 (sut/compile "-1")))
+    (t/is (= 0 (sut/compile "+False")))
+    (t/is (= 1 (sut/compile "--TRUE"))))
+
+  (t/testing "double negative can be used to coerce boolean to integer"
+
+    (t/is (= 1 (sut/compile "--TRUE")))
+    (t/is (= [:SIGN_EXPR "-" [:SIGN_EXPR "-" [:LESS_EXPR 1 0]]]
+             (sut/compile "--(1<0)")))
+
+    (t/is (= 1 (sut/run "--TRUE")))
+    (t/is (= 0 (sut/run "--FALSE")))
+
+    (t/is (= 1 (sut/run "--(1>0)")))))

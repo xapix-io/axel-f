@@ -107,7 +107,7 @@
         "MIN"
         "MAX"
         "ROUND"
-        "LEN"
+        "COUNT"
         "CONCATENATE"
         "AVERAGE"
         "AND"
