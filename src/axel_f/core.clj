@@ -5,60 +5,61 @@
 (def parser
   (insta/parser
    "
-FORMULA ::= EXPR | <eq-op> EXPR | <formula-begining> EXPR <formula-ending>
-EXPR ::= COMPARISON_EXPS
-COMPARISON_EXPS ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
-MORE_EXPR ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-op> COMPARISON_EXPS }
-LESS_EXPR ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-op> COMPARISON_EXPS }
-MORE_OR_EQ_EXPR ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-or-eq-op> COMPARISON_EXPS }
-LESS_OR_EQ_EXPR ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-or-eq-op> COMPARISON_EXPS }
-EQ_EXPR ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<eq-op> COMPARISON_EXPS }
-NOT_EQ_EXPR ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<not-eq-op> COMPARISON_EXPS }
-CONCAT_EXPR ::= ADDITIVE_EXPS {<concat-op> ADDITIVE_EXPS}
-ADDITIVE_EXPS ::= ADD_EXPR | SUB_EXPR
-ADD_EXPR ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<add-op> MULTIPLICATIVE_EXPS}
-SUB_EXPR ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<sub-op> MULTIPLICATIVE_EXPS}
-MULTIPLICATIVE_EXPS ::= MULT_EXPR | DIV_EXPR
-MULT_EXPR ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<mult-op> EXP_EXPR}
-DIV_EXPR ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<div-op> EXP_EXPR}
-EXP_EXPR ::= PRIMARY {<exp-op> PRIMARY}
-PRIMARY ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR ) <whitespace> *
-SIGN_EXPR ::= ( '+' | '-' ) PRIMARY
-PERCENT_EXPR ::= PRIMARY <percent-op>
-CONST ::= NUMBER | STRING | BOOL
-NUMBER ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
-STRING ::= #'\"[^\"]+\"'
-BOOL ::= #'TRUE|FALSE|True|False|true|false'
-FNCALL ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
-FN ::= #'(SUM|IF|MIN|MAX|ROUND|LEN|CONCATENATE|AVERAGE)'
-ARGUMENTS ::= ARGUMENT {<comma> ARGUMENT}
-ARGUMENT ::= EXPR | Epsilon
-OBJREF ::= FIELD (<dot> FIELD)+
-FIELD ::= #'(\"[^\"]+\"|[a-zA-Z0-9-_]+)(\\[[0-9]+\\])?'
-STRING_FIELD ::= STRING
-SYMBOL_FIELD ::= #'[a-zA-Z0-9-_]+'
+FORMULA                  ::= EXPR | <eq-op> EXPR | <formula-begining> EXPR <formula-ending>
+EXPR                     ::= COMPARISON_EXPS
+COMPARISON_EXPS          ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
+MORE_EXPR                ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-op> COMPARISON_EXPS }
+LESS_EXPR                ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-op> COMPARISON_EXPS }
+MORE_OR_EQ_EXPR          ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-or-eq-op> COMPARISON_EXPS }
+LESS_OR_EQ_EXPR          ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-or-eq-op> COMPARISON_EXPS }
+EQ_EXPR                  ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<eq-op> COMPARISON_EXPS }
+NOT_EQ_EXPR              ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<not-eq-op> COMPARISON_EXPS }
+CONCAT_EXPR              ::= ADDITIVE_EXPS {<concat-op> ADDITIVE_EXPS}
+ADDITIVE_EXPS            ::= ADD_EXPR | SUB_EXPR
+ADD_EXPR                 ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<add-op> MULTIPLICATIVE_EXPS}
+SUB_EXPR                 ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<sub-op> MULTIPLICATIVE_EXPS}
+MULTIPLICATIVE_EXPS      ::= MULT_EXPR | DIV_EXPR
+MULT_EXPR                ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<mult-op> EXP_EXPR}
+DIV_EXPR                 ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<div-op> EXP_EXPR}
+EXP_EXPR                 ::= PRIMARY {<exp-op> PRIMARY}
+PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR ) <whitespace> *
+SIGN_EXPR                ::= ( '+' | '-' ) PRIMARY
+PERCENT_EXPR             ::= PRIMARY <percent-op>
+CONST                    ::= NUMBER | STRING | BOOL
+NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
+STRING                   ::= #'\"[^\"]+\"'
+BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
+FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
+FN                       ::= #'(SUM|IF|MIN|MAX|ROUND|LEN|CONCATENATE|AVERAGE|AND|OR)'
+ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
+ARGUMENT                 ::= EXPR | Epsilon
+OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <opening-square-bracket> NUMBER_FIELD <closing-square-bracket> ) )*
+FIELD                    ::= STRING_FIELD | SYMBOL_FIELD
+STRING_FIELD             ::= STRING
+SYMBOL_FIELD             ::= #'[a-zA-Z0-9-_]+'
+NUMBER_FIELD             ::= #'[0-9]+'
 <opening-square-bracket> ::= '['
 <closing-square-bracket> ::= ']'
-<formula-begining> ::= '{='
-<formula-ending> ::= '}'
-<whitespace> ::= #'(\\s)+'
-<opening-parenthesis> ::= '('
-<closing-parenthesis> ::= ')'
-<percent-op> ::= '%'
-<concat-op> ::= '&'
-<exp-op> ::= '^'
-<more-op> ::= '>'
-<less-op> ::= '<'
-<more-or-eq-op> ::= '>='
-<less-or-eq-op> ::= '<='
-<eq-op> ::= '='
-<not-eq-op> ::= '<>'
-<add-op> ::= '+'
-<sub-op> ::= '-'
-<mult-op> ::= '*'
-<div-op> ::= '/'
-<comma> ::= ','
-<dot> ::= '.'
+<formula-begining>       ::= '{='
+<formula-ending>         ::= '}'
+<whitespace>             ::= #'(\\s)+'
+<opening-parenthesis>    ::= '('
+<closing-parenthesis>    ::= ')'
+<percent-op>             ::= '%'
+<concat-op>              ::= '&'
+<exp-op>                 ::= '^'
+<more-op>                ::= '>'
+<less-op>                ::= '<'
+<more-or-eq-op>          ::= '>='
+<less-or-eq-op>          ::= '<='
+<eq-op>                  ::= '='
+<not-eq-op>              ::= '<>'
+<add-op>                 ::= '+'
+<sub-op>                 ::= '-'
+<mult-op>                ::= '*'
+<div-op>                 ::= '/'
+<comma>                  ::= ','
+<dot>                    ::= '.'
   "))
 
 (defn round2
@@ -88,6 +89,9 @@ SYMBOL_FIELD ::= #'[a-zA-Z0-9-_]+'
    :NUMBER              read-string
    :FN                  identity
    :FIELD               identity
+   :NUMBER_FIELD        read-string
+   :STRING_FIELD        identity
+   :SYMBOL_FIELD        identity
    :STRING              (fn [s] (apply str (-> s rest butlast)))
    :BOOL                (fn [b]
                           (case b
@@ -114,9 +118,13 @@ SYMBOL_FIELD ::= #'[a-zA-Z0-9-_]+'
    :MORE_OR_EQ_EXPR     (optimize-token :MORE_OR_EQ_EXPR)})
 
 (defn compile [formula-str]
-  (insta/transform
-   optimize-transforms
-   (parser formula-str)))
+  (let [res (insta/transform
+             optimize-transforms
+             (parser formula-str))]
+    (if (insta/failure? res)
+      (throw (ex-info (str "Formula \"" formula-str "\" can't be parsed.")
+                      (insta/get-failure res)))
+      res)))
 
 (declare run*)
 
@@ -137,7 +145,9 @@ SYMBOL_FIELD ::= #'[a-zA-Z0-9-_]+'
     "ROUND"       (let [d (double (run* (first args) context))
                         p (second args)
                         p (if p (run* p context) 0)]
-                    (round2 d p))))
+                    (round2 d p))
+    "AND"         (every? identity (map #(run* % context) args))
+    "OR"          (some identity (map #(run* % context) args))))
 
 (defn run* [arg context]
   (let [token (if (vector? arg)
@@ -190,43 +200,3 @@ SYMBOL_FIELD ::= #'[a-zA-Z0-9-_]+'
                    (compile formula)
                    formula)]
              (run* formula context))))
-
-(comment
-  (def context {"foo" {"bar" [0.37990796030362173
-                              0.18809681687624025
-                              1.09344349517165595
-                              0.013367883168072914
-                              0.15845551027572413
-                              3.46994775748326534
-                              0.059319921394827]
-                       "baz" 10
-                       "buz" 9}})
-
-  (run "-1 * 9 + 12 < 0" {})
-  (clojure.pprint/pprint
-   (time
-    (run [:FNCALL "ROUND" [123.321 [:SIGN_EXPR "-" 2]]]
-      {"foo" {"bar" -2
-              "baz" 9}}))
-   )
-
-  (run
-    ;; (compile "SUM(foo.bar) / LEN(foo.bar)")
-    "AVERAGE(foo.bar)"
-    context)
-
-  (run (compile "=9000") context)
-
-  (time
-   (run
-     "SUM(foo.bar, 9000) / LEN(foo.bar) * (foo.baz + 9)"
-     context)
-   )
-
-  (time
-   (run
-     "IF(foo.baz <> foo.buz, false, true)"
-     context)
-   )
-
-  )
