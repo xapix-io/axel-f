@@ -31,11 +31,11 @@ NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
 STRING                   ::= #'\"[^\"]+\"'
 BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
 FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
-FN                       ::= #'(SUM|IF|MIN|MAX|ROUND|COUNT|CONCATENATE|AVERAGE|AND|OR)'
+FN                       ::= #'(SUM|IF|MIN|MAX|ROUND|COUNT|CONCATENATE|AVERAGE|AND|OR|OBJREF)'
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
-OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <opening-square-bracket> NUMBER_FIELD <closing-square-bracket> ) )*
-FIELD                    ::= STRING_FIELD | SYMBOL_FIELD
+OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <opening-square-bracket> ( NUMBER_FIELD | FNCALL ) <closing-square-bracket> ) )*
+FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | FNCALL
 STRING_FIELD             ::= STRING
 SYMBOL_FIELD             ::= #'[a-zA-Z0-9-_]+'
 NUMBER_FIELD             ::= #'[0-9]+'
@@ -71,6 +71,22 @@ NUMBER_FIELD             ::= #'[0-9]+'
     (if (> precision 0)
       res
       (int res))))
+
+(defn- with-indifferent-access [m ks]
+  (when (not-empty m)
+    (let [k (first ks)
+          res (or (and (integer? k)
+                       (nth m k nil))
+                  (and (string? k)
+                       (or (get m (keyword k))
+                           (get m k)))
+                  (and (keyword? k)
+                       (or (get m k)
+                           (get m (name k))))
+                  nil)]
+      (if-let [ks (not-empty (rest ks))]
+        (recur res ks)
+        res))))
 
 (defn- optimize-token [token]
   (fn
@@ -162,7 +178,8 @@ NUMBER_FIELD             ::= #'[0-9]+'
                         p (if p (run* p context) 0)]
                     (round2 d p))
     "AND"         (every? identity (map #(run* % context) args))
-    "OR"          (some identity (map #(run* % context) args))))
+    "OR"          (some identity (map #(run* % context) args))
+    "OBJREF"      (with-indifferent-access context (map #(run* % context) args))))
 
 (defn- run* [arg context]
   (let [token (if (vector? arg)
@@ -208,7 +225,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
                            (if (= (first args) "-")
                              (* -1 r)
                              r))
-        :OBJREF          (get-in context (map #(run* % context) args))
+        :OBJREF          (with-indifferent-access context (map #(run* % context) args))
         :VECTOR          (mapv #(run* % context) args)
         :FNCALL          (run-fncall* (first args) (second args) context)))))
 
