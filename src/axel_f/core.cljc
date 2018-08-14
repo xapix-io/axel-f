@@ -1,10 +1,10 @@
 (ns axel-f.core
-  (:require [instaparse.core :as insta])
+  (:require #?(:clj [instaparse.core :as insta :refer [defparser]]
+               :cljs [instaparse.core :as insta :refer-macros [defparser]]))
   (:refer-clojure :exclude [compile]))
 
-(def ^:private parser
-  (insta/parser
-   "
+(defparser parser
+  "
 FORMULA                  ::= EXPR | <eq-op> EXPR
 EXPR                     ::= COMPARISON_EXPS
 COMPARISON_EXPS          ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
@@ -61,7 +61,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
 <div-op>                 ::= '/'
 <comma>                  ::= ','
 <dot>                    ::= '.'
-  "))
+  ")
 
 (defn- round2
   "Round a double to the given precision (number of significant digits)"
@@ -106,10 +106,12 @@ NUMBER_FIELD             ::= #'[0-9]+'
    :FORMULA             identity
    :PRIMARY             identity
    :CONST               identity
-   :NUMBER              read-string
+   :NUMBER              #?(:clj read-string
+                           :cljs js/parseFloat)
    :FN                  identity
    :FIELD               identity
-   :NUMBER_FIELD        read-string
+   :NUMBER_FIELD        #?(:clj read-string
+                           :cljs js/parseFloat)
    :STRING_FIELD        identity
    :SYMBOL_FIELD        identity
    :STRING              (fn [s] (apply str (-> s rest butlast)))
@@ -143,7 +145,9 @@ NUMBER_FIELD             ::= #'[0-9]+'
                               (number? operand) (* sign operand)
                               (and (seqable? operand)
                                    (keyword? (first operand))) (vec (cons :SIGN_EXPR args))
-                              :otherwise (throw (Exception. (str "The operator “" (first args) "” expects a number or boolean but found " operand "."))))))
+                              :otherwise (throw (#?(:clj Exception.
+                                                    :cljs js/Error.)
+                                                 (str "The operator “" (first args) "” expects a number or boolean but found " operand "."))))))
    :MORE_OR_EQ_EXPR     (optimize-token :MORE_OR_EQ_EXPR)
    :ARRAY_EXPR          (fn [& args]
                           (vec (cons :VECTOR args)))})
@@ -161,7 +165,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
 
 (defn- run-fncall* [f args context]
   (case f
-    "SUM"         (reduce +' (flatten (map #(run* % context) args)))
+    "SUM"         (reduce #?(:clj +' :cljs +) (flatten (map #(run* % context) args)))
     "COUNT"       (count (flatten (map #(run* % context) args)))
     "MIN"         (reduce min (flatten (map #(run* % context) args)))
     "MAX"         (reduce max (flatten (map #(run* % context) args)))
@@ -171,7 +175,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
                     (when-let [else (nth args 2 nil)]
                       (run* else context)))
     "AVERAGE"     (if-let [l (not-empty (flatten (map #(run* % context) args)))]
-                    (/ (reduce +' l)
+                    (/ (reduce #?(:clj +' :cljs +) l)
                        (count l)))
     "ROUND"       (let [d (double (run* (first args) context))
                         p (second args)
@@ -208,15 +212,15 @@ NUMBER_FIELD             ::= #'[0-9]+'
                                 (map #(run* % context) args))
         :NOT_EQ_EXPR     (apply not=
                                 (map #(run* % context) args))
-        :MULT_EXPR       (apply *'
+        :MULT_EXPR       (apply #?(:clj *' :cljs *)
                                 (map #(run* % context) args))
         :DIV_EXPR        (apply /
                                 (map #(run* % context) args))
         :CONCAT_EXPR     (apply str
                                 (map #(run* % context) args))
-        :SUB_EXPR        (apply -'
+        :SUB_EXPR        (apply #?(:clj -' :cljs -)
                                 (map #(run* % context) args))
-        :ADD_EXPR        (apply +'
+        :ADD_EXPR        (apply #?(:clj +' :cljs +)
                                 (map #(run* % context) args))
         :SIGN_EXPR       (let [r (run* (second args) context)
                                r (if (boolean? r)
@@ -235,4 +239,4 @@ NUMBER_FIELD             ::= #'[0-9]+'
    (let [formula (if (string? formula)
                    (compile formula)
                    formula)]
-             (run* formula context))))
+     (run* formula context))))

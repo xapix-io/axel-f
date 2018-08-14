@@ -1,0 +1,12 @@
+{:output-to "js/min/axel_f.js"
+ :output-dir "js/min"
+ :optimizations :advanced
+ :main "axel_f.api"
+ :source-map "js/min/axel_f.js.map"
+ :aot-cache true
+ :output-wrapper false
+ :compiler-stats true
+ :pretty-print  false
+ :elide-asserts true
+ :parallel-build true
+ :checked-arrays :warn}

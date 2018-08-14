@@ -1,0 +1,7 @@
+{:output-to "js/dev/axel_f.dev.js"
+ :output-dir "js/dev/out"
+ :optimizations :none
+ :main "axel_f.api"
+ :source-map true
+ :aot-cache true
+ :compiler-stats true}

@@ -30,12 +30,16 @@
 
     (let [error-sample "1+"]
 
-      (t/is (thrown? clojure.lang.ExceptionInfo #"Formula \"1+\" can't be parsed"
+      (t/is (thrown? #?(:clj clojure.lang.ExceptionInfo
+                        :cljs ExceptionInfo)
+                     #"Formula \"1+\" can't be parsed"
                      (sut/compile error-sample)))
 
       (let [failure (try
                       (sut/compile error-sample)
-                      (catch clojure.lang.ExceptionInfo e
+                      (catch #?(:clj clojure.lang.ExceptionInfo
+                                :cljs ExceptionInfo)
+                          e
                         (ex-data e)))]
 
         (t/is (= {:index  2
