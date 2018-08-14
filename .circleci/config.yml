@@ -86,7 +86,43 @@ jobs:
             - ~/.m2
           key: cljs-{checksum "deps.edn" }}
 
-  deploy:
+  cljs-package-build:
+    <<: *defaults
+    steps:
+
+      - checkout
+
+      - restore_cache:
+          key: cljs-{{ checksum "deps.edn" }}
+
+      - run: mkdir -p workspace
+
+      - run:
+          name: Build JavaScript bundle
+          type: shell
+          command: |
+            clojure -A:cljs -m cljs.main -co axel_f.min.js.edn --compile
+
+      - run:
+          name: Prepare workspace for publishing
+          type: shell
+          command: |
+            cp js/min/axel_f.min.js workspace/axel_f.js
+            cp release-js/* workspace/
+
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - axel_f.js
+            - package.json
+            - README.md
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: cljs-{{ checksum "deps.edn" }}
+
+  clojars-deploy:
     <<: *defaults
     docker:
       - image: circleci/openjdk:8-jdk-node-browsers
@@ -107,6 +143,22 @@ jobs:
           paths:
             - ~/.m2
           key: maven-{{ checksum "pom.xml" }}
+
+  npm-deploy:
+    <<: *defaults
+    docker:
+      - image: circleci/node:10
+    steps:
+
+      - attach_workspace:
+          at: ~/workspace
+
+      - run:
+          name: Publish npm package
+          type: shell
+          command: |
+            cd ~/workspace
+            npm publish
 
 workflows:
   version: 2
@@ -134,11 +186,25 @@ workflows:
               only: /.*/
           requires:
             - checkout_code
-      - deploy:
+      - cljs-package-build:
+          filters:
+            tags:
+              only: /.*/
+          requires:
+            - test-js
+      - clojars-deploy:
           filters:
             tags:
               only: /.*/
           requires:
             - test-1.9
             - test-1.10
-            - test-js
+            - cljs-package-build
+      - npm-deploy:
+          filters:
+            tags:
+              only: /.*/
+          requires:
+            - test-1.9
+            - test-1.10
+            - cljs-package-build
