@@ -84,7 +84,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.m2
-          key: cljs-{checksum "deps.edn" }}
+          key: cljs-{{ checksum "deps.edn" }}
 
   cljs-package-build:
     <<: *defaults
@@ -152,6 +152,10 @@ jobs:
 
       - attach_workspace:
           at: ~/workspace
+
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/repo/.npmrc
 
       - run:
           name: Publish npm package
