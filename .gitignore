@@ -1,2 +1,20 @@
-/.nrepl-port
-/.cpcache
+# Created by https://www.gitignore.io/api/clojure
+
+### Clojure ###
+*.jar
+*.class
+/lib/
+/classes/
+/target/
+/checkouts/
+/js/
+/cljs-test-runner-out/
+.lein-deps-sum
+.lein-repl-history
+.lein-plugins/
+.lein-failures
+.nrepl-port
+.cpcache/
+
+
+# End of https://www.gitignore.io/api/clojure

@@ -1,0 +1,38 @@
+{
+    "name": "axel-f",
+    "version": "0.1.0",
+    "description": "axel-f is an engine that can evaluate excel-like expressions.",
+    "homepage": "https://github.com/xapix-io/axel-f",
+    "author": "Kirill Chernyshov (https://github.com/DeLaGuardo)",
+    "keywords": [
+        "excel",
+        "expression",
+        "language",
+        "compiler",
+        "lexer",
+        "clojure",
+        "clojurescript"
+    ],
+    "contributors": [
+        "Kirill Chernyshov (https://github.com/DeLaGuardo)",
+        "Anatoly Smolyaninov (https://github.com/zarkone)",
+        "xapix.io (https://github.com/xapix-io)"
+    ],
+    "bugs": {
+        "url": "https://github.com/xapix-io/axel-f/issues"
+    },
+    "licenses": [{
+        "type": "EPL",
+        "url": "https://github.com/xapix-io/axel-f/blob/master/LICENSE"
+    }],
+    "main": "./axel_f.js",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/xapix-io/axel-f.git"
+    },
+    "engines": {
+        "node": ">=0.8.28"
+    },
+    "dependencies": {},
+    "files": ["axel_f.js"]
+}

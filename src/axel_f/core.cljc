@@ -1,10 +1,10 @@
 (ns axel-f.core
-  (:require [instaparse.core :as insta])
+  (:require #?(:clj [instaparse.core :as insta :refer [defparser]]
+               :cljs [instaparse.core :as insta :refer-macros [defparser]]))
   (:refer-clojure :exclude [compile]))
 
-(def ^:private parser
-  (insta/parser
-   "
+(defparser parser
+  "
 FORMULA                  ::= EXPR | <eq-op> EXPR
 EXPR                     ::= COMPARISON_EXPS
 COMPARISON_EXPS          ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
@@ -34,11 +34,12 @@ FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenth
 FN                       ::= #'(SUM|IF|MIN|MAX|ROUND|COUNT|CONCATENATE|AVERAGE|AND|OR|OBJREF)'
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
-OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <opening-square-bracket> ( NUMBER_FIELD | FNCALL ) <closing-square-bracket> ) )*
+OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( NUMBER_FIELD | FNCALL | STAR ) <closing-square-bracket> ) )*
 FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | FNCALL
 STRING_FIELD             ::= STRING
 SYMBOL_FIELD             ::= #'[a-zA-Z0-9-_]+'
 NUMBER_FIELD             ::= #'[0-9]+'
+STAR                     ::= '*'
 <opening-square-bracket> ::= '['
 <closing-square-bracket> ::= ']'
 <opening-curly-bracket>  ::= '{'
@@ -61,7 +62,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
 <div-op>                 ::= '/'
 <comma>                  ::= ','
 <dot>                    ::= '.'
-  "))
+  ")
 
 (defn- round2
   "Round a double to the given precision (number of significant digits)"
@@ -73,20 +74,50 @@ NUMBER_FIELD             ::= #'[0-9]+'
       (int res))))
 
 (defn- with-indifferent-access [m ks]
-  (when (not-empty m)
-    (let [k (first ks)
-          res (or (and (integer? k)
-                       (nth m k nil))
-                  (and (string? k)
-                       (or (get m (keyword k))
-                           (get m k)))
-                  (and (keyword? k)
-                       (or (get m k)
-                           (get m (name k))))
-                  nil)]
-      (if-let [ks (not-empty (rest ks))]
-        (recur res ks)
-        res))))
+  (if (= "*" (first ks))
+    (if (and (seqable? m)
+             (not= (count ks) 1))
+      (mapv #(with-indifferent-access % (rest ks))
+            m)
+      m)
+    (when (and (seqable? m)
+               (not-empty m))
+      (let [k (first ks)
+            res (or (and (integer? k)
+                         (nth m k nil))
+                    (and (string? k)
+                         (or (get m (keyword k))
+                             (get m k)))
+                    (and (keyword? k)
+                         (or (get m k)
+                             (get m (name k))))
+                    nil)]
+        (if-let [ks (not-empty (rest ks))]
+          (recur res ks)
+          res)))))
+
+(def reserved-tokens
+  (set [:MORE_EXPR
+        :MORE_OR_EQ_EXPR
+        :LESS_EXPR
+        :LESS_OR_EQ_EXPR
+        :EQ_EXPR
+        :NOT_EQ_EXPR
+        :MULT_EXPR
+        :DIV_EXPR
+        :CONCAT_EXPR
+        :SUB_EXPR
+        :ADD_EXPR
+        :SIGN_EXPR
+        :OBJREF
+        :VECTOR
+        :FNCALL]))
+
+(defn- reserved? [token]
+  (let [token (if (string? token)
+                (keyword token)
+                token)]
+    (boolean (reserved-tokens token))))
 
 (defn- optimize-token [token]
   (fn
@@ -106,13 +137,19 @@ NUMBER_FIELD             ::= #'[0-9]+'
    :FORMULA             identity
    :PRIMARY             identity
    :CONST               identity
-   :NUMBER              read-string
+   :NUMBER              #?(:clj read-string
+                           :cljs js/parseFloat)
    :FN                  identity
    :FIELD               identity
-   :NUMBER_FIELD        read-string
+   :NUMBER_FIELD        #?(:clj read-string
+                           :cljs js/parseFloat)
    :STRING_FIELD        identity
    :SYMBOL_FIELD        identity
-   :STRING              (fn [s] (apply str (-> s rest butlast)))
+   :STRING              (fn [s]
+                          (let [s (apply str (-> s rest butlast))]
+                            (assert (not (reserved? s))
+                                    (str "String " s " is reserved."))
+                            s))
    :BOOL                (fn [b]
                           (case b
                             "TRUE"  true
@@ -121,6 +158,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
                             "FALSE" false
                             "False" false
                             "false" false))
+   :STAR                identity
    :COMPARISON_EXPS     identity
    :ADDITIVE_EXPS       identity
    :MULTIPLICATIVE_EXPS identity
@@ -143,7 +181,9 @@ NUMBER_FIELD             ::= #'[0-9]+'
                               (number? operand) (* sign operand)
                               (and (seqable? operand)
                                    (keyword? (first operand))) (vec (cons :SIGN_EXPR args))
-                              :otherwise (throw (Exception. (str "The operator “" (first args) "” expects a number or boolean but found " operand "."))))))
+                              :otherwise (throw (#?(:clj Exception.
+                                                    :cljs js/Error.)
+                                                 (str "The operator “" (first args) "” expects a number or boolean but found " operand "."))))))
    :MORE_OR_EQ_EXPR     (optimize-token :MORE_OR_EQ_EXPR)
    :ARRAY_EXPR          (fn [& args]
                           (vec (cons :VECTOR args)))})
@@ -161,7 +201,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
 
 (defn- run-fncall* [f args context]
   (case f
-    "SUM"         (reduce +' (flatten (map #(run* % context) args)))
+    "SUM"         (reduce #?(:clj +' :cljs +) (flatten (map #(run* % context) args)))
     "COUNT"       (count (flatten (map #(run* % context) args)))
     "MIN"         (reduce min (flatten (map #(run* % context) args)))
     "MAX"         (reduce max (flatten (map #(run* % context) args)))
@@ -171,7 +211,7 @@ NUMBER_FIELD             ::= #'[0-9]+'
                     (when-let [else (nth args 2 nil)]
                       (run* else context)))
     "AVERAGE"     (if-let [l (not-empty (flatten (map #(run* % context) args)))]
-                    (/ (reduce +' l)
+                    (/ (reduce #?(:clj +' :cljs +) l)
                        (count l)))
     "ROUND"       (let [d (double (run* (first args) context))
                         p (second args)
@@ -181,6 +221,14 @@ NUMBER_FIELD             ::= #'[0-9]+'
     "OR"          (some identity (map #(run* % context) args))
     "OBJREF"      (with-indifferent-access context (map #(run* % context) args))))
 
+(defmulti ->keyword (fn [v] (type v)))
+
+(defmethod ->keyword #?(:clj String
+                        :cljs js/String) [v] (keyword v))
+
+(defmethod ->keyword #?(:clj clojure.lang.Keyword
+                        :cljs cljs.core/Keyword) [v] v)
+
 (defn- run* [arg context]
   (let [token (if (vector? arg)
                 (first arg)
@@ -189,13 +237,8 @@ NUMBER_FIELD             ::= #'[0-9]+'
                 (rest arg)
                 nil)]
     (cond
-      (or (string? token)
-          (number? token)
-          (boolean? token))
-      token
-
-      (keyword? token)
-      (case token
+      (reserved? token)
+      (case (->keyword token)
         :MORE_EXPR       (apply >
                                 (map #(run* % context) args))
         :MORE_OR_EQ_EXPR (apply >=
@@ -208,15 +251,15 @@ NUMBER_FIELD             ::= #'[0-9]+'
                                 (map #(run* % context) args))
         :NOT_EQ_EXPR     (apply not=
                                 (map #(run* % context) args))
-        :MULT_EXPR       (apply *'
+        :MULT_EXPR       (apply #?(:clj *' :cljs *)
                                 (map #(run* % context) args))
         :DIV_EXPR        (apply /
                                 (map #(run* % context) args))
         :CONCAT_EXPR     (apply str
                                 (map #(run* % context) args))
-        :SUB_EXPR        (apply -'
+        :SUB_EXPR        (apply #?(:clj -' :cljs -)
                                 (map #(run* % context) args))
-        :ADD_EXPR        (apply +'
+        :ADD_EXPR        (apply #?(:clj +' :cljs +)
                                 (map #(run* % context) args))
         :SIGN_EXPR       (let [r (run* (second args) context)
                                r (if (boolean? r)
@@ -227,7 +270,12 @@ NUMBER_FIELD             ::= #'[0-9]+'
                              r))
         :OBJREF          (with-indifferent-access context (map #(run* % context) args))
         :VECTOR          (mapv #(run* % context) args)
-        :FNCALL          (run-fncall* (first args) (second args) context)))))
+        :FNCALL          (run-fncall* (first args) (second args) context))
+
+      (or (string? token)
+          (number? token)
+          (boolean? token))
+      token)))
 
 (defn run
   ([formula] (run formula {}))
@@ -235,4 +283,4 @@ NUMBER_FIELD             ::= #'[0-9]+'
    (let [formula (if (string? formula)
                    (compile formula)
                    formula)]
-             (run* formula context))))
+     (run* formula context))))

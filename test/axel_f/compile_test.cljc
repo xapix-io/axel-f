@@ -1,5 +1,6 @@
 (ns axel-f.compile-test
-  (:require  [clojure.test :as t]
+  (:require  #?(:clj [clojure.test :as t]
+                :cljs [cljs.test :as t :include-macros true])
              [axel-f.core :as sut]))
 
 (t/deftest compile-tests
@@ -30,12 +31,16 @@
 
     (let [error-sample "1+"]
 
-      (t/is (thrown? clojure.lang.ExceptionInfo #"Formula \"1+\" can't be parsed"
+      (t/is (thrown? #?(:clj clojure.lang.ExceptionInfo
+                        :cljs ExceptionInfo)
+                     #"Formula \"1+\" can't be parsed"
                      (sut/compile error-sample)))
 
       (let [failure (try
                       (sut/compile error-sample)
-                      (catch clojure.lang.ExceptionInfo e
+                      (catch #?(:clj clojure.lang.ExceptionInfo
+                                :cljs ExceptionInfo)
+                          e
                         (ex-data e)))]
 
         (t/is (= {:index  2
@@ -123,4 +128,14 @@
                (sut/compile "foo.bar[1]")))
 
       (t/is (= [:OBJREF "foo" "bar buz" 1]
-               (sut/compile "foo.\"bar buz\"[1]"))))))
+               (sut/compile "foo.\"bar buz\"[1]")))))
+
+  (t/testing "can not compile"
+
+    (t/testing "reserved strings"
+
+      (for [x sut/reserved-tokens]
+        (t/is (thrown? #?(:clj java.lang.AssertionError
+                          :cljs js/Error)
+                       (re-pattern (str "String " x " is reserved."))
+                       (sut/compile (str "\"" x "\""))))))))
