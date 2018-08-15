@@ -23,7 +23,10 @@
   ([formula context]
    (let [context (js->clj context)]
      (try
-       (clj->js (axel-f/run formula context))
+       (let [formula (if (string? formula)
+                       formula
+                       (js->clj formula))]
+         (clj->js (axel-f/run formula context)))
        (catch ExceptionInfo e
          (throw (js/Error. (js/JSON.stringify (clj->js (fix-regex-in-exception
                                                         (ex-data e)))))))))))

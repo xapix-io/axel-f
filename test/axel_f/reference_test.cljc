@@ -1,5 +1,6 @@
 (ns axel-f.reference-test
-  (:require [clojure.test :as t]
+  (:require #?(:clj [clojure.test :as t]
+               :cljs [cljs.test :as t :include-macros true])
             [axel-f.core :as sut]))
 
 (t/deftest reference-test
@@ -10,10 +11,21 @@
              (sut/compile "foo")))
     (t/is (= [:OBJREF "foo" "bar"]
              (sut/compile "foo.bar")))
-    (t/is (= [:OBJREF "foo" "bar" 1]
-             (sut/compile "foo.bar[1]")))
-    (t/is (= [:OBJREF "foo" 1 "bar"]
-             (sut/compile "foo[1].bar")))
+
+    (t/testing "with array references"
+
+      (t/is (= [:OBJREF "foo" "bar" 1]
+               (sut/compile "foo.bar[1]")))
+      (t/is (= [:OBJREF "foo" 1 "bar"]
+               (sut/compile "foo[1].bar")))
+      (t/is (= [:OBJREF "foo" "*"]
+               (sut/compile "foo[*]")))
+      (t/is (= [:OBJREF "foo" "*"]
+               (sut/compile "foo.[*]")))
+      (t/is (= [:OBJREF "foo" "*" "bar"]
+               (sut/compile "foo[*].bar")))
+      (t/is (= [:OBJREF "foo" "*" "bar" "*"]
+               (sut/compile "foo.[*].bar[*]"))))
 
     (t/testing "with calculated keywords"
 
@@ -44,4 +56,13 @@
       "foo.bar" {:foo1 {:bar 1}}
       "foo.bar[1]" {:foo {:bar [1]}}
       "foo.bar[SUM(1)]" {:foo {:bar [1]}}
-      "foo[1].bar" {:foo [{:bar 1}]})))
+      "foo[1].bar" {:foo [{:bar 1}]}))
+
+  (t/testing "references with array wildcarts"
+
+    (t/are [f c r] (t/is (= r (sut/run f c)))
+      "foo[*]"            {:foo [1 2 3]}                               [1 2 3]
+      "foo.[*]"           {:foo [1 2 3]}                               [1 2 3]
+      "foo[*].bar"        {:foo [{:bar 1} {:bar 2} {:bar 3}]}          [1 2 3]
+      "foo[*].bar[*].baz" {:foo [{:bar [{:baz 1} {:baz 2} {:baz 3}]}
+                                 {:bar [{:baz 4} {:baz 5} {:baz 6}]}]} [[1 2 3] [4 5 6]])))

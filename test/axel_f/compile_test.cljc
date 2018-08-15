@@ -1,5 +1,6 @@
 (ns axel-f.compile-test
-  (:require  [clojure.test :as t]
+  (:require  #?(:clj [clojure.test :as t]
+                :cljs [cljs.test :as t :include-macros true])
              [axel-f.core :as sut]))
 
 (t/deftest compile-tests
@@ -127,4 +128,14 @@
                (sut/compile "foo.bar[1]")))
 
       (t/is (= [:OBJREF "foo" "bar buz" 1]
-               (sut/compile "foo.\"bar buz\"[1]"))))))
+               (sut/compile "foo.\"bar buz\"[1]")))))
+
+  (t/testing "can not compile"
+
+    (t/testing "reserved strings"
+
+      (for [x sut/reserved-tokens]
+        (t/is (thrown? #?(:clj java.lang.AssertionError
+                          :cljs js/Error)
+                       (re-pattern (str "String " x " is reserved."))
+                       (sut/compile (str "\"" x "\""))))))))
