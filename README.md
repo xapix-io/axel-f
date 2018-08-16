@@ -1,4 +1,4 @@
-# Axel-f
+# Axel-f [![codecov](https://codecov.io/gh/xapix-io/axel-f/branch/master/graph/badge.svg)](https://codecov.io/gh/xapix-io/axel-f)
 
 > Expressions language for Clojure(Script) and JavaScript inspired by Microsoft Excel ™
 

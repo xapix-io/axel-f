@@ -20,6 +20,13 @@
   :test {:extra-paths ["test"]
          :extra-deps  {org.clojure/test.check {:mvn/version "RELEASE"}}}
 
+  :coverage {:extra-deps {cloverage {:mvn/version "1.0.11"}}
+             :main-opts  ["-m" "cloverage.coverage"
+                          "--src-ns-path" "src"
+                          "--test-ns-path" "test"
+                          "--fail-threshold" "65"
+                          "--codecov"]}
+
   :cljs-runner {:extra-deps {olical/cljs-test-runner {:mvn/version "2.1.0"}}
                 :main-opts  ["-m" "cljs-test-runner.main"]}
 
