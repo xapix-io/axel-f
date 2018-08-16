@@ -23,9 +23,13 @@
       (t/is (= [:OBJREF "foo" "*"]
                (sut/compile "foo.[*]")))
       (t/is (= [:OBJREF "foo" "*" "bar"]
-               (sut/compile "foo[*].bar")))
+               (sut/compile "foo[*].bar")
+               (sut/compile "foo[].bar")
+               (sut/compile "foo.[].bar")))
       (t/is (= [:OBJREF "foo" "*" "bar" "*"]
-               (sut/compile "foo.[*].bar[*]"))))
+               (sut/compile "foo.[*].bar[*]")
+               (sut/compile "foo[].bar[]")
+               (sut/compile "foo.[].bar.[]"))))
 
     (t/testing "with calculated keywords"
 

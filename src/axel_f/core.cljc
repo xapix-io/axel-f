@@ -39,7 +39,7 @@ FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | FNCALL
 STRING_FIELD             ::= STRING
 SYMBOL_FIELD             ::= #'[a-zA-Z0-9-_]+'
 NUMBER_FIELD             ::= #'[0-9]+'
-STAR                     ::= '*'
+STAR                     ::= '*'?
 <opening-square-bracket> ::= '['
 <closing-square-bracket> ::= ']'
 <opening-curly-bracket>  ::= '{'
@@ -158,7 +158,7 @@ STAR                     ::= '*'
                             "FALSE" false
                             "False" false
                             "false" false))
-   :STAR                identity
+   :STAR                (constantly "*")
    :COMPARISON_EXPS     identity
    :ADDITIVE_EXPS       identity
    :MULTIPLICATIVE_EXPS identity
