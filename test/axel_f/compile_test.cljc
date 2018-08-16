@@ -82,8 +82,8 @@
                1))
       (t/is (= (sut/compile "-1")
                -1))
-      (t/is (= (sut/compile "1%")
-               [:PERCENT_EXPR 1])))
+      (t/is (= (sut/compile "(1 + 1)%")
+               [:PERCENT_EXPR [:ADD_EXPR 1 1]])))
 
     (t/testing "all possible binary operators"
 

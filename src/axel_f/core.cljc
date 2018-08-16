@@ -109,6 +109,7 @@ STAR                     ::= '*'?
         :SUB_EXPR
         :ADD_EXPR
         :SIGN_EXPR
+        :PERCENT_EXPR
         :OBJREF
         :VECTOR
         :FNCALL]))
@@ -184,6 +185,10 @@ STAR                     ::= '*'?
                               :otherwise (throw (#?(:clj Exception.
                                                     :cljs js/Error.)
                                                  (str "The operator “" (first args) "” expects a number or boolean but found " operand "."))))))
+   :PERCENT_EXPR        (fn [arg]
+                          (if (number? arg)
+                            (float (/ arg 100))
+                            [:PERCENT_EXPR arg]))
    :MORE_OR_EQ_EXPR     (optimize-token :MORE_OR_EQ_EXPR)
    :ARRAY_EXPR          (fn [& args]
                           (vec (cons :VECTOR args)))})
@@ -272,6 +277,8 @@ STAR                     ::= '*'?
                            (if (= (first args) "-")
                              (* -1 r)
                              r))
+        :PERCENT_EXPR    (let [r (run* (first args) context)]
+                           (float (/ r 100)))
         :OBJREF          (with-indifferent-access context (map #(run* % context) args))
         :VECTOR          (mapv #(run* % context) args)
         :FNCALL          (run-fncall* (first args) (second args) context))
