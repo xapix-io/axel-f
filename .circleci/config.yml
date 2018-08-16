@@ -29,7 +29,8 @@ jobs:
           name: Test with clojure 1.9
           type: shell
           command: |
-            clojure -A:1.9:test:clj-runner
+            clojure -A:1.9:test:coverage
+            bash <(curl -s https://codecov.io/bash)
 
       - save_cache:
           paths:

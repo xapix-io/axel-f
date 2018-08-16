@@ -29,6 +29,105 @@
     (t/is (= 10 (sut/run "SUM({1,2,3},4)"))
           (= 15 (sut/run "SUM({1,2,3}, {4,5})")))))
 
+(t/deftest ROUND
+
+  (t/testing "ROUND function should work as expected"
+
+    (t/are [x y] (t/is (= x (sut/run (str "ROUND(123123.123, " y ")"))))
+      123000     -3
+      123100     -2
+      123120     -1
+      123123     0
+      123123.1   1
+      123123.12  2
+      123123.123 3)
+
+    (t/is (= 123123 (sut/run "ROUND(123123.123)")))))
+
+(t/deftest COUNT
+
+  (t/testing "COUNT function should work as expected"
+
+    (t/are [x y] (t/is (= x (sut/run (str "COUNT(" y ")") {:foo [1 2 3]})))
+      0 ""
+      0 "{}"
+      1 "{1}"
+      3 "foo")))
+
+(t/deftest MIN
+
+  (t/testing "MIN function should work as expected"
+
+    (t/are [x y] (t/is (= x (sut/run (str "MIN(" y ")") {:foo [1 2 3]})))
+      1 "{1}"
+      1 "foo")))
+
+(t/deftest MAX
+
+  (t/testing "MAX function should work as expected"
+
+    (t/are [x y] (t/is (= x (sut/run (str "MAX(" y ")") {:foo [1 2 3]})))
+      1 "{1}"
+      3 "foo")))
+
+(t/deftest CONCATENATE
+
+  (t/testing "CONCATENATE function should work as expected"
+
+    (t/are [x y] (t/is (= x (sut/run (str "CONCATENATE(" y ")") {:foo [1 2 3]})))
+      "1" "{1}"
+      "2" "foo[1]"
+      "123" "foo")))
+
+(t/deftest IF
+
+  (t/testing "IF function should work as expected"
+
+    (t/are [x y] (t/is (= x (sut/run (str "IF(" y ")") {:foo [1 2 3]})))
+      0 "FALSE, 1, 0"
+      1 "TRUE, 1, 0"
+      1 "True, 1"
+      nil "False, 1")))
+
+(t/deftest AVERAGE
+
+  (t/testing "AVERAGE function should work as expected"
+
+    (t/are [x y] (t/is (= x (sut/run (str "AVERAGE(" y ")") {:foo [1 2 3] :bar []})))
+      2 "{1,2,3}"
+      nil "bar"
+      2 "foo")))
+
+(t/deftest AND
+
+  (t/testing "AND function should work as expected"
+
+    (t/are [x y] (t/is (= x (sut/run (str "AND(" y ")") {:foo [1 2 3] :bar []})))
+      true "1 > 0, 2 > 1"
+      false "1 > 0, 2 < 1"
+      true "COUNT(foo)"
+      false "AVERAGE(foo) < COUNT(bar)")))
+
+(t/deftest OR
+
+  (t/testing "OR function should work as expected"
+
+    (t/are [x y] (t/is (= x (sut/run (str "OR(" y ")") {:foo [1 2 3] :bar []})))
+      true "1 > 0, 2 > 1"
+      true "1 > 0, 2 < 1"
+      true "COUNT(foo)"
+      false "AVERAGE(foo) < COUNT(bar)")))
+
+(t/deftest OBJREF
+
+  (t/testing "OBJREF function should work as expected"
+
+    (t/are [x y] (t/is (= x (sut/run (str "OBJREF(" y ")") {:foo [1 2 3] :bar []})))
+      2 "\"foo\", 1"
+      [] "\"bar\""
+      3 "CONCATENATE(\"f\", \"o\", \"o\"), 2"
+      nil "\"baz\"")))
+
 (def all-functions
   ["ABS"
    "ACCRINT"

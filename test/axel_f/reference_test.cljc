@@ -49,7 +49,10 @@
       "foo.bar" {:foo {:bar 1}}
       "foo.bar[0]" {:foo {:bar [1]}}
       "foo.bar[SUM(0)]" {:foo {:bar [1]}}
-      "foo[1].bar" {:foo [nil {:bar 1}]}))
+      "foo[1].bar" {:foo [nil {:bar 1}]})
+
+    (t/is (= 1 (sut/run [:OBJREF :foo "bar"] {:foo {:bar 1}})))
+    (t/is (= 1 (sut/run [:OBJREF :foo "bar"] {"foo" {:bar 1}}))))
 
   (t/testing "references evaluated into nil if corresponding path not exists in context"
 
@@ -60,7 +63,8 @@
       "foo.bar" {:foo1 {:bar 1}}
       "foo.bar[1]" {:foo {:bar [1]}}
       "foo.bar[SUM(1)]" {:foo {:bar [1]}}
-      "foo[1].bar" {:foo [{:bar 1}]}))
+      "foo[1].bar" {:foo [{:bar 1}]}
+      "foo.bar" nil))
 
   (t/testing "references with array wildcarts"
 
@@ -69,4 +73,5 @@
       "foo.[*]"           {:foo [1 2 3]}                               [1 2 3]
       "foo[*].bar"        {:foo [{:bar 1} {:bar 2} {:bar 3}]}          [1 2 3]
       "foo[*].bar[*].baz" {:foo [{:bar [{:baz 1} {:baz 2} {:baz 3}]}
-                                 {:bar [{:baz 4} {:baz 5} {:baz 6}]}]} [[1 2 3] [4 5 6]])))
+                                 {:bar [{:baz 4} {:baz 5} {:baz 6}]}]} [[1 2 3] [4 5 6]]
+      "foo[*]"            {:foo 1}                                     1)))

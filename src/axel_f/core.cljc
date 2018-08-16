@@ -25,7 +25,7 @@ EXP_EXPR                 ::= PRIMARY {<exp-op> PRIMARY}
 PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR ) <whitespace> *
 SIGN_EXPR                ::= ( '+' | '-' ) PRIMARY
 PERCENT_EXPR             ::= PRIMARY <percent-op>
-ARRAY_EXPR               ::= <opening-curly-bracket> EXPR {<comma> EXPR} <closing-curly-bracket>
+ARRAY_EXPR               ::= <opening-curly-bracket> ( EXPR {<comma> EXPR} )? <closing-curly-bracket>
 CONST                    ::= NUMBER | STRING | BOOL
 NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
 STRING                   ::= #'\"[^\"]+\"'
@@ -209,12 +209,12 @@ STAR                     ::= '*'?
     "COUNT"       (count (flatten (map #(run* % context) args)))
     "MIN"         (reduce min (flatten (map #(run* % context) args)))
     "MAX"         (reduce max (flatten (map #(run* % context) args)))
-    "CONCATENATE" (reduce str (flatten (map #(run* % context) args)))
+    "CONCATENATE" (apply str (flatten (map #(run* % context) args)))
     "IF"          (if (run* (first args) context)
                     (run* (second args) context)
                     (when-let [else (nth args 2 nil)]
                       (run* else context)))
-    "AVERAGE"     (if-let [l (not-empty (flatten (map #(run* % context) args)))]
+    "AVERAGE"     (when-let [l (not-empty (flatten (map #(run* % context) args)))]
                     (/ (reduce #?(:clj +' :cljs +) l)
                        (count l)))
     "ROUND"       (let [d (double (run* (first args) context))
@@ -222,7 +222,7 @@ STAR                     ::= '*'?
                         p (if p (run* p context) 0)]
                     (round2 d p))
     "AND"         (every? identity (map #(run* % context) args))
-    "OR"          (some identity (map #(run* % context) args))
+    "OR"          (boolean (some identity (map #(run* % context) args)))
     "OBJREF"      (with-indifferent-access context (map #(run* % context) args))))
 
 (defmulti ->keyword (fn [v] (type v)))
@@ -278,7 +278,8 @@ STAR                     ::= '*'?
 
       (or (string? token)
           (number? token)
-          (boolean? token))
+          (boolean? token)
+          (keyword? token))
       token)))
 
 (defn run
