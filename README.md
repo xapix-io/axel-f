@@ -4,7 +4,7 @@
 
 # Rationale
 
-In some applications, the lion's share of business logic is concentrated in dynamic expressions. Often they are not even part of the code base and are stored in a database, files, or somewhere in the cloud. And sometimes these expressions need to be accessed not by programmers. For example, managers or operators of call centers. Making them learn clojure or python will not be fair. This library is designed to combine the best of two completely different worlds: the most understandable syntax from Excel and the speed of Clojure.
+In some applications, the lion's share of business logic is concentrated in dynamic expressions. Often they are not even part of the code base and are stored in a database, files, or somewhere in the cloud. And sometimes these expressions need to be accessed non-technical personnel, like managers or call centers operators. Making them learn clojure or python is not fair. This library is designed to combine the best of two completely different worlds: the most understandable syntax from Excel and the speed of Clojure.
 
 # Installation
 
@@ -16,7 +16,7 @@ In some applications, the lion's share of business logic is concentrated in dyna
 
 ## JavaScript
 
-[Please checkout documentation for JavaScript package](https://github.com/xapix-io/axel-f/tree/master/release-js)
+[Please checkout the documentation for JavaScript package](https://github.com/xapix-io/axel-f/tree/master/release-js)
 
 # TL;DR
 
@@ -48,12 +48,12 @@ In some applications, the lion's share of business logic is concentrated in dyna
 
 # Difference from Excel
 
-* No cell-references and reference operations.
+* No cell-references or reference operations.
 * Excel errors replaced with Exceptions from Clojure(Script)
 
 # Object references
 
-In addition to the formula run function can accept execution context as a second argument. Context can be any valid Clojure(Script) object. In formula you can select the data from context by using object reference operators:
+In addition to a formula, the run function can accept execution context as a second argument. Context can be any valid Clojure(Script) object. In the formula you can select the data from context by using object reference operators:
 
 * Dot reference operator for access nested data: `foo.bar.baz`
 * Array reference operator for access data in vector: `foo[*].bar`
@@ -62,7 +62,7 @@ In addition to the formula run function can accept execution context as a second
 
 # Data types
 
-- [x] Booleans as they known in excel (TRUE/FALSE). In addition axel-f understands `True/False/true/false`
+- [x] Booleans as in Excel (TRUE/FALSE). In addition axel-f understands `True/False/true/false`
 - [x] Numbers (Integers, Floats, Exponential form)
 - [x] Strings in double or single quotes. (`'Some String'`, `"Some String"`)
 - [x] Arrays. Any data in curly brackets (`{1, 2 TRUE}`)
@@ -71,7 +71,7 @@ In addition to the formula run function can accept execution context as a second
 
 # Operators
 
-Any expressions can be used as a operand for any operator. axel-f has the same operator precedence as in Excel. To change a precendence of operators you can use round brackets (`(2+2)*2` => 8)
+Any expression can be used as an operand for any operator. axel-f has the same operator precedence as in Excel. To change a precendence of operators you can use round brackets (`(2+2)*2` => 8)
 
 ## Unary
 
@@ -105,7 +105,7 @@ Any expressions can be used as a operand for any operator. axel-f has the same o
 - [x] AND
 - [x] OR
 
-In addition we have special function for accessing the data in context: `OBJREF(arg1, [arg2...])`
+In addition we have special functions for accessing the data in context: `OBJREF(arg1, [arg2...])`
 
 - [ ] [ABS](https://support.office.com/en-us/article/abs-function-3420200f-5628-4e8c-99da-c99d7c87713c)
 - [ ] [ACCRINT](https://support.office.com/en-us/article/accrint-function-fe45d089-6722-4fb3-9379-e1f911d8dc74)
