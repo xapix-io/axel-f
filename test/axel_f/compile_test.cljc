@@ -1,6 +1,7 @@
 (ns axel-f.compile-test
   (:require  #?(:clj [clojure.test :as t]
                 :cljs [cljs.test :as t :include-macros true])
+             [clojure.string :as string]
              [axel-f.core :as sut]))
 
 (t/deftest compile-tests
@@ -138,4 +139,23 @@
         (t/is (thrown? #?(:clj java.lang.AssertionError
                           :cljs js/Error)
                        (re-pattern (str "String " x " is reserved."))
-                       (sut/compile (str "\"" x "\""))))))))
+                       (sut/compile (str "\"" x "\"")))))))
+
+  (t/testing "can accept custom transformations"
+
+    (letfn [(objref-custom-transform [& fields]
+              (cons :OBJREF
+                    (reduce (fn [acc [f n]]
+                              (let [n (if (and (= "header" f) (string? n))
+                                        (string/lower-case n)
+                                        n)]
+                                (if (empty? acc)
+                                  (conj acc f n)
+                                  (conj acc n))))
+                            []
+                            (partition 2 1 fields))))]
+
+      (t/is (= [:OBJREF "header" "Content-Type"]
+               (sut/compile "header.Content-Type")))
+      (t/is (= [:OBJREF "header" "content-type"]
+               (sut/compile "header.Content-Type" :OBJREF objref-custom-transform))))))

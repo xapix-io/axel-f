@@ -188,9 +188,13 @@ STAR                     ::= '*'?
    :ARRAY_EXPR          (fn [& args]
                           (vec (cons :VECTOR args)))})
 
-(defn compile [formula-str]
-  (let [res (insta/transform
-             optimize-transforms
+(defn compile [formula-str & custom-transforms]
+  (let [custom-transforms (into {} (map (fn [[k v]]
+                                          [k v])
+                                        (partition-all 2 custom-transforms)))
+        res (insta/transform
+             (merge optimize-transforms
+                    custom-transforms)
              (parser formula-str))]
     (if (insta/failure? res)
       (throw (ex-info (str "Formula \"" formula-str "\" can't be parsed.")
