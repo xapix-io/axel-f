@@ -596,3 +596,10 @@
    "YIELDMAT"
    "Z.TEST"
    "ZTEST"])
+
+
+(t/deftest text-function-test
+
+  (t/testing "CLEAN function"
+    (t/is (= true
+             (sut/run "EXACT(\"Hello world\", \"Hello world\")")))

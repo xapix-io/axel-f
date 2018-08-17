@@ -2,9 +2,11 @@
   (:require #?(:clj [instaparse.core :as insta :refer [defparser]]
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
             [clojure.string :as string]
-            [axel-f.error :as error])
+            [axel-f.error :as error]
+            [axel-f.functions :as functions])
   (:refer-clojure :exclude [compile]))
 
+;; TODO: take FN list from functions/ ns or use IDENTIFIER instead of FN
 (defparser parser
   "
 FORMULA                  ::= EXPR | <eq-op> EXPR
@@ -34,7 +36,7 @@ NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
 STRING                   ::= #'\"[^\"]+\"'
 BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
 FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
-FN                       ::= #'(SUM|IF|MIN|MAX|ROUND|COUNT|CONCATENATE|AVERAGE|AND|OR|OBJREF)'
+FN                       ::= #'(EXACT|SUM|IF|MIN|MAX|ROUND|COUNT|CONCATENATE|AVERAGE|AND|OR|OBJREF)'
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
 OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( NUMBER_FIELD | FNCALL | STAR ) <closing-square-bracket> ) )*
@@ -67,14 +69,6 @@ STAR                     ::= '*'?
 <dot>                    ::= '.'
   ")
 
-(defn- round2
-  "Round a double to the given precision (number of significant digits)"
-  [d precision]
-  (let [factor (Math/pow 10 precision)
-        res (/ (Math/round (* d factor)) factor)]
-    (if (> precision 0)
-      res
-      (int res))))
 
 (defn- with-indifferent-access [m ks]
   (if (= "*" (first ks))
@@ -222,27 +216,30 @@ STAR                     ::= '*'?
 
 (declare run*)
 
-(defn- run-fncall* [f args context]
+(defn- run-special
+  "Run fn which requires special/custom args evaluation"
+  [f args context]
   (case f
-    "SUM"         (reduce #?(:clj +' :cljs +) (flatten (map #(run* % context) args)))
-    "COUNT"       (count (flatten (map #(run* % context) args)))
-    "MIN"         (reduce min (flatten (map #(run* % context) args)))
-    "MAX"         (reduce max (flatten (map #(run* % context) args)))
-    "CONCATENATE" (apply str (flatten (map #(run* % context) args)))
-    "IF"          (if (run* (first args) context)
-                    (run* (second args) context)
-                    (when-let [else (nth args 2 nil)]
-                      (run* else context)))
-    "AVERAGE"     (when-let [l (not-empty (flatten (map #(run* % context) args)))]
-                    (/ (reduce #?(:clj +' :cljs +) l)
-                       (count l)))
-    "ROUND"       (let [d (double (run* (first args) context))
-                        p (second args)
-                        p (if p (run* p context) 0)]
-                    (round2 d p))
-    "AND"         (every? identity (map #(run* % context) args))
-    "OR"          (boolean (some identity (map #(run* % context) args)))
-    "OBJREF"      (with-indifferent-access context (map #(run* % context) args))))
+    "OBJREF"   (with-indifferent-access context (map #(run* % context) args))
+    "IF"       (if (run* (first args) context)
+                 (run* (second args) context)
+                 (when-let [else (nth args 2 nil)]
+                   (run* else context)))
+    nil))
+
+(defn- apply-flatten-args [f args]
+  (apply f (flatten args)))
+
+
+(defn- run-fncall* [f args context]
+  (or
+   (run-special f args context)
+   (if-let [f-implementation (get functions/functions-map f)]
+     (->> args
+          (map #(run* % context))
+          (apply-flatten-args f-implementation))
+     ;; TODO: emit parse error
+     (str "No such function: " f ))))
 
 (defmulti ->keyword (fn [v] (type v)))
 
