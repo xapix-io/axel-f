@@ -161,7 +161,8 @@ STAR                     ::= '*'?
    :STRING              (fn [s]
                           (let [s (apply str (-> s rest butlast))]
                             (if (reserved? s)
-                              (throw (AssertionError. (str "String " s " is reserved.")))
+                              (throw (#?(:clj Exception.
+                                         :cljs js/Error.) (str "String " s " is reserved.")))
                               s)))
    :BOOL                (fn [b]
                           (let [b (string/lower-case b)]

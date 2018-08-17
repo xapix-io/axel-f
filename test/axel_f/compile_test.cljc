@@ -135,8 +135,13 @@
 
     (t/testing "reserved strings"
 
+      (t/is (thrown? #?(:clj Exception
+                        :cljs js/Error)
+                     #"String \"OBJREF\" is reserved."
+                     (sut/compile "\"OBJREF\"")))
+
       (for [x sut/reserved-tokens]
-        (t/is (thrown? #?(:clj java.lang.AssertionError
+        (t/is (thrown? #?(:clj Exception
                           :cljs js/Error)
                        (re-pattern (str "String " x " is reserved."))
                        (sut/compile (str "\"" x "\"")))))))
