@@ -23,6 +23,7 @@ In some applications, the lion's share of business logic is concentrated in dyna
 ```clojure
 (require '[axel-f.core :as axel-f])
 
+;; Execute Excel formulas as a string
 (axel-f/run "CONCATENATE(\"foo\", \"bar\")")
 ;; => "foobar"
 
@@ -31,9 +32,13 @@ In some applications, the lion's share of business logic is concentrated in dyna
                    :baz [{:x 5}
                          {:x 7}
                          {:x 8}]}})
-
 ;; => 29
 
+;; Execute Excel formulas as a data
+(axel-f/run [:FNCALL "SUM" [1 2 3]])
+;; => 6
+
+;; Transform Excel formulas from string to data representation
 (axel-f/compile "=SUM(1, 2, AVERAGE({4,5,6}), foo.bar, foo.baz[*].x)")
 ;; =>
 ;; [:FNCALL
