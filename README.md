@@ -563,7 +563,7 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [YIELDDISC](https://support.office.com/en-us/article/yielddisc-function-a9dbdbae-7dae-46de-b995-615faffaaed7)
 - [ ] [YIELDMAT](https://support.office.com/en-us/article/yieldmat-function-ba7d1809-0d33-4bcb-96c7-6c56ec62ef6f)
 - [ ] [Z.TEST](https://support.office.com/en-us/article/ztest-function-d633d5a3-2031-4614-a016-92180ad82bee)
-- [ ] [ZTEST](https://support.office.com/en-us/article/ztest-function-8f33be8a-6bd6-4ecc-8e3a-d9a4420c4a6a)"]
+- [ ] [ZTEST](https://support.office.com/en-us/article/ztest-function-8f33be8a-6bd6-4ecc-8e3a-d9a4420c4a6a)
 
 # Copyright and License
 
