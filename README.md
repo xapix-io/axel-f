@@ -94,16 +94,16 @@ Any expression can be used as an operand for any operator. axel-f has the same o
 
 # Implemented excel functions
 
-- [x] SUM
-- [x] COUNT
-- [x] MIN
-- [x] MAX
-- [x] CONCATENATE
-- [x] IF
-- [x] AVERAGE
-- [x] ROUND
-- [x] AND
-- [x] OR
+- [x] [SUM](https://support.office.com/en-us/article/sum-function-043e1c7d-7726-4e80-8f32-07b23e057f89)
+- [x] [COUNT](https://support.office.com/en-us/article/count-function-a59cd7fc-b623-4d93-87a4-d23bf411294c)
+- [x] [MIN](https://support.office.com/en-us/article/min-function-61635d12-920f-4ce2-a70f-96f202dcc152)
+- [x] [MAX](https://support.office.com/en-us/article/max-function-e0012414-9ac8-4b34-9a47-73e662c08098)
+- [x] [CONCATENATE](https://support.office.com/en-us/article/concatenate-function-8f8ae884-2ca8-4f7a-b093-75d702bea31d)
+- [x] [IF](https://support.office.com/en-us/article/if-function-69aed7c9-4e8a-4755-a9bc-aa8bbff73be2)
+- [x] [AVERAGE](https://support.office.com/en-us/article/average-function-047bac88-d466-426c-a32b-8f33eb960cf6)
+- [x] [ROUND](https://support.office.com/en-us/article/round-function-c018c5d8-40fb-4053-90b1-b3e7f61a213c)
+- [x] [AND](https://support.office.com/en-us/article/and-function-5f19b2e8-e1df-4408-897a-ce285a19e9d9)
+- [x] [OR](https://support.office.com/en-us/article/or-function-7d17ad14-8700-4281-b308-00b131e22af0)
 
 In addition we have special functions for accessing the data in context: `OBJREF(arg1, [arg2...])`
 

@@ -1,6 +1,7 @@
 (ns axel-f.core
   (:require #?(:clj [instaparse.core :as insta :refer [defparser]]
-               :cljs [instaparse.core :as insta :refer-macros [defparser]]))
+               :cljs [instaparse.core :as insta :refer-macros [defparser]])
+            [clojure.string :as string])
   (:refer-clojure :exclude [compile]))
 
 (defparser parser
@@ -83,15 +84,26 @@ STAR                     ::= '*'?
     (when (and (seqable? m)
                (not-empty m))
       (let [k (first ks)
-            res (or (and (integer? k)
-                         (nth m k nil))
-                    (and (string? k)
-                         (or (get m (keyword k))
-                             (get m k)))
-                    (and (keyword? k)
-                         (or (get m k)
-                             (get m (name k))))
-                    nil)]
+            res (cond
+                  (number? k)  (let [r (when (integer? k)
+                                         (nth m k nil))]
+                                 (if (nil? r)
+                                   (let [r (get m k)]
+                                     (if (nil? r)
+                                       (let [k (str k)
+                                             r (get m (str k))]
+                                         (if (nil? r)
+                                           (get m (keyword k))))
+                                       r))
+                                   r))
+                  (string? k)  (let [r (get m k)]
+                                 (if (nil? r)
+                                   (get m (keyword k))
+                                   r))
+                  (keyword? k) (let [r (get m k)]
+                                 (if (nil? r)
+                                   (get m (name k))
+                                   r)))]
         (if-let [ks (not-empty (rest ks))]
           (recur res ks)
           res)))))
@@ -148,17 +160,14 @@ STAR                     ::= '*'?
    :SYMBOL_FIELD        identity
    :STRING              (fn [s]
                           (let [s (apply str (-> s rest butlast))]
-                            (assert (not (reserved? s))
-                                    (str "String " s " is reserved."))
-                            s))
+                            (if (reserved? s)
+                              (throw (AssertionError. (str "String " s " is reserved.")))
+                              s)))
    :BOOL                (fn [b]
-                          (case b
-                            "TRUE"  true
-                            "True"  true
-                            "true"  true
-                            "FALSE" false
-                            "False" false
-                            "false" false))
+                          (let [b (string/lower-case b)]
+                            (cond
+                              (= b "true") true
+                              (= b "false") false)))
    :STAR                (constantly "*")
    :COMPARISON_EXPS     identity
    :ADDITIVE_EXPS       identity
@@ -178,13 +187,13 @@ STAR                     ::= '*'?
                           (let [operand (second args)
                                 sign    (if (= "-" (first args)) -1 1)]
                             (cond
-                              (boolean? operand) (* sign (if operand 1 0))
-                              (number? operand) (* sign operand)
-                              (and (seqable? operand)
-                                   (keyword? (first operand))) (vec (cons :SIGN_EXPR args))
+                              (boolean? operand)         (* sign (if operand 1 0))
+                              (number? operand)          (* sign operand)
+                              (keyword? (first operand)) (vec (cons :SIGN_EXPR args))
                               :otherwise (throw (#?(:clj Exception.
                                                     :cljs js/Error.)
-                                                 (str "The operator “" (first args) "” expects a number or boolean but found " operand "."))))))
+                                                 (str "The operator “" (first args) "” expects a number or boolean but found " operand ".")))
+                              )))
    :PERCENT_EXPR        (fn [arg]
                           (if (number? arg)
                             (float (/ arg 100))
