@@ -34,7 +34,7 @@
   (every? identity args))
 
 (defn or-fn [& args]
-  (some? identity args))
+  (some? args))
 
 
 ;; ASC
