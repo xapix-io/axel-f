@@ -1,11 +1,6 @@
 # Axel-f
 
 > Expressions language for Clojure(Script) and JavaScript inspired by Microsoft Excel ™
-> A ring ding ding ding ding
-> A Ring Ding Ding Dingdemgdemg
-> A ring ding ding ding ding
-> Ring ding
-> Baa-Baa
 
 # Installation
 
@@ -19,7 +14,7 @@ npm i --save axel-f
 In Node.js
 
 ```javascript
-const {api: {compile: compile, run: run}} = require('axel-f');
+const {compile: compile, run: run} = require('axel-f');
 
 # Precompile excel formula
 compile("=SUM(1, 2, {5, 6, 8})");
