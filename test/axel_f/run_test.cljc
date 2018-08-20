@@ -1,7 +1,8 @@
 (ns axel-f.run-test
   (:require #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])
-            [axel-f.core :as sut]))
+            [axel-f.core :as sut]
+            [axel-f.lib :as lib]))
 
 (t/deftest run-test
 
@@ -68,7 +69,12 @@
         true "true"
         false "FALSE"
         false "False"
-        false "false")
+        false "false"
+        8 "(1+1)^3"
+        8 "(1+1)^SUM(1,2)")
+
+      (t/is (lib/fuzzy= 0.0001 10.0451 (sut/run "SUM(1,2)^2.1")))
+      (t/is (lib/fuzzy= 0.0001 9.261 (sut/run "2.1^SUM(1,2)")))
 
       (t/is (thrown? #?(:clj Exception
                         :cljs js/Error) (sut/run "-\"foo\""))))))

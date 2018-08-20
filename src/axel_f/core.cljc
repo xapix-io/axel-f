@@ -124,7 +124,8 @@ STAR                     ::= '*'?
         :PERCENT_EXPR
         :OBJREF
         :VECTOR
-        :FNCALL]))
+        :FNCALL
+        :EXP_EXPR]))
 
 (defn- reserved? [token]
   (let [token (if (string? token)
@@ -287,6 +288,12 @@ STAR                     ::= '*'?
                            (if (= (first args) "-")
                              (* -1 r)
                              r))
+        :EXP_EXPR        (let [f (run* (first args) context)
+                               s (run* (second args) context)
+                               res (Math/pow f s)]
+                           (if (and (integer? f) (integer? s))
+                             (int res)
+                             res))
         :PERCENT_EXPR    (let [r (run* (first args) context)]
                            (float (/ r 100)))
         :OBJREF          (with-indifferent-access context (map #(run* % context) args))

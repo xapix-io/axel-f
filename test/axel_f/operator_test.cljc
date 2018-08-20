@@ -1,7 +1,8 @@
 (ns axel-f.operator-test
   (:require #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])
-            [axel-f.core :as sut]))
+            [axel-f.core :as sut]
+            [axel-f.lib :as lib]))
 
 (t/deftest operator-precedence
 
@@ -134,18 +135,13 @@
 
     (t/is (= 1 (sut/run "--(1>0)")))))
 
-(defn fuzzy= [tolerance x y]
-  (let [diff (#?(:clj Math/abs
-                 :cljs js/Math.abs) (- x y))]
-    (< diff tolerance)))
-
 (t/deftest percent-operator
 
   (t/testing "applying percent operator to number resolved during compile time"
 
-    (t/is (fuzzy= 0.0001 0.024 (sut/compile "2.4%"))))
+    (t/is (lib/fuzzy= 0.0001 0.024 (sut/compile "2.4%"))))
 
   (t/testing "percent operator evaluated into float number"
 
-    (t/is (fuzzy= 0.0001 0.024 (sut/run "2.4%")))
-    (t/is (fuzzy= 0.0001 0.024 (sut/run [:PERCENT_EXPR 2.4])))))
+    (t/is (lib/fuzzy= 0.0001 0.024 (sut/run "2.4%")))
+    (t/is (lib/fuzzy= 0.0001 0.024 (sut/run [:PERCENT_EXPR 2.4])))))
