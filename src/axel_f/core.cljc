@@ -6,9 +6,14 @@
             [axel-f.functions :as functions])
   (:refer-clojure :exclude [compile]))
 
-;; TODO: take FN list from functions/ ns or use IDENTIFIER instead of FN
+(defn- strings->rule [strings]
+  (->> strings
+       (map #(str "'" % "'"))
+       (string/join " | ")))
+
 (defparser parser
-  "
+  (str
+   "
 FORMULA                  ::= EXPR | <eq-op> EXPR
 EXPR                     ::= COMPARISON_EXPS
 COMPARISON_EXPS          ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
@@ -36,7 +41,7 @@ NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
 STRING                   ::= #'\"[^\"]+\"'
 BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
 FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
-FN                       ::= #'(EXACT|SUM|IF|MIN|MAX|ROUND|COUNT|CONCATENATE|AVERAGE|AND|OR|OBJREF)'
+FN                       ::= " (-> functions/functions-map keys strings->rule) "
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
 OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( NUMBER_FIELD | FNCALL | STAR ) <closing-square-bracket> ) )*
@@ -67,7 +72,7 @@ STAR                     ::= '*'?
 <div-op>                 ::= '/'
 <comma>                  ::= ','
 <dot>                    ::= '.'
-  ")
+  "))
 
 
 (defn- with-indifferent-access [m ks]
