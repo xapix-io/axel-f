@@ -44,10 +44,6 @@
 (defn or-fn [& args]
   (some identity args))
 
-;; ASC
-;; BAHTTEXT
-;; CHAR
-
 (defn clean-fn
   "removes all nonprintable characters from text.
 
@@ -64,15 +60,10 @@
   [text]
   (-> text first int))
 
-;; CONCATENATE
-;; DBCS
-;; DOLLAR
-
 (defn exact-fn
   "Compares two text strings and returns TRUE if they are exactly the same, FALSE otherwise. EXACT is case-sensitive but ignores formatting differences."
   [str1 str2]
   (= str1 str2))
-
 
 (defn find-fn
   "FIND locate one text string within a second text string, and return the number of the starting position of the first text string from the first character of the second text string."
@@ -81,7 +72,6 @@
 (defn fixed-fn
   "Rounds a number to the specified number of decimals, formats the number in decimal format using a period and commas, and returns the result as text."
   [])
-;; HTML
 
 (defn left-fn
   "LEFT returns the first character or characters in a text string, based on the number of characters you specify."
