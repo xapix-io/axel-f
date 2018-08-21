@@ -51,11 +51,10 @@
   [text]
   (string/replace text #"[0-x1F]" ""))
 
-
-
 (defn code-fn
   "Returns a numeric code for the first character in a text string."
-  [])
+  [text]
+  (-> text first int))
 
 ;; CONCATENATE
 ;; DBCS
@@ -154,4 +153,5 @@
    "OR"          or-fn
 
    "EXACT"       exact-fn
+   "CODE"        code-fn
    })

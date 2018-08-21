@@ -602,4 +602,12 @@
 
   (t/testing "CLEAN function"
     (t/is (= true
-             (sut/run "EXACT(\"Hello world\", \"Hello world\")")))))
+             (sut/run "EXACT(\"Hello world\", \"Hello world\")"))))
+
+  (t/testing "CODE function"
+    (t/is (= 65
+             (sut/run "CODE(\"A\")")))
+    (t/is (= 1000
+             (sut/run "CODE(\"Ϩ\")")))
+    )
+  )
