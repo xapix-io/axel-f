@@ -34,8 +34,7 @@
   (every? identity args))
 
 (defn or-fn [& args]
-  (some? args))
-
+  (some identity args))
 
 ;; ASC
 ;; BAHTTEXT
