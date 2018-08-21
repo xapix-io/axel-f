@@ -11,8 +11,16 @@
 (defn max-fn [& items]
   (reduce max items))
 
+(defn- excel-str [item]
+  (case item
+    true "TRUE"
+    false "FALSE"
+    (str item)))
+
 (defn concatenate-fn [& items]
-  (reduce str items))
+  (->> items
+       (map excel-str)
+       (apply str)))
 
 (defn average-fn [& items]
   (let [len (count items)]
