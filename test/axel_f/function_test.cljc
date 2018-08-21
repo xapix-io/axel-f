@@ -610,4 +610,20 @@
     (t/is (= 1000
              (sut/run "CODE(\"Ϩ\")")))
     )
+
+  (t/testing "CONCATENATE function"
+    (t/is (= "hello world"
+             (sut/run "CONCATENATE(\"hello\", \" \", \"world\")")))
+    (t/is (= "hello world"
+             (sut/run "CONCATENATE({\"hello\", \" \", \"world\"})")))
+    (t/is (= "1hello"
+             (sut/run "CONCATENATE(1, \"hello\",)")))
+    (t/is (= "TRUEyes"
+             (sut/run "CONCATENATE(true, \"yes\")")))
+    (t/is (= "FALSEno"
+             (sut/run "CONCATENATE(false, \"no\")")))
+
+    )
+
+
   )
