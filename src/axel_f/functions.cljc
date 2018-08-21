@@ -67,7 +67,11 @@
 
 (defn find-fn
   "FIND locate one text string within a second text string, and return the number of the starting position of the first text string from the first character of the second text string."
-  [])
+  ([substr str] (find-fn substr str 0))
+  ([substr str from-index]
+   (some-> str
+           (string/index-of substr from-index)
+           (inc))))
 
 (defn fixed-fn
   "Rounds a number to the specified number of decimals, formats the number in decimal format using a period and commas, and returns the result as text."
@@ -152,4 +156,5 @@
 
    "EXACT"       exact-fn
    "CODE"        code-fn
+   "FIND"        find-fn
    })

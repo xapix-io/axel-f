@@ -622,8 +622,21 @@
              (sut/run "CONCATENATE(true, \"yes\")")))
     (t/is (= "FALSEno"
              (sut/run "CONCATENATE(false, \"no\")")))
-
     )
 
+  (t/testing "EXACT function"
+    (t/is (= true
+             (sut/run "EXACT(\"yes\", \"yes\" )")))
+    )
 
+  (t/testing "FIND function"
+    (let [context {:data {:name "Miriam McGovern"}}]
+      (t/is (= 1
+               (sut/run "FIND(\"M\", data.name)" context)))
+      (t/is (= 6
+               (sut/run "FIND(\"m\", data.name)" context)))
+      (t/is (= 8
+               (sut/run "FIND(\"M\", data.name, 3)" context))))
+
+    )
   )
