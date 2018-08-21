@@ -1,7 +1,8 @@
 (ns axel-f.core
   (:require #?(:clj [instaparse.core :as insta :refer [defparser]]
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [axel-f.error :as error])
   (:refer-clojure :exclude [compile]))
 
 (defparser parser
@@ -23,10 +24,11 @@ MULTIPLICATIVE_EXPS      ::= MULT_EXPR | DIV_EXPR
 MULT_EXPR                ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<mult-op> EXP_EXPR}
 DIV_EXPR                 ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<div-op> EXP_EXPR}
 EXP_EXPR                 ::= PRIMARY {<exp-op> PRIMARY}
-PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR ) <whitespace> *
+PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR | ERROR ) <whitespace> *
 SIGN_EXPR                ::= ( '+' | '-' ) PRIMARY
 PERCENT_EXPR             ::= PRIMARY <percent-op>
 ARRAY_EXPR               ::= <opening-curly-bracket> ( EXPR {<comma> EXPR} )? <closing-curly-bracket>
+ERROR                    ::= #'#N/A|#VALUE!|#REF!|#DIV/0!|#NUM!|#NAME?|#NULL!'
 CONST                    ::= NUMBER | STRING | BOOL
 NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
 STRING                   ::= #'\"[^\"]+\"'
@@ -202,7 +204,8 @@ STAR                     ::= '*'?
                             [:PERCENT_EXPR arg]))
    :MORE_OR_EQ_EXPR     (optimize-token :MORE_OR_EQ_EXPR)
    :ARRAY_EXPR          (fn [& args]
-                          (vec (cons :VECTOR args)))})
+                          (vec (cons :VECTOR args)))
+   :ERROR               error/error})
 
 (defn compile [formula-str & custom-transforms]
   (let [custom-transforms (into {} (map (fn [[k v]]
