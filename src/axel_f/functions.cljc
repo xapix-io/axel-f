@@ -65,6 +65,10 @@
   #?(:clj (-> text first int)
      :cljs (.charCodeAt text 0)))
 
+;; CONCATENATE
+;; DBCS
+;; DOLLAR
+
 (defn exact-fn
   "Compares two text strings and returns TRUE if they are exactly the same,
    FALSE otherwise. EXACT is case-sensitive but ignores formatting differences."
