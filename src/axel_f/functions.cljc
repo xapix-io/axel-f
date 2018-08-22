@@ -44,6 +44,10 @@
 (defn or-fn [& args]
   (boolean (some identity args)))
 
+;; ASC
+;; BAHTTEXT
+;; CHAR
+
 (defn clean-fn
   "removes all nonprintable characters from text.
 
