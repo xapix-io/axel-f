@@ -41,7 +41,10 @@ NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
 STRING                   ::= #'\"[^\"]+\"'
 BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
 FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
-FN                       ::= " (-> functions/functions-map keys strings->rule) "
+FN                       ::= " (-> functions/functions-map
+                                   keys
+                                   (conj "IF" "OBJREF")
+                                   strings->rule) "
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
 OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( NUMBER_FIELD | FNCALL | STAR ) <closing-square-bracket> ) )*
@@ -229,15 +232,18 @@ STAR                     ::= '*'?
     "IF"       (if (run* (first args) context)
                  (run* (second args) context)
                  (when-let [else (nth args 2 nil)]
-                   (run* else context)))
-    nil))
+                   (run* else context)))))
+
+(defn- special? [f]
+  (or (= f "IF")
+      (= f "OBJREF")))
 
 (defn- apply-flatten-args [f args]
   (apply f (flatten args)))
 
 
 (defn- run-fncall* [f args context]
-  (or
+  (if (special? f)
    (run-special f args context)
    (if-let [f-implementation (get functions/functions-map f)]
      (->> args
