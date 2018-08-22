@@ -6,7 +6,7 @@
   (reduce #?(:clj +' :cljs +) items))
 
 (defn min-fn [& items]
-  (reduce min-fn items))
+  (reduce min items))
 
 (defn max-fn [& items]
   (reduce max items))
@@ -42,7 +42,7 @@
   (every? identity args))
 
 (defn or-fn [& args]
-  (some identity args))
+  (boolean (some identity args)))
 
 ;; ASC
 ;; BAHTTEXT
@@ -144,11 +144,15 @@
   "Converts text to uppercase."
   [])
 
+(defn count-fn [& args]
+  (count (flatten args)))
+
+
 ;; VALUE
 
 (def functions-map
   {"SUM"         sum-fn
-   "COUNT"       len-fn
+   "COUNT"       count-fn
    "LEN"         len-fn
    "MIN"         min-fn
    "MAX"         max-fn
