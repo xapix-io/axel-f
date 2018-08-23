@@ -196,30 +196,32 @@
 
 
 (def functions-map
-  {"SUM"         sum-fn
-   "MIN"         min-fn
-   "MAX"         max-fn
-   "CONCATENATE" concatenate-fn
-   "AVERAGE"     average-fn
-   "ROUND"       round-fn
-   "AND"         and-fn
-   "OR"          or-fn
-   "CLEAN"       clean-fn
-   "CODE"        code-fn
-   "EXACT"       exact-fn
-   "FIND"        find-fn
-   "LEFT"        left-fn
-   "LEN"         len-fn
-   "LOWER"       lower-fn
-   "MID"         mid-fn
-   "NUMBERVALUE" numbervalue-fn
-   "PROPER"      proper-fn
-   "REPLACE"     replace-fn
-   "REPT"        rept-fn
-   "RIGHT"       right-fn
-   "SEARCH"      search-fn
-   "SUBSTITUTE"  substitute-fn
-   "TRIM"        trim-fn
-   "UPPER"       upper-fn
-   "COUNT"       count-fn
+  {"SUM"         {:impl sum-fn}
+   "MIN"         {:impl min-fn}
+   "MAX"         {:impl max-fn}
+   "CONCATENATE" {:impl concatenate-fn}
+   "AVERAGE"     {:impl average-fn}
+   "ROUND"       {:impl round-fn}
+   "AND"         {:impl and-fn}
+   "OR"          {:impl or-fn}
+   "CLEAN"       {:impl clean-fn}
+   "CODE"        {:impl code-fn}
+   "EXACT"       {:impl exact-fn}
+   "FIND"        {:impl find-fn}
+   "LEFT"        {:impl left-fn}
+   "LEN"         {:impl len-fn}
+   "LOWER"       {:impl lower-fn}
+   "MID"         {:impl mid-fn}
+   "NUMBERVALUE" {:impl numbervalue-fn}
+   "PROPER"      {:impl proper-fn}
+   "REPLACE"     {:impl replace-fn}
+   "REPT"        {:impl rept-fn}
+   "RIGHT"       {:impl right-fn}
+   "SEARCH"      {:impl search-fn}
+   "SUBSTITUTE"  {:impl substitute-fn}
+   "TRIM"        {:impl trim-fn}
+   "UPPER"       {:impl upper-fn}
+   "COUNT"       {:impl count-fn}
+   "IF"          {:impl :special-form}
+   "OBJREF"      {:impl :special-form}
    })

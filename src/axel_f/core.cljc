@@ -43,7 +43,6 @@ BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
 FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
 FN                       ::= " (-> functions/functions-map
                                    keys
-                                   (conj "IF" "OBJREF")
                                    strings->rule) "
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
@@ -234,23 +233,17 @@ STAR                     ::= '*'?
                  (when-let [else (nth args 2 nil)]
                    (run* else context)))))
 
-(defn- special? [f]
-  (or (= f "IF")
-      (= f "OBJREF")))
-
 (defn- apply-flatten-args [f args]
   (apply f (flatten args)))
 
-
 (defn- run-fncall* [f args context]
-  (if (special? f)
-   (run-special f args context)
-   (if-let [f-implementation (get functions/functions-map f)]
-     (->> args
+  (if-let [f-implementation (get-in functions/functions-map [f :impl])]
+    (if (= :special-form f-implementation)
+      (run-special f args context)
+      (->> args
           (map #(run* % context))
-          (apply-flatten-args f-implementation))
-     ;; TODO: emit parse error
-     (str "No such function: " f ))))
+          (apply-flatten-args f-implementation)))
+    (str "No such function: " f)))
 
 (defmulti ->keyword (fn [v] (type v)))
 
@@ -259,6 +252,14 @@ STAR                     ::= '*'?
 
 (defmethod ->keyword #?(:clj clojure.lang.Keyword
                         :cljs cljs.core/Keyword) [v] v)
+
+(defmulti ->string (fn [v] (type v)))
+
+(defmethod ->string #?(:clj String
+                       :cljs js/String) [v] v)
+
+(defmethod ->string #?(:clj clojure.lang.Keyword
+                       :cljs cljs.core/Keyword) [v] (name v))
 
 (defn- run* [arg context]
   (let [token (if (vector? arg)
@@ -324,3 +325,119 @@ STAR                     ::= '*'?
                    (compile formula)
                    formula)]
      (run* formula context))))
+
+(defn- valid-reference? [ref]
+  (try
+    (let [ref (compile ref)]
+      (and (seqable? ref) (= (first ref) :OBJREF)))
+    (catch clojure.lang.ExceptionInfo _
+      false)))
+
+(defn- fix-up-fncall [fncall]
+  (let [fncall (string/replace fncall #",[ ]*$" "")]
+    (str fncall
+         (when-not (string/ends-with? fncall ")")
+           ")"))))
+
+(defn- valid-fncall? [fncall]
+  (try
+    (let [fncall (compile (fix-up-fncall fncall))]
+      (and (seqable? fncall) (= (first fncall) :FNCALL)))
+    (catch #?(:clj clojure.lang.ExceptionInfo
+              :cljs js/Error) _
+      false)))
+
+(defn- valid-fnname? [fnname]
+  (re-matches #"[A-Z]+" fnname))
+
+(defn- build-suggestion [type item & [args]]
+  (merge {:type type}
+         (case type
+           :OBJREF {:value item
+                    :description "Field in the context"}
+           :FN (merge {:value item}
+                      (select-keys (get functions/functions-map item)
+                                   [:description :args]))
+           :FNCALL (merge {:value item
+                           :args-count (dec (count args))}
+                          (select-keys (get functions/functions-map item)
+                                       [:description :args])))))
+
+(defn- build-suggestions-for-objref [objref context]
+  (concat (->> functions/functions-map
+              keys
+              (filter #(string/starts-with? % objref))
+              (map #(build-suggestion :FN %)))
+          (let [[_ & fields] (compile objref)]
+            (if (> (count fields) 1)
+              (let [known-path (butlast fields)
+                    maybe-path (last fields)]
+                (cond
+                  (= maybe-path "*") (->> (run (string/join "." known-path)
+                                           context)
+                                         (filter map?)
+                                         (apply merge)
+                                         keys
+                                         (map #(build-suggestion :OBJREF %)))
+                  :otherwise (let [new-context (run (string/join "." known-path)
+                                                 context)]
+                               (cond
+                                 (map? new-context) (->> new-context
+                                                        keys
+                                                        (map ->string)
+                                                        (filter #(string/starts-with? % maybe-path))
+                                                        (map #(build-suggestion :OBJREF %)))))))
+              (->> context
+                  keys
+                  (map ->string)
+                  (filter #(string/starts-with? % (first fields)))
+                  (map #(build-suggestion :OBJREF %)))))))
+
+(defn- build-suggestions-for-fncall [fncall]
+  (let [[_ f args] (compile (fix-up-fncall fncall))]
+    (->> functions/functions-map
+        keys
+        (filter #(string/starts-with? % f))
+        (map #(build-suggestion :FNCALL % args)))))
+
+(defn get-last-part [incomplete-formula]
+  (let [chx (string/split incomplete-formula #"")]
+    (loop [ch (last chx) chx (butlast chx) acc [] terms {:open-round 0
+                                                         :close-round 0
+                                                         :pre-terminate false
+                                                         :terminate false}]
+      (if (or (not ch) (:terminate terms))
+        (apply str acc)
+        (let [terms (cond-> terms
+                      (= ")" ch) (update :close-round inc)
+                      (= "(" ch) (update :open-round inc)
+                      (= "," ch) (#(if (valid-reference? (apply str acc))
+                                     (assoc % :terminate true)
+                                     %))
+                      (re-matches #"[A-Z]" ch) (#(if (>= (:open-round %) (:close-round %))
+                                                   (assoc % :pre-terminate true)
+                                                   %))
+                      (not (re-matches #"[A-Z]" ch)) (#(if (:pre-terminate %)
+                                                         (assoc % :terminate true)
+                                                         %)))]
+          (if (:terminate terms)
+            (apply str acc)
+            (recur (last chx) (butlast chx) (cons ch acc) terms)))))))
+
+(defn autocomplete
+  ([incomplete-formula] (autocomplete incomplete-formula {}))
+  ([incomplete-formula context]
+   (let [last-part (get-last-part incomplete-formula)]
+     (cond
+       (valid-reference? last-part) (build-suggestions-for-objref last-part context)
+       (valid-fncall? last-part)    (build-suggestions-for-fncall last-part)))))
+
+(comment
+
+  (autocomplete "SU.bar[*]" {:SU {:bar [{:baz 1} {:buz 2}]}})
+
+  (autocomplete "S" {:SU {:bar [{:baz 1} {:buz 2}]}})
+
+  (autocomplete "SUM(1,2" {:SU {:bar [{:baz 1} {:buz 2}]}})
+
+  )
