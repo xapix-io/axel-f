@@ -5,15 +5,17 @@
             [clj-fuzzy.metrics :as fuzzy]))
 
 (defn- fuzzy-match? [ex dict]
-  (->> dict
-      (map #(hash-map :value %
-                      :distance (if (string/starts-with? (string/lower-case %)
-                                                         (string/lower-case ex))
-                                  0
-                                  (fuzzy/jaccard ex %))))
-      (filter #(< (:distance %) 0.6))
-      (sort-by :distance)
-      (map :value)))
+  (if (string? ex)
+    (->> dict
+        (map #(hash-map :value %
+                        :distance (if (string/starts-with? (string/lower-case %)
+                                                           (string/lower-case ex))
+                                    0
+                                    (fuzzy/jaccard ex %))))
+        (filter #(< (:distance %) 0.6))
+        (sort-by :distance)
+        (map :value))
+    []))
 
 (defn- fix-up-objref [ref]
   (string/replace ref #"\.$" ""))
@@ -57,8 +59,15 @@
                           (select-keys (get functions/functions-map item)
                                        [:description :args])))))
 
+(defn- reconstruct-path [path]
+  (string/join "." (map (fn [s]
+                          (if (integer? s)
+                            (str "[" s "]")
+                            s))
+                        path)))
+
 (defn- build-new-context [context path maybe-path]
-  (let [new-context (axel-f/run (string/join "." path)
+  (let [new-context (axel-f/run (reconstruct-path path)
                       context)]
     (cond
       (map? new-context) (->> new-context
@@ -95,7 +104,7 @@
                                  ""
                                  (last fields))]
                 (cond
-                  (= maybe-path "*") (->> (axel-f/run (string/join "." known-path)
+                  (= maybe-path "*") (->> (axel-f/run (reconstruct-path known-path)
                                            context)
                                          (filter map?)
                                          (apply merge)
