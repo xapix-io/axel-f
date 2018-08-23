@@ -21,12 +21,7 @@
     "bugs": {
         "url": "https://github.com/xapix-io/axel-f/issues"
     },
-    "license": [
-        {
-            "type": "EPL-2.0",
-            "url": "https://github.com/xapix-io/axel-f/blob/master/LICENSE"
-        }
-    ],
+    "license": "EPL-2.0",
     "main": "./axel_f.js",
     "repository": {
         "type": "git",
