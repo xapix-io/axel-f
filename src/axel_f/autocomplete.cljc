@@ -104,13 +104,16 @@
                                  ""
                                  (last fields))]
                 (cond
-                  (= maybe-path "*") (->> (axel-f/run (reconstruct-path known-path)
-                                           context)
-                                         (filter map?)
-                                         (apply merge)
-                                         keys
-                                         (map #(build-suggestion :OBJREF %)))
-                  :otherwise (build-new-context context known-path maybe-path)))
+                  (= maybe-path "*")
+                  (->> (axel-f/run (reconstruct-path known-path)
+                        context)
+                      (filter map?)
+                      (apply merge)
+                      keys
+                      (map #(build-suggestion :OBJREF %)))
+
+                  :otherwise
+                  (build-new-context context known-path maybe-path)))
 
               (string/ends-with? objref ".")
               (build-new-context context fields "")
