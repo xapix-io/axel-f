@@ -7,7 +7,8 @@
 (defn- fuzzy-match? [ex dict]
   (->> dict
       (map #(hash-map :value %
-                      :distance (if (string/starts-with? % ex)
+                      :distance (if (string/starts-with? (string/lower-case %)
+                                                         (string/lower-case ex))
                                   0
                                   (fuzzy/jaccard ex %))))
       (filter #(< (:distance %) 0.6))

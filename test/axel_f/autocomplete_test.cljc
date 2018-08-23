@@ -29,7 +29,13 @@
     (t/testing "fuzzy match"
 
       (t/is (= [{:type :FN :value "MID"} {:type :FN :value "MIN"} {:type :FN :value "MAX"}]
-               (sut/autocomplete "MIX"))))
+               (sut/autocomplete "MIX")))
+
+      (t/is (= [{:type :FN :value "MID"}
+                {:type :FN :value "MIN"}
+                {:type :FN :value "TRIM"}
+                {:type :OBJREF :value "mio" :description "Field in the context"}]
+               (sut/autocomplete "MI" {:mio 1}))))
 
     (t/testing "function call with incomplete list of arguments"
 
