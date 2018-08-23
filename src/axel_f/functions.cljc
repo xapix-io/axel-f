@@ -62,21 +62,20 @@
      :cljs (.charCodeAt text 0)))
 
 (defn exact-fn
-  "Compares two text strings and returns TRUE if they are exactly the same, FALSE otherwise. EXACT is case-sensitive but ignores formatting differences."
+  "Compares two text strings and returns TRUE if they are exactly the same,
+   FALSE otherwise. EXACT is case-sensitive but ignores formatting differences."
   [str1 str2]
   (= str1 str2))
 
 (defn find-fn
-  "FIND locate one text string within a second text string, and return the number of the starting position of the first text string from the first character of the second text string."
+  "FIND locate one text string within a second text string, and return the number
+   of the starting position of the first text string from the first character of the
+   second text string."
   ([substr str] (find-fn substr str 0))
   ([substr str from-index]
    (some-> str
            (string/index-of substr from-index)
            (inc))))
-
-(defn fixed-fn
-  "Rounds a number to the specified number of decimals, formats the number in decimal format using a period and commas, and returns the result as text."
-  [])
 
 (defn left-fn
   "LEFT returns the first character or characters in a text string, based on the number
@@ -86,60 +85,72 @@
 
 (defn len-fn
   "LEN returns the number of characters in a text string."
-  [])
+  [text]
+  (count text))
 
 (defn lower-fn
   "Converts all uppercase letters in a text string to lowercase."
-  [])
+  [text]
+  (string/lower-case text))
 
 (defn mid-fn
-  "MID returns a specific number of characters from a text string, starting at the position you specify, based on the number of characters you specify."
-  [])
+  "MID returns a specific number of characters from a text string,
+  starting at the position you specify, based on the number of characters you specify."
+  [text start number]
+  (subs text start (+ start number)))
 
 (defn numbervalue-fn
   "Converts text to a number"
   [])
 
-;; PRONETIC
-
 (defn proper-fn
-  "Capitalizes the first letter in a text string and any other letters in text that follow any character other than a letter. Converts all other letters to lowercase letters."
+  "Capitalizes the first letter in a text string and any other letters
+   in text that follow any character other than a letter.
+   Converts all other letters to lowercase letters."
   [])
 
-;; REGEXEXTRACT
-;; REGEXMATCH
-;; REGEXREPLACE
-
 (defn replace-fn
-  "REPLACE replaces part of a text string, based on the number of characters you specify, with a different text string."
+  "REPLACE replaces part of a text string, based on the number of characters
+   you specify, with a different text string."
   [])
 
 (defn rept-fn
-  "Repeats text a given number of times. Use REPT to fill a cell with a number of instances of a text string."
-  [])
+  "Repeats text a given number of times."
+  [text number]
+  (->> (constantly text)
+       (repeatedly number)
+       (vec)))
 
 (defn right-fn
-  "RIGHT returns the last character or characters in a text string, based on the number of characters you specify."
-  [])
+  "RIGHT returns the last character or characters in a text string,
+   based on the number of characters you specify."
+  [text number]
+  (subs text (- (count text)
+                number)))
 
 (defn search-fn [])
 
-(defn split-fn [])
+(defn split-fn [text separator]
+  (.split text separator))
 
 (defn substitute-fn
-  "Substitutes new_text for old_text in a text string. Use SUBSTITUTE when you want to replace specific text in a text string; use REPLACE when you want to replace any text that occurs in a specific location in a text string."
+  "Substitutes new_text for old_text in a text string.
+   Use SUBSTITUTE when you want to replace specific text in a text string;
+   use REPLACE when you want to replace any text that occurs in a specific location
+   in a text string."
   [])
-;; T
-
-;; TEXT
 
 (defn trim-fn
-  "Removes all spaces from text except for single spaces between words. Use TRIM on text that you have received from another application that may have irregular spacing."
-  [])
+  "Removes all spaces from text except for single spaces between words.
+   Use TRIM on text that you have received from another application that may
+   have irregular spacing."
+  [text]
+  (string/replace text #"\ +" " "))
 
 (defn upper-fn
   "Converts text to uppercase."
-  [])
+  [text]
+  (string/upper-case text))
 
 (defn count-fn [& args]
   (count (flatten args)))
