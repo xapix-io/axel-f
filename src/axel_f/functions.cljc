@@ -101,18 +101,24 @@
 
 (defn numbervalue-fn
   "Converts text to a number"
-  [])
+  [text]
+  #?(:clj  (read-string text)
+     :cljs (js/parseFloat text)))
 
 (defn proper-fn
   "Capitalizes the first letter in a text string and any other letters
    in text that follow any character other than a letter.
    Converts all other letters to lowercase letters."
-  [])
+  [text]
+  (string/replace text #"\w*" string/capitalize))
 
 (defn replace-fn
   "REPLACE replaces part of a text string, based on the number of characters
    you specify, with a different text string."
-  [])
+  [text position length new-text]
+  (str (subs text 0 (dec position))
+       new-text
+       (subs text (+ (dec position) length))))
 
 (defn rept-fn
   "Repeats text a given number of times."
@@ -128,7 +134,16 @@
   (subs text (- (count text)
                 number)))
 
-(defn search-fn [])
+(defn search-fn
+  "SEARCH returns the number of the character at which a specific character
+   or text string is first found, beginning with start_num. Use SEARCH to determine
+   the location of a character or text string within another text string so that
+   you can use the MID or REPLACE functions to change the text."
+  ([find-text within-text] (search-fn find-text within-text 0))
+  ([find-text within-text position]
+   (string/index-of (string/lower-case within-text)
+                    (string/lower-case find-text)
+                    position)))
 
 (defn split-fn [text separator]
   (.split text separator))
@@ -138,7 +153,23 @@
    Use SUBSTITUTE when you want to replace specific text in a text string;
    use REPLACE when you want to replace any text that occurs in a specific location
    in a text string."
-  [])
+  ([text old-text new-text]
+   (string/replace text (re-pattern old-text) new-text))
+  ([text old-text new-text occurrence]
+   (if (every? string? [text old-text new-text])
+     (loop [i 1
+            index (string/index-of text old-text)]
+       (if index
+         (if (= i occurrence)
+           (str (subs text 0 index)
+                new-text
+                (subs text (+ index (count old-text))))
+           (recur (inc i)
+                  (string/index-of text old-text (inc index))))
+         text))
+     ;; TODO: emit error
+     {:error "text should be string"})))
+
 
 (defn trim-fn
   "Removes all spaces from text except for single spaces between words.
@@ -156,24 +187,31 @@
   (count (flatten args)))
 
 
-;; VALUE
-
 (def functions-map
   {"SUM"         sum-fn
-   "COUNT"       count-fn
-   "LEN"         len-fn
    "MIN"         min-fn
    "MAX"         max-fn
    "CONCATENATE" concatenate-fn
-
    "AVERAGE"     average-fn
    "ROUND"       round-fn
-
    "AND"         and-fn
    "OR"          or-fn
-
-   "EXACT"       exact-fn
+   "CLEAN"       clean-fn
    "CODE"        code-fn
+   "EXACT"       exact-fn
    "FIND"        find-fn
    "LEFT"        left-fn
+   "LEN"         len-fn
+   "LOWER"       lower-fn
+   "MID"         mid-fn
+   "NUMBERVALUE" numbervalue-fn
+   "PROPER"      proper-fn
+   "REPLACE"     replace-fn
+   "REPT"        rept-fn
+   "RIGHT"       right-fn
+   "SEARCH"      search-fn
+   "SUBSTITUTE"  substitute-fn
+   "TRIM"        trim-fn
+   "UPPER"       upper-fn
+   "COUNT"       count-fn
    })
