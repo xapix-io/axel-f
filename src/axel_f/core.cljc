@@ -43,7 +43,6 @@ BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
 FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
 FN                       ::= " (-> functions/functions-map
                                    keys
-                                   (conj "IF" "OBJREF")
                                    strings->rule) "
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
@@ -234,23 +233,17 @@ STAR                     ::= '*'?
                  (when-let [else (nth args 2 nil)]
                    (run* else context)))))
 
-(defn- special? [f]
-  (or (= f "IF")
-      (= f "OBJREF")))
-
 (defn- apply-flatten-args [f args]
   (apply f (flatten args)))
 
-
 (defn- run-fncall* [f args context]
-  (if (special? f)
-   (run-special f args context)
-   (if-let [f-implementation (get functions/functions-map f)]
-     (->> args
+  (if-let [f-implementation (get-in functions/functions-map [f :impl])]
+    (if (= :special-form f-implementation)
+      (run-special f args context)
+      (->> args
           (map #(run* % context))
-          (apply-flatten-args f-implementation))
-     ;; TODO: emit parse error
-     (str "No such function: " f ))))
+          (apply-flatten-args f-implementation)))
+    (str "No such function: " f)))
 
 (defmulti ->keyword (fn [v] (type v)))
 
@@ -259,6 +252,14 @@ STAR                     ::= '*'?
 
 (defmethod ->keyword #?(:clj clojure.lang.Keyword
                         :cljs cljs.core/Keyword) [v] v)
+
+(defmulti ->string (fn [v] (type v)))
+
+(defmethod ->string #?(:clj String
+                       :cljs js/String) [v] v)
+
+(defmethod ->string #?(:clj clojure.lang.Keyword
+                       :cljs cljs.core/Keyword) [v] (name v))
 
 (defn- run* [arg context]
   (let [token (if (vector? arg)

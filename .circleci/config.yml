@@ -157,6 +157,10 @@ jobs:
           at: ~/workspace
 
       - run:
+          name: Install dev dependencies
+          command: npm install -g npm-snapshot
+
+      - run:
           name: Authenticate with registry
           command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
 
@@ -165,7 +169,8 @@ jobs:
           type: shell
           command: |
             cd ~/workspace
-            npm publish
+            BUILD_TAG=$(if [ -z ${CIRCLE_TAG+x} ]; then npm-snapshot $CIRCLE_BUILD_NUM; else echo "$CIRCLE_TAG"; fi)
+            npm publish --tag $BUILD_TAG
 
 workflows:
   version: 2
@@ -204,7 +209,7 @@ workflows:
             tags:
               only: /^[0-9]+\.[0-9]+\.[0-9]+$/
             branches:
-              ignore: /.*/
+              only: /master/
           requires:
             - test-1.9
             - test-1.10
@@ -214,7 +219,7 @@ workflows:
             tags:
               only: /^[0-9]+\.[0-9]+\.[0-9]+$/
             branches:
-              ignore: /.*/
+              only: /master/
           requires:
             - test-1.9
             - test-1.10
