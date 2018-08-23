@@ -1,7 +1,18 @@
 (ns axel-f.autocomplete
   (:require [clojure.string :as string]
             [axel-f.core :as axel-f]
-            [axel-f.functions :as functions]))
+            [axel-f.functions :as functions]
+            [clj-fuzzy.metrics :as fuzzy]))
+
+(defn- fuzzy-match? [ex dict]
+  (->> dict
+      (map #(hash-map :value %
+                      :distance (if (string/starts-with? % ex)
+                                  0
+                                  (fuzzy/jaccard ex %))))
+      (filter #(< (:distance %) 0.6))
+      (sort-by :distance)
+      (map :value)))
 
 (defn- fix-up-objref [ref]
   (string/replace ref #"\.$" ""))
@@ -52,7 +63,7 @@
       (map? new-context) (->> new-context
                              keys
                              (map axel-f/->string)
-                             (filter #(string/starts-with? % maybe-path))
+                             (fuzzy-match? maybe-path)
                              (map #(build-suggestion :OBJREF %)))
       (seqable? new-context) (if-let [seq-of-maps (not-empty (filter map? new-context))]
                                (->> seq-of-maps
@@ -60,14 +71,14 @@
                                    keys
                                    (map axel-f/->string)
                                    dedupe
-                                   (filter #(string/starts-with? % maybe-path))
+                                   (fuzzy-match? maybe-path)
                                    (map #(build-suggestion :OBJREF %)))
                                []))))
 
 (defn- build-suggestions-for-objref [objref context]
   (concat (->> functions/functions-map
               keys
-              (filter #(string/starts-with? % objref))
+              (fuzzy-match? objref)
               (map #(build-suggestion :FN %)))
           (let [[_ & fields] (axel-f/compile (fix-up-objref objref))]
             (cond
@@ -98,14 +109,14 @@
               (->> context
                   keys
                   (map axel-f/->string)
-                  (filter #(string/starts-with? % (first fields)))
+                  (fuzzy-match? (first fields))
                   (map #(build-suggestion :OBJREF %)))))))
 
 (defn- build-suggestions-for-fncall [fncall]
   (let [[_ f args] (axel-f/compile (fix-up-fncall fncall))]
     (->> functions/functions-map
         keys
-        (filter #(string/starts-with? % f))
+        (filter #(= % f))
         (map #(build-suggestion :FNCALL % args)))))
 
 (defn get-last-part [incomplete-formula]

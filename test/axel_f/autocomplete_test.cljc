@@ -26,6 +26,11 @@
         (t/is (= [{:type :FN :value "MIN"} {:type :FN :value "MAX"}]
                  (sut/autocomplete "M")))))
 
+    (t/testing "fuzzy match"
+
+      (t/is (= [{:type :FN :value "MID"} {:type :FN :value "MIN"} {:type :FN :value "MAX"}]
+               (sut/autocomplete "MIX"))))
+
     (t/testing "function call with incomplete list of arguments"
 
       (t/is (= [{:type :FNCALL :value "SUM" :current-arg 0}]
