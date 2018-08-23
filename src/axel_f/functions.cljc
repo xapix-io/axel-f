@@ -79,8 +79,10 @@
   [])
 
 (defn left-fn
-  "LEFT returns the first character or characters in a text string, based on the number of characters you specify."
-  [])
+  "LEFT returns the first character or characters in a text string, based on the number
+   of characters you specify."
+  ([text] (left-fn text 1))
+  ([text number] (subs text 0 number)))
 
 (defn len-fn
   "LEN returns the number of characters in a text string."
@@ -162,4 +164,5 @@
    "EXACT"       exact-fn
    "CODE"        code-fn
    "FIND"        find-fn
+   "LEFT"        left-fn
    })

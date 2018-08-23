@@ -637,6 +637,15 @@
                (sut/run "FIND(\"m\", data.name)" context)))
       (t/is (= 8
                (sut/run "FIND(\"M\", data.name, 3)" context))))
+    )
+
+  (t/testing "LEFT function"
+    (t/is (= "Sale"
+             (sut/run "LEFT(\"Sale Price\", 4)")))
+    (t/is (= "S"
+             (sut/run "LEFT(\"Sweeden\")")))
+
+    ;; TODO: error values: text.LEFT(3).should.equal(error.value);
 
     )
   )
