@@ -1,5 +1,6 @@
 (ns axel-f.api
-  (:require [axel-f.core :as axel-f]))
+  (:require [axel-f.core :as axel-f]
+            [axel-f.autocomplete :as autocomplete]))
 
 (defn- fix-regex-in-exception [exception-data]
   (update exception-data
@@ -37,6 +38,6 @@
    (let [context (js->clj context)]
      (clj->js
       (try
-        (axel-f/autocomplete incomplete-formula context)
+        (autocomplete/autocomplete incomplete-formula context)
         (catch ExceptionInfo e
           []))))))
