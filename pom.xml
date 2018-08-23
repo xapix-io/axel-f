@@ -16,6 +16,11 @@
             <artifactId>instaparse</artifactId>
             <version>1.4.9</version>
         </dependency>
+        <dependency>
+            <groupId>clj-fuzzy</groupId>
+            <artifactId>clj-fuzzy</artifactId>
+            <version>0.4.1</version>
+        </dependency>
     </dependencies>
     <build>
         <sourceDirectory>src</sourceDirectory>
@@ -28,7 +33,11 @@
     <repositories>
         <repository>
             <id>clojars</id>
-            <url>https://repo.clojars.org/</url>
+            <url>https://clojars.org/repo/</url>
+        </repository>
+        <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </repository>
     </repositories>
     <distributionManagement>
@@ -38,7 +47,7 @@
             <url>https://repo.clojars.org/</url>
         </repository>
     </distributionManagement>
-    <description></description>
+    <description/>
     <url>https://github.com/xapix-io/axel-f</url>
     <licenses>
         <license>
