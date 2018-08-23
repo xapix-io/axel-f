@@ -10,7 +10,8 @@
   (try
     (let [ref (axel-f/compile (fix-up-objref ref))]
       (and (seqable? ref) (= (first ref) :OBJREF)))
-    (catch clojure.lang.ExceptionInfo _
+    (catch #?(:clj clojure.lang.ExceptionInfo
+              :cljs ExceptionInfo) _
       false)))
 
 (defn- fix-up-fncall [fncall]
