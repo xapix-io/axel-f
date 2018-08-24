@@ -119,7 +119,7 @@
    in text that follow any character other than a letter.
    Converts all other letters to lowercase letters."
   [text]
-  (string/replace text #"\w*" string/capitalize))
+  (string/replace (str text) #"\w*" string/capitalize))
 
 (defn replace-fn
   "REPLACE replaces part of a text string, based on the number of characters
