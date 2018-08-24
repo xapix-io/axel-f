@@ -338,6 +338,6 @@ STAR                     ::= '*'?
          (run* formula-or-error context)
          (catch Throwable e
            {:error (if-let [ex-data (ex-data e)]
-                     ex-data
+                     (:reason ex-data)
                      (.toString e))}
            ))))))

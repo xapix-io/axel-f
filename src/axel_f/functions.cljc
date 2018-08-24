@@ -1,5 +1,6 @@
 (ns axel-f.functions
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [axel-f.error :as error]))
 
 
 (defn sum-fn [& items]
@@ -198,7 +199,9 @@
 (defn upper-fn
   "Converts text to uppercase."
   [text]
-  (string/upper-case text))
+  (if-not (string? text)
+    (throw (error/error "ExcelWrongArgumentError" "UPPER: Argument should be string"))
+    (string/upper-case text)))
 
 (defn count-fn [& args]
   (count (flatten args)))

@@ -785,6 +785,8 @@
   (t/testing "UPPER function"
     (t/is (= "TO UPPER CASE PLEASE"
              (sut/run "UPPER(\"to upper case please\")")))
+    (t/is (not (nil?
+                (:error (sut/run "UPPER(1)")))))
     ))
 
 (t/deftest count-function-test
