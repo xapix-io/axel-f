@@ -2,11 +2,18 @@
   (:require #?(:clj [instaparse.core :as insta :refer [defparser]]
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
             [clojure.string :as string]
-            [axel-f.error :as error])
+            [axel-f.error :as error]
+            [axel-f.functions :as functions])
   (:refer-clojure :exclude [compile]))
 
+(defn- strings->rule [strings]
+  (->> strings
+       (map #(str "'" % "'"))
+       (string/join " | ")))
+
 (defparser parser
-  "
+  (str
+   "
 FORMULA                  ::= EXPR | <eq-op> EXPR
 EXPR                     ::= COMPARISON_EXPS
 COMPARISON_EXPS          ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
@@ -31,10 +38,12 @@ ARRAY_EXPR               ::= <opening-curly-bracket> ( EXPR {<comma> EXPR} )? <c
 ERROR                    ::= #'#N/A|#VALUE!|#REF!|#DIV/0!|#NUM!|#NAME?|#NULL!'
 CONST                    ::= NUMBER | STRING | BOOL
 NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
-STRING                   ::= #'\"[^\"]+\"'
+STRING                   ::= #'\"[^\"]*\"'
 BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
 FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
-FN                       ::= #'(SUM|IF|MIN|MAX|ROUND|COUNT|CONCATENATE|AVERAGE|AND|OR|OBJREF)'
+FN                       ::= " (-> functions/functions-map
+                                   keys
+                                   strings->rule) "
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
 OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( NUMBER_FIELD | FNCALL | STAR ) <closing-square-bracket> ) )*
@@ -65,16 +74,8 @@ STAR                     ::= '*'?
 <div-op>                 ::= '/'
 <comma>                  ::= ','
 <dot>                    ::= '.'
-  ")
+  "))
 
-(defn- round2
-  "Round a double to the given precision (number of significant digits)"
-  [d precision]
-  (let [factor (Math/pow 10 precision)
-        res (/ (Math/round (* d factor)) factor)]
-    (if (> precision 0)
-      res
-      (int res))))
 
 (defn- with-indifferent-access [m ks]
   (if (= "*" (first ks))
@@ -222,27 +223,26 @@ STAR                     ::= '*'?
 
 (declare run*)
 
-(defn- run-fncall* [f args context]
+(defn- run-special
+  "Run fn which requires special/custom args evaluation"
+  [f args context]
   (case f
-    "SUM"         (reduce #?(:clj +' :cljs +) (flatten (map #(run* % context) args)))
-    "COUNT"       (count (flatten (map #(run* % context) args)))
-    "MIN"         (reduce min (flatten (map #(run* % context) args)))
-    "MAX"         (reduce max (flatten (map #(run* % context) args)))
-    "CONCATENATE" (apply str (flatten (map #(run* % context) args)))
-    "IF"          (if (run* (first args) context)
-                    (run* (second args) context)
-                    (when-let [else (nth args 2 nil)]
-                      (run* else context)))
-    "AVERAGE"     (when-let [l (not-empty (flatten (map #(run* % context) args)))]
-                    (/ (reduce #?(:clj +' :cljs +) l)
-                       (count l)))
-    "ROUND"       (let [d (double (run* (first args) context))
-                        p (second args)
-                        p (if p (run* p context) 0)]
-                    (round2 d p))
-    "AND"         (every? identity (map #(run* % context) args))
-    "OR"          (boolean (some identity (map #(run* % context) args)))
-    "OBJREF"      (with-indifferent-access context (map #(run* % context) args))))
+    "OBJREF"   (with-indifferent-access context (map #(run* % context) args))
+    "IF"       (if (run* (first args) context)
+                 (run* (second args) context)
+                 (when-let [else (nth args 2 nil)]
+                   (run* else context)))))
+
+(defn- apply-flatten-args [f args]
+  (apply f (flatten args)))
+
+(defn- run-fncall* [f args context]
+  (let [f-implementation (get-in functions/functions-map [f :impl])]
+    (if (= :special-form f-implementation)
+      (run-special f args context)
+      (->> args
+          (map #(run* % context))
+          (apply-flatten-args f-implementation)))))
 
 (defmulti ->keyword (fn [v] (type v)))
 
@@ -251,6 +251,14 @@ STAR                     ::= '*'?
 
 (defmethod ->keyword #?(:clj clojure.lang.Keyword
                         :cljs cljs.core/Keyword) [v] v)
+
+(defmulti ->string (fn [v] (type v)))
+
+(defmethod ->string #?(:clj String
+                       :cljs js/String) [v] v)
+
+(defmethod ->string #?(:clj clojure.lang.Keyword
+                       :cljs cljs.core/Keyword) [v] (name v))
 
 (defn- run* [arg context]
   (let [token (if (vector? arg)

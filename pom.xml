@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.xapix</groupId>
     <artifactId>axel-f</artifactId>
-    <version>0.1.3</version>
+    <version>0.2.0-SNAPSHOT</version>
     <name>axel-f</name>
     <dependencies>
         <dependency>
@@ -15,6 +15,11 @@
             <groupId>instaparse</groupId>
             <artifactId>instaparse</artifactId>
             <version>1.4.9</version>
+        </dependency>
+        <dependency>
+            <groupId>clj-fuzzy</groupId>
+            <artifactId>clj-fuzzy</artifactId>
+            <version>0.4.1</version>
         </dependency>
     </dependencies>
     <build>
@@ -28,7 +33,11 @@
     <repositories>
         <repository>
             <id>clojars</id>
-            <url>https://repo.clojars.org/</url>
+            <url>https://clojars.org/repo/</url>
+        </repository>
+        <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </repository>
     </repositories>
     <distributionManagement>
@@ -38,7 +47,7 @@
             <url>https://repo.clojars.org/</url>
         </repository>
     </distributionManagement>
-    <description></description>
+    <description/>
     <url>https://github.com/xapix-io/axel-f</url>
     <licenses>
         <license>
