@@ -31,8 +31,7 @@
 (defn round-fn
   ([d] (round-fn d 0))
   ([d precision]
-   (let [precision (or precision 0)
-         factor (Math/pow 10 precision)
+   (let [factor (Math/pow 10 precision)
          res (/ (Math/round (* d factor)) factor)]
      (if (> precision 0)
        res
