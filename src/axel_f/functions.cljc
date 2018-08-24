@@ -53,7 +53,7 @@
   that is frequently at the beginning and end of data files and cannot
   be printed."
   [text]
-  (string/replace text #"[0-x1F]" ""))
+  (string/replace text #"[\x00-\x1F]" ""))
 
 (defn code-fn
   "Returns a numeric code for the first character in a text string."
@@ -168,23 +168,22 @@
    use REPLACE when you want to replace any text that occurs in a specific location
    in a text string."
   ([text old-text new-text]
-   (if (empty? old-text)
-     text
-     (string/replace text (re-pattern old-text) new-text)))
+   (substitute-fn text old-text new-text nil))
   ([text old-text new-text occurrence]
    (if (every? string? [text old-text new-text])
      (if (empty? old-text)
        text
-       (loop [i 1
-              index (string/index-of text old-text)]
-         (if index
-           (if (= i occurrence)
-             (str (subs text 0 index)
-                  new-text
-                  (subs text (+ index (count old-text))))
-             (recur (inc i)
-                    (string/index-of text old-text (inc index))))
-           text)))
+       (if (nil? occurrence)
+         (string/replace text (re-pattern old-text) new-text)
+         (loop [i 1
+                index (string/index-of text old-text)]
+           (if index
+             (if (= i occurrence)
+               (str (subs text 0 index)
+                    new-text
+                    (subs text (+ index (count old-text))))
+               (recur (inc i) (string/index-of text old-text (inc index))))
+             text))))
      ;; TODO: emit error
      {:error "text should be string"})))
 

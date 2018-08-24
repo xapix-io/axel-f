@@ -237,13 +237,12 @@ STAR                     ::= '*'?
   (apply f (flatten args)))
 
 (defn- run-fncall* [f args context]
-  (if-let [f-implementation (get-in functions/functions-map [f :impl])]
+  (let [f-implementation (get-in functions/functions-map [f :impl])]
     (if (= :special-form f-implementation)
       (run-special f args context)
       (->> args
           (map #(run* % context))
-          (apply-flatten-args f-implementation)))
-    (str "No such function: " f)))
+          (apply-flatten-args f-implementation)))))
 
 (defmulti ->keyword (fn [v] (type v)))
 

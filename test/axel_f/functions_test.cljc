@@ -765,6 +765,14 @@
              (sut/run "SUBSTITUTE(\"\", \"im\", \"ames\")")))
     (t/is (= "Quarter 2, 2008"
              (sut/run "SUBSTITUTE(\"Quarter 1, 2008\", \"1\", \"2\", 1)")))
+    (t/is (= "Jim Alateras"
+             (sut/run "SUBSTITUTE(\"Jim Alateras\", \"\", \"ames\", 1)")))
+    (t/is (= "Jim Alateras Jim Alateras James Alateras"
+             (sut/run "SUBSTITUTE(\"Jim Alateras Jim Alateras Jim Alateras\", \"im\", \"ames\", 3)")))
+    (t/is (= "James Alateras"
+             (sut/run "SUBSTITUTE(\"James Alateras\", \"im\", \"ames\", 2)")))
+    (t/is (= {:error "text should be string"}
+             (sut/run "SUBSTITUTE(1, \"foo\", \"bar\")")))
     ))
 
 (t/deftest trim-function-test
@@ -788,3 +796,8 @@
                (sut/run "COUNT(1,2,3,4)")))
       ))
   )
+
+(t/deftest clean-function-test
+  (let [example (str "foo" (apply str (map char (range 0 35))))]
+    (t/is (= "foo !\""
+             (sut/run "CLEAN(foo)" {:foo example})))))

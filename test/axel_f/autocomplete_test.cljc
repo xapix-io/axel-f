@@ -101,4 +101,12 @@
 
       (t/is (= [{:type :OBJREF :value "bar"}]
                (map #(select-keys % [:type :value])
-                    (sut/autocomplete "foo[*]" {:foo [{:bar 1} {:bar 2}]})))))))
+                    (sut/autocomplete "foo[*]" {:foo [{:bar 1} {:bar 2}]}))))
+
+      (t/is (= []
+               (map #(select-keys % [:type :value])
+                    (sut/autocomplete "foo[0]" {:foo [{:bar 1} {:bar 2}]}))))
+
+      (t/is (= [{:type :OBJREF :value "bar"}]
+               (map #(select-keys % [:type :value])
+                    (sut/autocomplete "foo[0]." {:foo [{:bar 1} {:bar 2}]})))))))
