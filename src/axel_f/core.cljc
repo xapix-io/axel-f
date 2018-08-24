@@ -208,7 +208,7 @@ STAR                     ::= '*'?
                           (vec (cons :VECTOR args)))
    :ERROR               error/error})
 
-(defn compile [formula-str & custom-transforms]
+(defn compile* [formula-str & custom-transforms]
   (let [custom-transforms (into {} (map (fn [[k v]]
                                           [k v])
                                         (partition-all 2 custom-transforms)))
@@ -317,10 +317,27 @@ STAR                     ::= '*'?
           (keyword? token))
       token)))
 
+
+(defn compile [formula-str & custom-transforms]
+  (try
+    (apply compile* formula-str custom-transforms)
+    (catch Throwable e
+      {:error (if-let [ex-data (ex-data e)]
+                ex-data
+                (.toString e))})))
+
 (defn run
   ([formula] (run formula {}))
   ([formula context]
-   (let [formula (if (string? formula)
-                   (compile formula)
-                   formula)]
-     (run* formula context))))
+   (let [formula-or-error (if (string? formula)
+                            (compile formula)
+                            formula)]
+     (if (error/error? formula-or-error)
+       formula-or-error
+       (try
+         (run* formula-or-error context)
+         (catch Throwable e
+           {:error (if-let [ex-data (ex-data e)]
+                     ex-data
+                     (.toString e))}
+           ))))))
