@@ -233,16 +233,14 @@ STAR                     ::= '*'?
                  (when-let [else (nth args 2 nil)]
                    (run* else context)))))
 
-(defn- apply-flatten-args [f args]
-  (apply f (flatten args)))
-
 (defn- run-fncall* [f args context]
-  (let [f-implementation (get-in functions/functions-map [f :impl])]
+  (let [_ (functions/check-arity f args)
+        f-implementation (get-in functions/functions-map [f :impl])]
     (if (= :special-form f-implementation)
       (run-special f args context)
       (->> args
           (map #(run* % context))
-          (apply-flatten-args f-implementation)))))
+          (apply f-implementation)))))
 
 (defmulti ->keyword (fn [v] (type v)))
 
@@ -322,7 +320,8 @@ STAR                     ::= '*'?
   (try
     (apply compile* formula-str custom-transforms)
     (catch Throwable e
-      {:error (if-let [ex-data (ex-data e)]
+      (throw (error/error "#ERROR!" "Formula parse error."))
+      #_{:error (if-let [ex-data (ex-data e)]
                 ex-data
                 (.toString e))})))
 
@@ -337,7 +336,46 @@ STAR                     ::= '*'?
        (try
          (run* formula-or-error context)
          (catch Throwable e
-           {:error (if-let [ex-data (ex-data e)]
-                     (:reason ex-data)
-                     (.toString e))}
-           ))))))
+           e))))))
+
+(comment
+
+  (run "SUBSTITUTE(\"FOO\", \"O\")")
+
+  (run "COUNT(\"foo\", {1,2,3})")
+
+  (run "IF(FALSE, \"true\",)")
+
+  (run "SPLIT(\"foo,bar.baz\", \",.\", true)")
+
+  (run "SPLIT(\"foo|bar,baz||\", \"|,\", true, false)")
+
+  (run "SEARCH(\"Foo\", \"fooFoo\", 2)")
+
+  (run "RIGHT(\"ajh\", 4)")
+
+  (run "REPT(\"foo\")")
+
+  (run "REPLACE(\"abcdefg\", 1, 6, \"xyz\")")
+
+  (run "MID(\"get this\", 5, 4)")
+
+  (run "LOWER(\"FOOOOO\")")
+
+  (run "LEN({\"foo\", \"bar\"})")
+
+  (run "LEFT(\"foo\", 4)")
+
+  (run "FIND(\"def\", \"abcdefg\", 2)")
+
+  (run "ROUND(99.44, -2)")
+
+  (run "AVERAGE({1,2,3}, {2,3,4}, {3,4,5})")
+
+  (run "CONCATENATE(\"foo\", {\"bar\", \"baz\"})")
+
+  (run "SUM({5,6,7},2,{4,5,6})")
+
+  (run "-\"foo\"")
+
+  )

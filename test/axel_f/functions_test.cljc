@@ -52,8 +52,8 @@
   (t/testing "COUNT function should work as expected"
 
     (t/are [x y] (t/is (= x (sut/run (str "COUNT(" y ")") {:foo [1 2 3]})))
-      0 ""
-      0 "{}"
+      0 "\"foo\""
+      1 "{\"foo\", 1}"
       1 "{1}"
       3 "foo")))
 
@@ -693,14 +693,6 @@
 
       )))
 
-(t/deftest numbervalue-function-test
-  (t/testing "NUMBERVALUE function"
-    (t/is (= 250
-             (sut/run "NUMBERVALUE(\"250\")")))
-    (t/is (= 42.24
-             (sut/run "NUMBERVALUE(\"42.24\")")))
-    ))
-
 (t/deftest proper-function-test
   (t/testing "PROPER function"
     (t/is (= "A Title Case"
@@ -771,7 +763,7 @@
              (sut/run "SUBSTITUTE(\"Jim Alateras Jim Alateras Jim Alateras\", \"im\", \"ames\", 3)")))
     (t/is (= "James Alateras"
              (sut/run "SUBSTITUTE(\"James Alateras\", \"im\", \"ames\", 2)")))
-    (t/is (= {:error "text should be string"}
+    (t/is (= "1"
              (sut/run "SUBSTITUTE(1, \"foo\", \"bar\")")))
     ))
 
@@ -785,8 +777,8 @@
   (t/testing "UPPER function"
     (t/is (= "TO UPPER CASE PLEASE"
              (sut/run "UPPER(\"to upper case please\")")))
-    (t/is (not (nil?
-                (:error (sut/run "UPPER(1)")))))
+    (t/is (= "1"
+             (sut/run "UPPER(1)")))
     ))
 
 (t/deftest count-function-test

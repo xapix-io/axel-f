@@ -47,17 +47,17 @@
   (merge {:type type}
          (case type
            :OBJREF {:value (axel-f/->string item)
-                    :description "Field in the context"}
+                    :desc "Field in the context"}
            :FN (merge {:value item}
                       (select-keys (get functions/functions-map item)
-                                   [:description :args]))
+                                   [:desc :args]))
            :FNCALL (merge {:value item
                            :current-arg (let [position (dec (count args))]
                                           (if (< position 0)
                                             0
                                             position))}
                           (select-keys (get functions/functions-map item)
-                                       [:description :args])))))
+                                       [:desc :args])))))
 
 (defn- reconstruct-path [path]
   (string/join "." (map (fn [s]
