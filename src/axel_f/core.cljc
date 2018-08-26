@@ -319,11 +319,9 @@ STAR                     ::= '*'?
 (defn compile [formula-str & custom-transforms]
   (try
     (apply compile* formula-str custom-transforms)
-    (catch Throwable e
-      (throw (error/error "#ERROR!" "Formula parse error."))
-      #_{:error (if-let [ex-data (ex-data e)]
-                ex-data
-                (.toString e))})))
+    (catch #?(:clj Throwable
+              :cljs js/Error) e
+      (throw (error/error "#ERROR!" "Formula parse error." (ex-data e))))))
 
 (defn run
   ([formula] (run formula {}))
@@ -335,7 +333,8 @@ STAR                     ::= '*'?
        formula-or-error
        (try
          (run* formula-or-error context)
-         (catch Throwable e
+         (catch #?(:clj Throwable
+                   :cljs js/Error) e
            e))))))
 
 (comment
@@ -377,5 +376,7 @@ STAR                     ::= '*'?
   (run "SUM({5,6,7},2,{4,5,6})")
 
   (run "-\"foo\"")
+
+  (run "SUM(")
 
   )

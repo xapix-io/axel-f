@@ -600,13 +600,6 @@
    "Z.TEST"
    "ZTEST"])
 
-
-(t/deftest clean-function-test
-  (t/testing "CLEAN function"
-    (t/is (= true
-             (sut/run "EXACT(\"Hello world\", \"Hello world\")"))))
-  )
-
 (t/deftest code-function-test
   (t/testing "CODE function"
     (t/is (= 65
