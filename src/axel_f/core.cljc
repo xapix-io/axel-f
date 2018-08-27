@@ -208,7 +208,7 @@ STAR                     ::= '*'?
                           (vec (cons :VECTOR args)))
    :ERROR               error/error})
 
-(defn compile [formula-str & custom-transforms]
+(defn compile* [formula-str & custom-transforms]
   (let [custom-transforms (into {} (map (fn [[k v]]
                                           [k v])
                                         (partition-all 2 custom-transforms)))
@@ -233,16 +233,14 @@ STAR                     ::= '*'?
                  (when-let [else (nth args 2 nil)]
                    (run* else context)))))
 
-(defn- apply-flatten-args [f args]
-  (apply f (flatten args)))
-
 (defn- run-fncall* [f args context]
-  (let [f-implementation (get-in functions/functions-map [f :impl])]
+  (let [_ (functions/check-arity f args)
+        f-implementation (get-in functions/functions-map [f :impl])]
     (if (= :special-form f-implementation)
       (run-special f args context)
       (->> args
           (map #(run* % context))
-          (apply-flatten-args f-implementation)))))
+          (apply f-implementation)))))
 
 (defmulti ->keyword (fn [v] (type v)))
 
@@ -317,10 +315,25 @@ STAR                     ::= '*'?
           (keyword? token))
       token)))
 
+
+(defn compile [formula-str & custom-transforms]
+  (try
+    (apply compile* formula-str custom-transforms)
+    (catch #?(:clj Throwable
+              :cljs js/Error) e
+      (throw (error/error "#ERROR!" "Formula parse error." (ex-data e))))))
+
 (defn run
   ([formula] (run formula {}))
   ([formula context]
-   (let [formula (if (string? formula)
-                   (compile formula)
-                   formula)]
-     (run* formula context))))
+   (let [formula-or-error (if (string? formula)
+                            (compile formula)
+                            formula)]
+     (try
+       (run* formula-or-error context)
+       (catch #?(:clj Throwable
+                 :cljs js/Error) e
+         (let [{:keys [type] :as data} (ex-data e)]
+           (if (#{"#N/A" "#VALUE!" "#REF!" "#DIV/0!" "#NUM!" "#NAME?" "#NULL!"} type)
+             data
+             (throw e))))))))

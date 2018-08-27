@@ -1,237 +1,244 @@
 (ns axel-f.functions
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [axel-f.error :as error]
+            [axel-f.functions.text :as text]
+            [axel-f.functions.math :as math]
+            [axel-f.functions.stat :as stat]
+            [axel-f.functions.logic :as logic]))
 
-
-(defn sum-fn [& items]
-  (reduce #?(:clj +' :cljs +) items))
-
-(defn min-fn [& items]
-  (reduce min items))
-
-(defn max-fn [& items]
-  (reduce max items))
-
-(defn- excel-str [item]
-  (case item
-    true "TRUE"
-    false "FALSE"
-    (str item)))
-
-(defn concatenate-fn [& items]
-  (->> items
-       (map excel-str)
-       (apply str)))
-
-(defn average-fn [& items]
-  (let [len (count items)]
-    (when-not (zero? len)
-      (/ (apply sum-fn items)
-         len))))
-
-(defn round-fn
-  ([d] (round-fn d 0))
-  ([d precision]
-   (let [factor (Math/pow 10 precision)
-         res (/ (Math/round (* d factor)) factor)]
-     (if (> precision 0)
-       res
-       (int res)))))
-
-(defn and-fn [& args]
-  (every? identity args))
-
-(defn or-fn [& args]
-  (boolean (some identity args)))
-
-(defn clean-fn
-  "removes all nonprintable characters from text.
-
-  Use CLEAN on text imported from other applications that contains
-  characters that may not print with your operating system. For
-  example, you can use CLEAN to remove some low-level computer code
-  that is frequently at the beginning and end of data files and cannot
-  be printed."
-  [text]
+(defn- clean-fn [text]
   (string/replace text #"[\x00-\x1F]" ""))
 
-(defn code-fn
-  "Returns a numeric code for the first character in a text string."
-  [text]
-  #?(:clj (-> text first int)
-     :cljs (.charCodeAt text 0)))
-
-(defn exact-fn
-  "Compares two text strings and returns TRUE if they are exactly the same,
-   FALSE otherwise. EXACT is case-sensitive but ignores formatting differences."
-  [str1 str2]
-  (= str1 str2))
-
-(defn find-fn
-  "FIND locate one text string within a second text string, and return the number
-   of the starting position of the first text string from the first character of the
-   second text string."
-  ([substr str] (find-fn substr str 0))
-  ([substr str from-index]
-   (some-> str
-           (string/index-of substr from-index)
-           (inc))))
-
-(defn left-fn
-  "LEFT returns the first character or characters in a text string, based on the number
-   of characters you specify."
-  ([text] (left-fn text 1))
-  ([text number] (subs text 0 number)))
-
-(defn len-fn
-  "LEN returns the number of characters in a text string."
-  [text]
-  (count text))
-
-(defn lower-fn
-  "Converts all uppercase letters in a text string to lowercase."
-  [text]
-  (string/lower-case text))
-
-(defn mid-fn
-  "MID returns a specific number of characters from a text string,
-  starting at the position you specify, based on the number of characters you specify."
-  [text start number]
-  (let [text-end (count text)
-        params-start (dec start)
-        params-end (+ (dec start) number)
-        start (if (> params-start text-end)
-                text-end
-                params-start)
-        end (if (> params-end text-end)
-              text-end
-              params-end)]
-    (subs text start end)))
-
-(defn numbervalue-fn
-  "Converts text to a number"
-  [text]
-  #?(:clj  (read-string text)
-     :cljs (js/parseFloat text)))
-
-(defn proper-fn
-  "Capitalizes the first letter in a text string and any other letters
-   in text that follow any character other than a letter.
-   Converts all other letters to lowercase letters."
-  [text]
-  (string/replace (str text) #"\w*" string/capitalize))
-
-(defn replace-fn
-  "REPLACE replaces part of a text string, based on the number of characters
-   you specify, with a different text string."
-  [text position length new-text]
-  (str (subs text 0 (dec position))
-       new-text
-       (subs text (+ (dec position) length))))
-
-;; TODO: REGEX fns
-
-(defn rept-fn
-  "Repeats text a given number of times."
-  [text number]
-  (->> (constantly text)
-       (repeatedly number)
-       (apply str)))
-
-(defn right-fn
-  "RIGHT returns the last character or characters in a text string,
-   based on the number of characters you specify."
-  ([text] (right-fn text 1))
-  ([text number]
-   (subs text (- (count text)
-                number))))
-
-(defn search-fn
-  "SEARCH returns the number of the character at which a specific character
-   or text string is first found, beginning with start_num. Use SEARCH to determine
-   the location of a character or text string within another text string so that
-   you can use the MID or REPLACE functions to change the text."
-  ([find-text within-text] (search-fn find-text within-text 0))
-  ([find-text within-text position]
-   (inc
-    (string/index-of (string/lower-case within-text)
-                     (string/lower-case find-text)
-                     position))))
-
-;; TODO: | seaprator doesn't work
-(defn split-fn [text separator]
-  (vec (.split text separator)))
-
-(defn substitute-fn
-  "Substitutes new_text for old_text in a text string.
-   Use SUBSTITUTE when you want to replace specific text in a text string;
-   use REPLACE when you want to replace any text that occurs in a specific location
-   in a text string."
-  ([text old-text new-text]
-   (substitute-fn text old-text new-text nil))
-  ([text old-text new-text occurrence]
-   (if (every? string? [text old-text new-text])
-     (if (empty? old-text)
-       text
-       (if (nil? occurrence)
-         (string/replace text (re-pattern old-text) new-text)
-         (loop [i 1
-                index (string/index-of text old-text)]
-           (if index
-             (if (= i occurrence)
-               (str (subs text 0 index)
-                    new-text
-                    (subs text (+ index (count old-text))))
-               (recur (inc i) (string/index-of text old-text (inc index))))
-             text))))
-     ;; TODO: emit error
-     {:error "text should be string"})))
-
-
-(defn trim-fn
-  "Removes all spaces from text except for single spaces between words.
-   Use TRIM on text that you have received from another application that may
-   have irregular spacing."
-  [text]
-  (string/trim
-   (string/replace text #"\ +" " ")))
-
-(defn upper-fn
-  "Converts text to uppercase."
-  [text]
-  (string/upper-case text))
-
-(defn count-fn [& args]
-  (count (flatten args)))
-
-
 (def functions-map
-  {"SUM"         {:impl #'sum-fn}
-   "MIN"         {:impl #'min-fn}
-   "MAX"         {:impl #'max-fn}
-   "CONCATENATE" {:impl #'concatenate-fn}
-   "AVERAGE"     {:impl #'average-fn}
-   "ROUND"       {:impl #'round-fn}
-   "AND"         {:impl #'and-fn}
-   "OR"          {:impl #'or-fn}
-   "CLEAN"       {:impl #'clean-fn}
-   "CODE"        {:impl #'code-fn}
-   "EXACT"       {:impl #'exact-fn}
-   "FIND"        {:impl #'find-fn}
-   "LEFT"        {:impl #'left-fn}
-   "LEN"         {:impl #'len-fn}
-   "LOWER"       {:impl #'lower-fn}
-   "MID"         {:impl #'mid-fn}
-   "NUMBERVALUE" {:impl #'numbervalue-fn}
-   "PROPER"      {:impl #'proper-fn}
-   "REPLACE"     {:impl #'replace-fn}
-   "REPT"        {:impl #'rept-fn}
-   "RIGHT"       {:impl #'right-fn}
-   "SEARCH"      {:impl #'search-fn}
-   "SPLIT"       {:impl #'split-fn}
-   "SUBSTITUTE"  {:impl #'substitute-fn}
-   "TRIM"        {:impl #'trim-fn}
-   "UPPER"       {:impl #'upper-fn}
-   "COUNT"       {:impl #'count-fn}
-   "IF"          {:impl :special-form}
-   "OBJREF"      {:impl :special-form}
-   })
+  {"SUM"         {:impl #'math/sum-fn
+                  :desc "Returns the sum of a series of numbers and/or references."
+                  :args [{:desc "The first number or range to add together."}
+                         {:desc "Additional numbers or ranges to add to arg1."
+                          :opt true
+                          :repeatable true}]}
+
+   "MIN"         {:impl #'stat/min-fn
+                  :desc "Returns the minimum value in a numeric dataset."
+                  :args [{:desc "The first value or range to consider when calculating the minimum value."}
+                         {:desc "Additional values or ranges to consider when calculating the minimum value."
+                          :opt true
+                          :repeatable true}]}
+
+   "MAX"         {:impl #'stat/max-fn
+                  :desc "Returns the maximum value in a numeric dataset."
+                  :args [{:desc "The first value or range to consider when calculating the maximum value."}
+                         {:desc "Additional values or ranges to consider when calculating the maximum value."
+                          :opt true
+                          :repeatable true}]}
+
+   "AVERAGE"     {:impl #'stat/average-fn
+                  :desc "Returns the numerical average value in a dataset, ignoring text."
+                  :args [{:desc "The first value or range to consider when calculating the average value."}
+                         {:desc "Additional values or ranges to consider when calculating the average value."
+                          :opt true
+                          :repeatable true}]}
+
+   "ROUND"       {:impl #'math/round-fn
+                  :desc "Rounds a number to a certain number of decimal places according to standard rules."
+                  :args [{:desc "The value to round to places number of places."}
+                         {:desc "The number of decimal places to which to round."
+                          :opt true}]}
+
+   "AND"         {:impl #'logic/and-fn
+                  :desc "Returns true if all of the provided arguments are logically true, and false if any of the provided arguments are logically false."
+                  :args [{:desc "Returns true if all of the provided arguments are logically true, and false if any of the provided arguments are logically false."}
+                         {:desc "An expression or reference to some logical value, i.e. TRUE or FALSE, or can be coerced to a logical value."
+                          :opt true
+                          :repeatable true}]}
+
+   "OR"          {:impl #'logic/or-fn
+                  :desc "Returns true if any of the provided arguments are logically true, and false if all of the provided arguments are logically false."
+                  :args [{:desc "An expression or reference to some logical value, i.e. TRUE or FALSE, or can be coerced to a logical value."}
+                         {:desc "More expressions that evaluate to logical values."
+                          :opt true
+                          :repeatable true}]}
+
+   "NOT"         {:impl #'logic/not-fn
+                  :desc "Returns the opposite of a logical value - `NOT(TRUE)` returns `FALSE`; `NOT(FALSE)` returns `TRUE`."
+                  :args [{:desc "An expression or reference holding an expression that represents some logical value, i.e. TRUE or FALSE."}]}
+
+   "CLEAN"       {:impl #'clean-fn
+                  :desc "Returns the text with the non-printable ASCII characters removed."
+                  :args [{:desc "The text whose non-printable characters are to be removed."}]}
+
+   "CHAR"        {:impl #'text/char-fn
+                  :desc "Convert a number into a character according to the current Unicode table."
+                  :args [{:desc "The number of the character to look up from the current Unicode table in decimal format."}]}
+
+   "CODE"        {:impl #'text/code-fn
+                  :desc "Returns the numeric Unicode map value of the first character in the string provided."
+                  :args [{:desc "The string whose first character's Unicode map value will be returned."}]}
+
+   "CONCATENATE" {:impl (partial text/join-fn "")
+                  :desc "Appends strings to one another."
+                  :args [{:desc "The initial string."}
+                         {:desc "More strings to append in sequence."
+                          :opt true
+                          :repeatable true}]}
+
+   "DOLLAR"      {:impl #'text/dollar-fn
+                  :desc "Formats a number into the locale-specific currency format."
+                  :args [{:desc "The value to be formatted."}
+                         {:desc "The number of decimal places to display."
+                          :opt true}]}
+
+   "EXACT"       {:impl #'text/exact-fn
+                  :desc "Tests whether two strings are identical."
+                  :args [{:desc "The first string to compare"}
+                         {:desc "The second string to compare"}]}
+
+   "FIND"        {:impl #'text/find-fn
+                  :desc "Returns the position at which a string is first found within text where the capitalization of letters matters. Returns #VALUE! if the string is not found."
+                  :args [{:desc "The string to look for within arg2."}
+                         {:desc "The text to search for the first occurrence of arg1."}
+                         {:desc "The character within arg2 at which to start the search."
+                          :opt true}]}
+
+   "JOIN"        {:impl #'text/join-fn
+                  :desc "Concatenates the elements of one or more one-dimensional arrays using a specified delimiter."
+                  :args [{:desc "The character or string to place between each concatenated value."}
+                         {:desc "The value or values to be appended using arg1."}
+                         {:desc "Additional value or array to be appended using arg1."
+                          :opt true
+                          :repeatable true}]}
+
+   "LEFT"        {:impl #'text/left-fn
+                  :desc "Returns a substring from the beginning of a specified string."
+                  :args [{:desc "The string from which the left portion will be returned."}
+                         {:desc "The number of characters to return from the left side of arg1."
+                          :opt true}]}
+
+   "LEN"         {:impl #'text/len-fn
+                  :desc "Returns the length of a string."
+                  :args [{:desc "The string whose length will be returned."}]}
+
+   "LOWER"       {:impl #'text/lower-fn
+                  :desc "Converts a specified string to lowercase."
+                  :args [{:desc "The string to convert to lowercase."}]}
+
+   "MID"         {:impl #'text/mid-fn
+                  :desc "Returns a segment of a string."
+                  :args [{:desc "The string to extract a segment from."}
+                         {:desc "The index from the left of arg1 from which to begin extracting. The first character in arg1 has the index 1."}
+                         {:desc "The length of the segment to extract."}]}
+
+   "PROPER"      {:impl #'text/proper-fn
+                  :desc "Capitalizes each word in a specified string."
+                  :args [{:desc "The text which will be returned with the first letter of each word in uppercase and all other letters in lowercase."}]}
+
+   "REPLACE"     {:impl #'text/replace-fn
+                  :desc "Replaces part of a text string with a different text string."
+                  :args [{:desc "The text, a part of which will be replaced."}
+                         {:desc "The position where the replacement will begin (starting from 1)."}
+                         {:desc "The number of characters in the text to be replaced."}
+                         {:desc "The text which will be inserted into the original text."}]}
+
+   "REPT"        {:impl #'text/rept-fn
+                  :desc "Returns specified text repeated a number of times."
+                  :args [{:desc "The character or string to repeat."}
+                         {:desc "The number of times arg1 should appear in the value returned."}]}
+
+   "RIGHT"       {:impl #'text/right-fn
+                  :desc "Returns a substring from the end of a specified string."
+                  :args [{:desc "The string from which the right portion will be returned."}
+                         {:desc "The number of characters to return from the right side of arg1."
+                          :opt true}]}
+
+   "ROMAN"       {:impl #'text/roman-fn
+                  :desc "Formats a number in Roman numerals."
+                  :args [{:desc "The number to format, between 1 and 3999, inclusive."}]}
+
+   "SEARCH"      {:impl #'text/search-fn
+                  :desc "Returns the position at which a string is first found within text and ignores capitalization of letters. Returns #VALUE! if the string is not found."
+                  :args [{:desc "The string to look for within arg2."}
+                         {:desc "The text to search for the first occurrence of arg1."}
+                         {:desc "The character within arg2 at which to start the search."
+                          :opt true}]}
+
+   "SPLIT"       {:impl #'text/split-fn
+                  :desc "Divides text around a specified character or string, and puts each fragment into an array."
+                  :args [{:desc "The text to divide."}
+                         {:desc "The character or characters to use to split arg1."}
+                         {:desc "Whether or not to divide arg1 around each character contained in arg2."
+                          :opt true}
+                         {:desc "Whether or not to remove empty text messages from the split results. The default behavior is to treat consecutive delimiters as one (if TRUE). If FALSE, null values are added between consecutive delimiters."
+                          :opt true}]}
+
+   "SUBSTITUTE"  {:impl #'text/substitute-fn
+                  :desc "Replaces existing text with new text in a string."
+                  :args [{:desc "The text within which to search and replace."}
+                         {:desc "The string to search for within text_to_search."}
+                         {:desc "The string that will replace search_for."}
+                         {:desc "The instance of arg2 within arg1 to replace with arg3. By default, all occurrences of arg2 are replaced; however, if arg4 is specified, only the indicated instance of arg2 is replaced."
+                          :opt true}]}
+
+   "TRIM"        {:impl #'text/trim-fn
+                  :desc "Removes leading, trailing, and repeated spaces in text."
+                  :args [{:desc "The text or reference to a cell containing text to be trimmed."}]}
+
+   "UPPER"       {:impl #'text/upper-fn
+                  :desc "Converts a specified string to uppercase."
+                  :args [{:desc "The string to convert to uppercase."}]}
+
+   "COUNT"       {:impl #'stat/count-fn
+                  :desc "Returns a count of the number of numeric values in a dataset."
+                  :args [{:desc "The first value or range to consider when counting."}
+                         {:desc "Additional values or ranges to consider when counting."
+                          :repeatable true
+                          :opt true}]}
+
+   "IF"          {:impl :special-form
+                  :desc "Returns one value if a logical expression is TRUE and another if it is FALSE."
+                  :args [{:desc "An expression or reference to a context value containing an expression that represents some logical value, i.e. TRUE or FALSE."}
+                         {:desc "The value the function returns if arg1 is TRUE."}
+                         {:desc "The value the function returns if arg1 is FALSE."
+                          :opt true}]}
+
+   "OBJREF"      {:impl :special-form
+                  :desc "Returns a value from execution context."
+                  :args [{:desc "Key-reference, number index or star (*)."
+                          :repeatable true}]}})
+
+(defn- infinity-args? [args]
+  (-> args
+      last
+      :repeatable))
+
+(defn- min-arity [args]
+  (->> args
+      (filter #(not (:opt %)))
+      count))
+
+(defn- max-arity [args]
+  (when-not (infinity-args? args)
+    (count args)))
+
+(defn- format-wrong-arity-error [fnname min-arity max-arity total]
+  (str "Wrong number of arguments to "
+       fnname
+       ". Expected "
+       (if (and min-arity max-arity
+                (not= min-arity max-arity))
+         (str "between " min-arity " and " max-arity " arguments,")
+         (if (and min-arity (nil? max-arity))
+           (str "at least " min-arity " argument" (when-not (= 1 min-arity) "s") ",")
+           (str "exact " min-arity " argument" (when-not (= 1 min-arity) "s") ",")))
+       " but got "
+       total
+       " arguments."))
+
+(defn check-arity [fnname args]
+  (let [fn-args (get-in functions-map [fnname :args])
+        infinity-args? (infinity-args? fn-args)
+        min-arity (min-arity fn-args)
+        max-arity (max-arity fn-args)]
+    (or (and (= min-arity 0) infinity-args?)
+        (<= min-arity (count args) (or max-arity #?(:clj Double/POSITIVE_INFINITY
+                                                    :cljs js/Infinity)))
+        (throw (error/error "#N/A"
+                            (format-wrong-arity-error fnname min-arity max-arity (count args)))))))

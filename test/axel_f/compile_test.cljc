@@ -42,7 +42,7 @@
                       (catch #?(:clj clojure.lang.ExceptionInfo
                                 :cljs ExceptionInfo)
                           e
-                        (ex-data e)))]
+                        (:data (ex-data e))))]
 
         (t/is (= {:index  2
                   :line   1

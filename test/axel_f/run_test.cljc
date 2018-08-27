@@ -77,4 +77,8 @@
       (t/is (lib/fuzzy= 0.0001 9.261 (sut/run "2.1^SUM(1,2)")))
 
       (t/is (thrown? #?(:clj Exception
-                        :cljs js/Error) (sut/run "-\"foo\""))))))
+                        :cljs js/Error) (sut/run "-\"foo\"")))
+      (let [res (sut/run "ROUND()")]
+        (t/is (= {:type "#N/A"
+                  :reason "Wrong number of arguments to ROUND. Expected between 1 and 2 arguments, but got 0 arguments."}
+                 res))))))
