@@ -352,8 +352,8 @@
            (ex-data (sut/run "CHAR(\"d\")"))))
 
   (t/is (= {:type "#NUM!"
-            :reason "Function CHAR parameter 1 value 99999 is out of range."}
-           (ex-data (sut/run "CHAR(99999)"))))
+            :reason "Function CHAR parameter 1 value 65536 is out of range."}
+           (ex-data (sut/run "CHAR(65536)"))))
 
   (t/is (= "d" (sut/run "CHAR(100)"))))
 

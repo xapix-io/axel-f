@@ -1,7 +1,10 @@
 (ns axel-f.functions.text
   (:require [axel-f.error :as error]
             [clojure.string :as string]
-            [axel-f.functions.math :as math]))
+            [axel-f.functions.math :as math]
+            #?@(:cljs
+                [[goog.string :as gstring]
+                 [goog.string.format]])))
 
 (defn- excel-str [item]
   (case item
@@ -31,12 +34,10 @@
 
 (defn char-fn [number]
   (if (number? number)
-    (try
+    (if (< 0 number 65536)
       #?(:clj (-> number char str)
          :cljs (js/String.fromCharCode number))
-      (catch #?(:clj java.lang.IllegalArgumentException
-                :cljs js/Error) e
-        (throw (error/error "#NUM!" (str "Function CHAR parameter 1 value " number " is out of range.")))))
+      (throw (error/error "#NUM!" (str "Function CHAR parameter 1 value " number " is out of range."))))
     (throw (error/error "#VALUE!" (str "Function CHAR parameter 1 expects number values. But '" number "' is a text.")))))
 
 (defn code-fn [text]
@@ -59,7 +60,7 @@
                  "%.0f"
                  (str "%." number-of-places "f"))]
        (str "$" #?(:clj (format fmt number)
-                   :cljs (.toFixed number number-of-places)))))))
+                   :cljs (gstring/format fmt number)))))))
 
 (defn exact-fn [str1 str2]
   (= str1 str2))
