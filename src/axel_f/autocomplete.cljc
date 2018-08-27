@@ -160,8 +160,7 @@
                                                            (assoc % :terminate true)
                                                            (-> %
                                                                (update :open-round inc)
-                                                               (assoc :pre-terminate false))
-                                                           ))
+                                                               (assoc :pre-terminate false))))
                         (= "," ch)                     (#(if (valid-reference? (apply str acc))
                                                            (assoc % :terminate true)
                                                            (assoc % :pre-terminate false)))
@@ -175,11 +174,17 @@
               (apply str acc)
               (recur (last chx) (butlast chx) (cons ch acc) terms))))))))
 
+(defn- build-suggestions-for-fn []
+  (->> functions/functions-map
+      (map (fn [[fn-name _]]
+             (build-suggestion :FN fn-name)))))
+
 (defn autocomplete
   ([incomplete-formula] (autocomplete incomplete-formula {}))
   ([incomplete-formula context]
    (let [last-part (get-last-part incomplete-formula)]
      (or (cond
+           (= "" last-part)             (build-suggestions-for-fn)
            (valid-reference? last-part) (build-suggestions-for-objref last-part context)
            (valid-fncall? last-part)    (build-suggestions-for-fncall last-part))
          []))))

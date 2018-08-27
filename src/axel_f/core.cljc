@@ -329,54 +329,8 @@ STAR                     ::= '*'?
    (let [formula-or-error (if (string? formula)
                             (compile formula)
                             formula)]
-     (if (error/error? formula-or-error)
-       formula-or-error
-       (try
-         (run* formula-or-error context)
-         (catch #?(:clj Throwable
-                   :cljs js/Error) e
-           e))))))
-
-(comment
-
-  (run "SUBSTITUTE(\"FOO\", \"O\")")
-
-  (run "COUNT(\"foo\", {1,2,3})")
-
-  (run "IF(FALSE, \"true\",)")
-
-  (run "SPLIT(\"foo,bar.baz\", \",.\", true)")
-
-  (run "SPLIT(\"foo|bar,baz||\", \"|,\", true, false)")
-
-  (run "SEARCH(\"Foo\", \"fooFoo\", 2)")
-
-  (run "RIGHT(\"ajh\", 4)")
-
-  (run "REPT(\"foo\")")
-
-  (run "REPLACE(\"abcdefg\", 1, 6, \"xyz\")")
-
-  (run "MID(\"get this\", 5, 4)")
-
-  (run "LOWER(\"FOOOOO\")")
-
-  (run "LEN({\"foo\", \"bar\"})")
-
-  (run "LEFT(\"foo\", 4)")
-
-  (run "FIND(\"def\", \"abcdefg\", 2)")
-
-  (run "ROUND(99.44, -2)")
-
-  (run "AVERAGE({1,2,3}, {2,3,4}, {3,4,5})")
-
-  (run "CONCATENATE(\"foo\", {\"bar\", \"baz\"})")
-
-  (run "SUM({5,6,7},2,{4,5,6})")
-
-  (run "-\"foo\"")
-
-  (run "SUM(")
-
-  )
+     (try
+       (run* formula-or-error context)
+       (catch #?(:clj Throwable
+                 :cljs js/Error) e
+         e)))))

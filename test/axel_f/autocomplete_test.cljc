@@ -8,12 +8,16 @@
 
   (t/testing "autocomplete function return array of suggestions for incomplete formula with"
 
-    (t/is (= [] (sut/autocomplete "" {})))
-
     (with-redefs [functions/functions-map {"SUM"   {}
                                            "ROUND" {}
                                            "MIN"   {}
                                            "MAX"   {}}]
+
+      (t/is (= [{:type :FN, :value "SUM"}
+                {:type :FN, :value "ROUND"}
+                {:type :FN, :value "MIN"}
+                {:type :FN, :value "MAX"}]
+               (sut/autocomplete "" {})))
 
       (t/testing "begining of the function"
 

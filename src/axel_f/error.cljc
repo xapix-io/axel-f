@@ -7,7 +7,3 @@
                     {:reason reason})
                   (when data
                     {:data data}))))
-
-(defn error? [maybe-error]
-  (and (map? maybe-error)
-       (:error maybe-error)))
