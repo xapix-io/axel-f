@@ -333,4 +333,7 @@ STAR                     ::= '*'?
        (run* formula-or-error context)
        (catch #?(:clj Throwable
                  :cljs js/Error) e
-         e)))))
+         (let [{:keys [type] :as data} (ex-data e)]
+           (if (#{"#N/A" "#VALUE!" "#REF!" "#DIV/0!" "#NUM!" "#NAME?" "#NULL!"} type)
+             data
+             (throw e))))))))

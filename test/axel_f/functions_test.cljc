@@ -67,7 +67,7 @@
 
     (t/is (= {:type "#VALUE!"
               :reason "Function MIN parameters expects number values."}
-             (ex-data (sut/run "MIN(\"foo\")"))))))
+             (sut/run "MIN(\"foo\")")))))
 
 (t/deftest MAX
 
@@ -79,7 +79,7 @@
 
     (t/is (= {:type "#VALUE!"
               :reason "Function MAX parameters expects number values."}
-             (ex-data (sut/run "MAX(\"foo\")"))))))
+             (sut/run "MAX(\"foo\")")))))
 
 (t/deftest SUM
 
@@ -92,7 +92,7 @@
 
     (t/is (= {:type "#VALUE!"
               :reason "Function SUM parameters expects number values."}
-             (ex-data (sut/run "SUM(\"foo\")"))))))
+             (sut/run "SUM(\"foo\")")))))
 
 (t/deftest CONCATENATE
 
@@ -349,11 +349,11 @@
 
 (t/deftest char-fn-test
   (t/is (= {:type "#VALUE!" :reason "Function CHAR parameter 1 expects number values. But 'd' is a text."}
-           (ex-data (sut/run "CHAR(\"d\")"))))
+           (sut/run "CHAR(\"d\")")))
 
   (t/is (= {:type "#NUM!"
             :reason "Function CHAR parameter 1 value 65536 is out of range."}
-           (ex-data (sut/run "CHAR(65536)"))))
+           (sut/run "CHAR(65536)")))
 
   (t/is (= "d" (sut/run "CHAR(100)"))))
 
@@ -369,16 +369,16 @@
 
     (t/is (= {:type "#VALUE!"
               :reason "Function DOLLAR parameter 1 expects number values."}
-             (ex-data (sut/run "DOLLAR(\"foo\")"))))
+             (sut/run "DOLLAR(\"foo\")")))
 
     (t/is (= {:type "#VALUE!"
               :reason "Function DOLLAR parameter 2 expects number values."}
-             (ex-data (sut/run "DOLLAR(100, \"foo\")"))))))
+             (sut/run "DOLLAR(100, \"foo\")")))))
 
 (t/deftest wrong-arity-test
   (t/is (= {:type "#N/A", :reason "Wrong number of arguments to JOIN. Expected at least 2 arguments, but got 1 arguments."}
-           (ex-data (sut/run "JOIN(\",\")"))))
+           (sut/run "JOIN(\",\")")))
 
   (t/is (= {:type "#N/A"
             :reason "Wrong number of arguments to CHAR. Expected exact 1 argument, but got 0 arguments."}
-           (ex-data (sut/run "CHAR()")))))
+           (sut/run "CHAR()"))))
