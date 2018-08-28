@@ -85,13 +85,17 @@
 
   (t/testing "SUM function should work as expected"
 
-    (t/are [x y] (t/is (= x (sut/run (str "SUM(" y ")") {:foo [1 2 3]})))
+    (t/are [x y] (t/is (= x (sut/run (str "SUM(" y ")") {:foo [1 2 3]
+                                                         :bar ["2.1" 3.9]})))
       6 "foo"
       7 "foo, 1"
-      6 "{1,2,3}")
+      6 "{1,2,3}"
+      1 "'1'"
+      3 "{'1', '2'}"
+      6.0 "bar")
 
     (t/is (= {:type "#VALUE!"
-              :reason "Function SUM parameters expects number values."}
+              :reason "Function SUM parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "SUM(\"foo\")")))))
 
 (t/deftest CONCATENATE
