@@ -10,9 +10,9 @@ In some applications, the lion's share of business logic is concentrated in dyna
 
 ## Clojure(Script)
 
-* **Leiningen** : `[io.xapix/axel-f "0.1.2"]`
-* **Boot**: `(set-env! :dependencies #(conj % [io.xapix/axel-f "0.1.2"]))`
-* **deps.edn**: `{:deps {io.xapix/axel-f {:mvn/version "0.1.2"}}}`
+* **Leiningen** : `[io.xapix/axel-f "0.2.0"]`
+* **Boot**: `(set-env! :dependencies #(conj % [io.xapix/axel-f "0.2.0"]))`
+* **deps.edn**: `{:deps {io.xapix/axel-f {:mvn/version "0.2.0"}}}`
 
 ## JavaScript
 
@@ -54,7 +54,6 @@ In some applications, the lion's share of business logic is concentrated in dyna
 # Difference from Excel
 
 * No cell-references or reference operations.
-* Excel errors replaced with Exceptions from Clojure(Script)
 
 # Object references
 
@@ -64,6 +63,7 @@ In addition to a formula, the run function can accept execution context as a sec
 * Array reference operator for access data in vector: `foo[*].bar`
   * `foo[*][*]` we support nested vectors (vector of vectors of vectors ...)
   * and objects in vectors `foo[*].bar[*].baz`
+  * it is possible to use indexes to get the data inside of arrays: `foo[1].bar`
 
 # Data types
 
@@ -72,7 +72,7 @@ In addition to a formula, the run function can accept execution context as a sec
 - [x] Strings in double or single quotes. (`'Some String'`, `"Some String"`)
 - [x] Arrays. Any data in curly brackets (`{1, 2 TRUE}`)
 - [ ] Date
-- [ ] Excel Error types
+- [x] Excel Error types
 
 # Operators
 
@@ -100,15 +100,37 @@ Any expression can be used as an operand for any operator. axel-f has the same o
 # Implemented excel functions
 
 - [x] [SUM](https://support.office.com/en-us/article/sum-function-043e1c7d-7726-4e80-8f32-07b23e057f89)
-- [x] [COUNT](https://support.office.com/en-us/article/count-function-a59cd7fc-b623-4d93-87a4-d23bf411294c)
 - [x] [MIN](https://support.office.com/en-us/article/min-function-61635d12-920f-4ce2-a70f-96f202dcc152)
 - [x] [MAX](https://support.office.com/en-us/article/max-function-e0012414-9ac8-4b34-9a47-73e662c08098)
-- [x] [CONCATENATE](https://support.office.com/en-us/article/concatenate-function-8f8ae884-2ca8-4f7a-b093-75d702bea31d)
-- [x] [IF](https://support.office.com/en-us/article/if-function-69aed7c9-4e8a-4755-a9bc-aa8bbff73be2)
 - [x] [AVERAGE](https://support.office.com/en-us/article/average-function-047bac88-d466-426c-a32b-8f33eb960cf6)
 - [x] [ROUND](https://support.office.com/en-us/article/round-function-c018c5d8-40fb-4053-90b1-b3e7f61a213c)
 - [x] [AND](https://support.office.com/en-us/article/and-function-5f19b2e8-e1df-4408-897a-ce285a19e9d9)
 - [x] [OR](https://support.office.com/en-us/article/or-function-7d17ad14-8700-4281-b308-00b131e22af0)
+- [x] [NOT](https://support.office.com/en-us/article/not-function-9cfc6011-a054-40c7-a140-cd4ba2d87d77)
+- [x] [CLEAN](https://support.office.com/en-us/article/clean-function-26f3d7c5-475f-4a9c-90e5-4b8ba987ba41)
+- [x] [CHAR](https://support.office.com/en-us/article/char-function-bbd249c8-b36e-4a91-8017-1c133f9b837a)
+- [x] [CODE](https://support.office.com/en-us/article/code-function-c32b692b-2ed0-4a04-bdd9-75640144b928)
+- [x] [CONCATENATE](https://support.office.com/en-us/article/concatenate-function-8f8ae884-2ca8-4f7a-b093-75d702bea31d)
+- [x] [DOLLAR](https://support.office.com/en-us/article/dollar-function-a6cd05d9-9740-4ad3-a469-8109d18ff611)
+- [x] [EXACT](https://support.office.com/en-us/article/exact-function-d3087698-fc15-4a15-9631-12575cf29926)
+- [x] [FIND](https://support.office.com/en-us/article/find-findb-functions-c7912941-af2a-4bdf-a553-d0d89b0a0628)
+- [x] [JOIN](https://support.google.com/docs/answer/3094077)
+- [x] [LEFT](https://support.office.com/en-us/article/left-leftb-functions-9203d2d2-7960-479b-84c6-1ea52b99640c)
+- [x] [LEN](https://support.office.com/en-us/article/len-lenb-functions-29236f94-cedc-429d-affd-b5e33d2c67cb)
+- [x] [LOWER](https://support.office.com/en-us/article/lower-function-3f21df02-a80c-44b2-afaf-81358f9fdeb4)
+- [x] [MID](https://support.office.com/en-us/article/mid-midb-functions-d5f9e25c-d7d6-472e-b568-4ecb12433028)
+- [x] [PROPER](https://support.office.com/en-us/article/proper-function-52a5a283-e8b2-49be-8506-b2887b889f94)
+- [x] [REPLACE](https://support.office.com/en-us/article/replace-replaceb-functions-8d799074-2425-4a8a-84bc-82472868878a)
+- [x] [REPT](https://support.office.com/en-us/article/rept-function-04c4d778-e712-43b4-9c15-d656582bb061)
+- [x] [RIGHT](https://support.office.com/en-us/article/right-rightb-functions-240267ee-9afa-4639-a02b-f19e1786cf2f)
+- [x] [ROMAN](https://support.office.com/en-us/article/roman-function-d6b0b99e-de46-4704-a518-b45a0f8b56f5)
+- [x] [SEARCH](https://support.office.com/en-us/article/search-searchb-functions-9ab04538-0e55-4719-a72e-b6f54513b495)
+- [x] [SPLIT](https://support.google.com/docs/answer/3094136)
+- [x] [SUBSTITUTE](https://support.office.com/en-us/article/substitute-function-6434944e-a904-4336-a9b0-1e58df3bc332)
+- [x] [TRIM](https://support.office.com/en-us/article/trim-function-410388fa-c5df-49c6-b16c-9e5630b479f9)
+- [x] [UPPER](https://support.office.com/en-us/article/upper-function-c11f29b3-d1a3-4537-8df6-04d0049963d6)
+- [x] [COUNT](https://support.office.com/en-us/article/count-function-a59cd7fc-b623-4d93-87a4-d23bf411294c)
+- [x] [IF](https://support.office.com/en-us/article/if-function-69aed7c9-4e8a-4755-a9bc-aa8bbff73be2)
 
 In addition we have special functions for accessing the data in context: `OBJREF(arg1, [arg2...])`
 
@@ -162,7 +184,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [CEILING.MATH](https://support.office.com/en-us/article/ceilingmath-function-80f95d2f-b499-4eee-9f16-f795a8e306c8)
 - [ ] [CEILING.PRECISE](https://support.office.com/en-us/article/ceilingprecise-function-f366a774-527a-4c92-ba49-af0a196e66cb)
 - [ ] [CELL](https://support.office.com/en-us/article/cell-function-51bd39a5-f338-4dbe-a33f-955d67c2b2cf)
-- [ ] [CHAR](https://support.office.com/en-us/article/char-function-bbd249c8-b36e-4a91-8017-1c133f9b837a)
 - [ ] [CHIDIST](https://support.office.com/en-us/article/chidist-function-c90d0fbc-5b56-4f5f-ab57-34af1bf6897e)
 - [ ] [CHIINV](https://support.office.com/en-us/article/chiinv-function-cfbea3f6-6e4f-40c9-a87f-20472e0512af)
 - [ ] [CHITEST](https://support.office.com/en-us/article/chitest-function-981ff871-b694-4134-848e-38ec704577ac)
@@ -172,8 +193,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [CHISQ.INV.RT](https://support.office.com/en-us/article/chisqinvrt-function-435b5ed8-98d5-4da6-823f-293e2cbc94fe)
 - [ ] [CHISQ.TEST](https://support.office.com/en-us/article/chisqtest-function-2e8a7861-b14a-4985-aa93-fb88de3f260f)
 - [ ] [CHOOSE](https://support.office.com/en-us/article/choose-function-fc5c184f-cb62-4ec7-a46e-38653b98f5bc)
-- [ ] [CLEAN](https://support.office.com/en-us/article/clean-function-26f3d7c5-475f-4a9c-90e5-4b8ba987ba41)
-- [ ] [CODE](https://support.office.com/en-us/article/code-function-c32b692b-2ed0-4a04-bdd9-75640144b928)
 - [ ] [COLUMN](https://support.office.com/en-us/article/column-function-44e8c754-711c-4df3-9da4-47a55042554b)
 - [ ] [COLUMNS](https://support.office.com/en-us/article/columns-function-4e8e7b4e-e603-43e8-b177-956088fa48ca)
 - [ ] [COMBIN](https://support.office.com/en-us/article/combin-function-12a3f276-0a21-423a-8de6-06990aaf638a)
@@ -237,7 +256,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [DISC](https://support.office.com/en-us/article/disc-function-71fce9f3-3f05-4acf-a5a3-eac6ef4daa53)
 - [ ] [DMAX](https://support.office.com/en-us/article/dmax-function-f4e8209d-8958-4c3d-a1ee-6351665d41c2)
 - [ ] [DMIN](https://support.office.com/en-us/article/dmin-function-4ae6f1d9-1f26-40f1-a783-6dc3680192a3)
-- [ ] [DOLLAR](https://support.office.com/en-us/article/dollar-function-a6cd05d9-9740-4ad3-a469-8109d18ff611)
 - [ ] [DOLLARDE](https://support.office.com/en-us/article/dollarde-function-db85aab0-1677-428a-9dfd-a38476693427)
 - [ ] [DOLLARFR](https://support.office.com/en-us/article/dollarfr-function-0835d163-3023-4a33-9824-3042c5d4f495)
 - [ ] [DPRODUCT](https://support.office.com/en-us/article/dproduct-function-4f96b13e-d49c-47a7-b769-22f6d017cb31)
@@ -258,7 +276,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [ERROR.TYPE](https://support.office.com/en-us/article/errortype-function-10958677-7c8d-44f7-ae77-b9a9ee6eefaa)
 - [ ] [EUROCONVERT](https://support.office.com/en-us/article/euroconvert-function-79c8fd67-c665-450c-bb6c-15fc92f8345c)
 - [ ] [EVEN](https://support.office.com/en-us/article/even-function-197b5f06-c795-4c1e-8696-3c3b8a646cf9)
-- [ ] [EXACT](https://support.office.com/en-us/article/exact-function-d3087698-fc15-4a15-9631-12575cf29926)
 - [ ] [EXP](https://support.office.com/en-us/article/exp-function-c578f034-2c45-4c37-bc8c-329660a63abe)
 - [ ] [EXPON.DIST](https://support.office.com/en-us/article/expondist-function-4c12ae24-e563-4155-bf3e-8b78b6ae140e)
 - [ ] [EXPONDIST](https://support.office.com/en-us/article/expondist-function-68ab45fd-cd6d-4887-9770-9357eb8ee06a)
@@ -269,7 +286,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [FDIST](https://support.office.com/en-us/article/fdist-function-ecf76fba-b3f1-4e7d-a57e-6a5b7460b786)
 - [ ] [F.DIST.RT](https://support.office.com/en-us/article/fdistrt-function-d74cbb00-6017-4ac9-b7d7-6049badc0520)
 - [ ] [FILTERXML](https://support.office.com/en-us/article/filterxml-function-4df72efc-11ec-4951-86f5-c1374812f5b7)
-- [ ] [FIND,](https://support.office.com/en-us/article/find-findb-functions-c7912941-af2a-4bdf-a553-d0d89b0a0628)
 - [ ] [F.INV](https://support.office.com/en-us/article/finv-function-0dda0cf9-4ea0-42fd-8c3c-417a1ff30dbe)
 - [ ] [F.INV.RT](https://support.office.com/en-us/article/finvrt-function-d371aa8f-b0b1-40ef-9cc2-496f0693ac00)
 - [ ] [FINV](https://support.office.com/en-us/article/finv-function-4d46c97c-c368-4852-bc15-41e8e31140b1)
@@ -364,8 +380,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [KURT](https://support.office.com/en-us/article/kurt-function-bc3a265c-5da4-4dcb-b7fd-c237789095ab)
 - [ ] [LARGE](https://support.office.com/en-us/article/large-function-3af0af19-1190-42bb-bb8b-01672ec00a64)
 - [ ] [LCM](https://support.office.com/en-us/article/lcm-function-7152b67a-8bb5-4075-ae5c-06ede5563c94)
-- [ ] [LEFT,](https://support.office.com/en-us/article/left-leftb-functions-9203d2d2-7960-479b-84c6-1ea52b99640c)
-- [ ] [LEN,](https://support.office.com/en-us/article/len-lenb-functions-29236f94-cedc-429d-affd-b5e33d2c67cb)
 - [ ] [LINEST](https://support.office.com/en-us/article/linest-function-84d7d0d9-6e50-4101-977a-fa7abf772b6d)
 - [ ] [LN](https://support.office.com/en-us/article/ln-function-81fe1ed7-dac9-4acd-ba1d-07a142c6118f)
 - [ ] [LOG](https://support.office.com/en-us/article/log-function-4e82f196-1ca9-4747-8fb0-6c4a3abb3280)
@@ -376,14 +390,12 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [LOGNORMDIST](https://support.office.com/en-us/article/lognormdist-function-f8d194cb-9ee3-4034-8c75-1bdb3884100b)
 - [ ] [LOGNORM.INV](https://support.office.com/en-us/article/lognorminv-function-fe79751a-f1f2-4af8-a0a1-e151b2d4f600)
 - [ ] [LOOKUP](https://support.office.com/en-us/article/lookup-function-446d94af-663b-451d-8251-369d5e3864cb)
-- [ ] [LOWER](https://support.office.com/en-us/article/lower-function-3f21df02-a80c-44b2-afaf-81358f9fdeb4)
 - [ ] [MATCH](https://support.office.com/en-us/article/match-function-e8dffd45-c762-47d6-bf89-533f4a37673a)
 - [ ] [MAXA](https://support.office.com/en-us/article/maxa-function-814bda1e-3840-4bff-9365-2f59ac2ee62d)
 - [ ] [MAXIFS](https://support.office.com/en-us/article/maxifs-function-dfd611e6-da2c-488a-919b-9b6376b28883)
 - [ ] [MDETERM](https://support.office.com/en-us/article/mdeterm-function-e7bfa857-3834-422b-b871-0ffd03717020)
 - [ ] [MDURATION](https://support.office.com/en-us/article/mduration-function-b3786a69-4f20-469a-94ad-33e5b90a763c)
 - [ ] [MEDIAN](https://support.office.com/en-us/article/median-function-d0916313-4753-414c-8537-ce85bdd967d2)
-- [ ] [MID,](https://support.office.com/en-us/article/mid-midb-functions-d5f9e25c-d7d6-472e-b568-4ecb12433028)
 - [ ] [MINIFS](https://support.office.com/en-us/article/minifs-function-6ca1ddaa-079b-4e74-80cc-72eef32e6599)
 - [ ] [MINA](https://support.office.com/en-us/article/mina-function-245a6f46-7ca5-4dc7-ab49-805341bc31d3)
 - [ ] [MINUTE](https://support.office.com/en-us/article/minute-function-af728df0-05c4-4b07-9eed-a84801a60589)
@@ -413,7 +425,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [NORMSDIST](https://support.office.com/en-us/article/normsdist-function-463369ea-0345-445d-802a-4ff0d6ce7cac)
 - [ ] [NORM.S.INV](https://support.office.com/en-us/article/normsinv-function-d6d556b4-ab7f-49cd-b526-5a20918452b1)
 - [ ] [NORMSINV](https://support.office.com/en-us/article/normsinv-function-8d1bce66-8e4d-4f3b-967c-30eed61f019d)
-- [ ] [NOT](https://support.office.com/en-us/article/not-function-9cfc6011-a054-40c7-a140-cd4ba2d87d77)
 - [ ] [NOW](https://support.office.com/en-us/article/now-function-3337fd29-145a-4347-b2e6-20c904739c46)
 - [ ] [NPER](https://support.office.com/en-us/article/nper-function-240535b5-6653-4d2d-bfcf-b6a38151d815)
 - [ ] [NPV](https://support.office.com/en-us/article/npv-function-8672cb67-2576-4d07-b67b-ac28acf2a568)
@@ -450,7 +461,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [PRICEMAT](https://support.office.com/en-us/article/pricemat-function-52c3b4da-bc7e-476a-989f-a95f675cae77)
 - [ ] [PROB](https://support.office.com/en-us/article/prob-function-9ac30561-c81c-4259-8253-34f0a238fc49)
 - [ ] [PRODUCT](https://support.office.com/en-us/article/product-function-8e6b5b24-90ee-4650-aeec-80982a0512ce)
-- [ ] [PROPER](https://support.office.com/en-us/article/proper-function-52a5a283-e8b2-49be-8506-b2887b889f94)
 - [ ] [PV](https://support.office.com/en-us/article/pv-function-23879d31-0e02-4321-be01-da16e8168cbd)
 - [ ] [QUARTILE](https://support.office.com/en-us/article/quartile-function-93cf8f62-60cd-4fdb-8a92-8451041e1a2a)
 - [ ] [QUARTILE.EXC](https://support.office.com/en-us/article/quartileexc-function-5a355b7a-840b-4a01-b0f1-f538c2864cad)
@@ -465,10 +475,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [RATE](https://support.office.com/en-us/article/rate-function-9f665657-4a7e-4bb7-a030-83fc59e748ce)
 - [ ] [RECEIVED](https://support.office.com/en-us/article/received-function-7a3f8b93-6611-4f81-8576-828312c9b5e5)
 - [ ] [REGISTER.ID](https://support.office.com/en-us/article/registerid-function-f8f0af0f-fd66-4704-a0f2-87b27b175b50)
-- [ ] [REPLACE,](https://support.office.com/en-us/article/replace-replaceb-functions-8d799074-2425-4a8a-84bc-82472868878a)
-- [ ] [REPT](https://support.office.com/en-us/article/rept-function-04c4d778-e712-43b4-9c15-d656582bb061)
-- [ ] [RIGHT,](https://support.office.com/en-us/article/right-rightb-functions-240267ee-9afa-4639-a02b-f19e1786cf2f)
-- [ ] [ROMAN](https://support.office.com/en-us/article/roman-function-d6b0b99e-de46-4704-a518-b45a0f8b56f5)
 - [ ] [ROUNDDOWN](https://support.office.com/en-us/article/rounddown-function-2ec94c73-241f-4b01-8c6f-17e6d7968f53)
 - [ ] [ROUNDUP](https://support.office.com/en-us/article/roundup-function-f8bc9b23-e795-47db-8703-db171d0c42a7)
 - [ ] [ROW](https://support.office.com/en-us/article/row-function-3a63b74a-c4d0-4093-b49a-e76eb49a6d8d)
@@ -476,7 +482,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [RRI](https://support.office.com/en-us/article/rri-function-6f5822d8-7ef1-4233-944c-79e8172930f4)
 - [ ] [RSQ](https://support.office.com/en-us/article/rsq-function-d7161715-250d-4a01-b80d-a8364f2be08f)
 - [ ] [RTD](https://support.office.com/en-us/article/rtd-function-e0cc001a-56f0-470a-9b19-9455dc0eb593)
-- [ ] [SEARCH,](https://support.office.com/en-us/article/search-searchb-functions-9ab04538-0e55-4719-a72e-b6f54513b495)
 - [ ] [SEC](https://support.office.com/en-us/article/sec-function-ff224717-9c87-4170-9b58-d069ced6d5f7)
 - [ ] [SECH](https://support.office.com/en-us/article/sech-function-e05a789f-5ff7-4d7f-984a-5edb9b09556f)
 - [ ] [SECOND](https://support.office.com/en-us/article/second-function-740d1cfc-553c-4099-b668-80eaa24e8af1)
@@ -502,7 +507,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [STDEVP](https://support.office.com/en-us/article/stdevp-function-1f7c1c88-1bec-4422-8242-e9f7dc8bb195)
 - [ ] [STDEVPA](https://support.office.com/en-us/article/stdevpa-function-5578d4d6-455a-4308-9991-d405afe2c28c)
 - [ ] [STEYX](https://support.office.com/en-us/article/steyx-function-6ce74b2c-449d-4a6e-b9ac-f9cef5ba48ab)
-- [ ] [SUBSTITUTE](https://support.office.com/en-us/article/substitute-function-6434944e-a904-4336-a9b0-1e58df3bc332)
 - [ ] [SUBTOTAL](https://support.office.com/en-us/article/subtotal-function-7b027003-f060-4ade-9040-e478765b9939)
 - [ ] [SUMIF](https://support.office.com/en-us/article/sumif-function-169b8c99-c05c-4483-a712-1697a653039b)
 - [ ] [SUMIFS](https://support.office.com/en-us/article/sumifs-function-c9e748f5-7ea7-455d-9406-611cebce642b)
@@ -533,7 +537,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [TODAY](https://support.office.com/en-us/article/today-function-5eb3078d-a82c-4736-8930-2f51a028fdd9)
 - [ ] [TRANSPOSE](https://support.office.com/en-us/article/transpose-function-ed039415-ed8a-4a81-93e9-4b6dfac76027)
 - [ ] [TREND](https://support.office.com/en-us/article/trend-function-e2f135f0-8827-4096-9873-9a7cf7b51ef1)
-- [ ] [TRIM](https://support.office.com/en-us/article/trim-function-410388fa-c5df-49c6-b16c-9e5630b479f9)
 - [ ] [TRIMMEAN](https://support.office.com/en-us/article/trimmean-function-d90c9878-a119-4746-88fa-63d988f511d3)
 - [ ] [TRUE](https://support.office.com/en-us/article/true-function-7652c6e3-8987-48d0-97cd-ef223246b3fb)
 - [ ] [TRUNC](https://support.office.com/en-us/article/trunc-function-8b86a64c-3127-43db-ba14-aa5ceb292721)
@@ -542,7 +545,6 @@ In addition we have special functions for accessing the data in context: `OBJREF
 - [ ] [TYPE](https://support.office.com/en-us/article/type-function-45b4e688-4bc3-48b3-a105-ffa892995899)
 - [ ] [UNICHAR](https://support.office.com/en-us/article/unichar-function-ffeb64f5-f131-44c6-b332-5cd72f0659b8)
 - [ ] [UNICODE](https://support.office.com/en-us/article/unicode-function-adb74aaa-a2a5-4dde-aff6-966e4e81f16f)
-- [ ] [UPPER](https://support.office.com/en-us/article/upper-function-c11f29b3-d1a3-4537-8df6-04d0049963d6)
 - [ ] [VALUE](https://support.office.com/en-us/article/value-function-257d0108-07dc-437d-ae1c-bc2d3953d8c2)
 - [ ] [VAR](https://support.office.com/en-us/article/var-function-1f2b7ab2-954d-4e17-ba2c-9e58b15a7da2)
 - [ ] [VAR.P](https://support.office.com/en-us/article/varp-function-73d1285c-108c-4843-ba5d-a51f90656f3a)

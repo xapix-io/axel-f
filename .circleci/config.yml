@@ -169,7 +169,7 @@ jobs:
           type: shell
           command: |
             cd ~/workspace
-            BUILD_TAG=$(if [ -z ${CIRCLE_TAG+x} ]; then npm-snapshot $CIRCLE_BUILD_NUM; else echo "$CIRCLE_TAG"; fi)
+            BUILD_TAG=$(if [ -z ${CIRCLE_TAG+x} ]; then npm-snapshot $CIRCLE_BUILD_NUM; else echo "latest"; fi)
             npm publish --tag $BUILD_TAG
 
 workflows:
