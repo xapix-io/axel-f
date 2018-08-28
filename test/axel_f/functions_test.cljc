@@ -135,7 +135,8 @@
     (t/are [x y] (t/is (= x (sut/run (str "AVERAGE(" y ")") {:foo [1 2 3] :bar []})))
       2 "{1,2,3}"
       nil "bar"
-      2 "foo")))
+      2 "foo"
+      4/3 "1, 2, TRUE")))
 
 (t/deftest AND
 
