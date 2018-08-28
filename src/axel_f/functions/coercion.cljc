@@ -11,7 +11,8 @@
                   :cljs js/parseFloat) maybe-number)]
         (when (and (number? n) #?(:cljs (not (js/isNaN n))))
           n))
-      (catch Throwable e
+      (catch #?(:clj Throwable
+                :cljs js/Error) e
         nil))
 
     (boolean? maybe-number)

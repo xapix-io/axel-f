@@ -3,7 +3,6 @@
                :cljs [cljs.test :as t :include-macros true])
             [axel-f.core :as sut]))
 
-
 (t/deftest nested-function-test
   (t/testing "nested function calls"
     (let [[fncall & _] (last (sut/compile "SUM(SUM(1,2,3),5)") )]
@@ -32,7 +31,7 @@
              (last (sut/compile "SUM( 1, 2,3 )")))))
   )
 
-(t/deftest ROUND
+(t/deftest round-function-test
 
   (t/testing "ROUND function should work as expected"
 
@@ -57,7 +56,7 @@
               "Function ROUND parameter 2 expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "ROUND(123123.123, \"foo\")")))))
 
-(t/deftest COUNT
+(t/deftest count-function-test
 
   (t/testing "COUNT function should work as expected"
 
@@ -67,7 +66,7 @@
       1 "{1}"
       3 "foo")))
 
-(t/deftest MIN
+(t/deftest min-function-test
 
   (t/testing "MIN function should work as expected"
 
@@ -79,7 +78,7 @@
               :reason "Function MIN parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "MIN(\"foo\")")))))
 
-(t/deftest MAX
+(t/deftest max-function-test
 
   (t/testing "MAX function should work as expected"
 
@@ -91,7 +90,7 @@
               :reason "Function MAX parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "MAX(\"foo\")")))))
 
-(t/deftest SUM
+(t/deftest sum-function-test
 
   (t/testing "SUM function should work as expected"
 
@@ -109,7 +108,7 @@
               :reason "Function SUM parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "SUM(\"foo\")")))))
 
-(t/deftest CONCATENATE
+(t/deftest concatenate-function-test
 
   (t/testing "CONCATENATE function should work as expected"
 
@@ -118,7 +117,7 @@
       "2" "foo[1]"
       "123" "foo")))
 
-(t/deftest IF
+(t/deftest if-function-test
 
   (t/testing "IF function should work as expected"
 
@@ -128,7 +127,7 @@
       1 "True, 1"
       nil "False, 1")))
 
-(t/deftest AVERAGE
+(t/deftest average-function-test
 
   (t/testing "AVERAGE function should work as expected"
 
@@ -138,7 +137,7 @@
       2 "foo"
       1 "1, 1, TRUE")))
 
-(t/deftest AND
+(t/deftest and-function-test
 
   (t/testing "AND function should work as expected"
 
@@ -148,7 +147,7 @@
       true "COUNT(foo)"
       false "AVERAGE(foo) < COUNT(bar)")))
 
-(t/deftest OR
+(t/deftest or-function-test
 
   (t/testing "OR function should work as expected"
 
@@ -158,7 +157,7 @@
       true "COUNT(foo)"
       false "AVERAGE(foo) < COUNT(bar)")))
 
-(t/deftest NOT
+(t/deftest not-function-test
 
   (t/testing "NOT function should work as expected"
 
@@ -167,7 +166,7 @@
       false "True"
       true "False")))
 
-(t/deftest OBJREF
+(t/deftest objref-function-test
 
   (t/testing "OBJREF function should work as expected"
 

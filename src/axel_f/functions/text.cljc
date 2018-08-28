@@ -28,7 +28,7 @@
 ;; (defn asc-fn [])
 
 (defn char-fn [number]
-  (if (number? number)
+  (if-let [number (some-> number coercion/excel-number int)]
     (if (< 0 number 65536)
       #?(:clj (-> number char str)
          :cljs (js/String.fromCharCode number))
@@ -36,36 +36,34 @@
     (throw (error/error "#VALUE!" (str "Function CHAR parameter 1 expects number values. But '" number "' is a text.")))))
 
 (defn code-fn [text]
-  #?(:clj (-> text first int)
-     :cljs (.charCodeAt text 0)))
+  (if-let [text (coercion/excel-str text)]
+    #?(:clj (some-> text first int)
+       :cljs (.charCodeAt text 0))))
 
 (defn dollar-fn
   ([number] (dollar-fn number 2))
   ([number number-of-places]
-   (cond
-     (not (number? number))
-     (throw (error/error "#VALUE!" "Function DOLLAR parameter 1 expects number values."))
-
-     (not (number? number-of-places))
-     (throw (error/error "#VALUE!" "Function DOLLAR parameter 2 expects number values."))
-
-     :otherwise
-     (let [number (double (math/round-fn number number-of-places))
-           fmt (if (< number-of-places 0)
-                 "%.0f"
-                 (str "%." number-of-places "f"))]
-       (str "$" #?(:clj (format fmt number)
-                   :cljs (gstring/format fmt number)))))))
+   (if-let [number (coercion/excel-number number)]
+     (if-let [number-of-places (coercion/excel-number number-of-places)]
+       (let [number (double (math/round-fn number number-of-places))
+             fmt (if (< number-of-places 0)
+                   "%.0f"
+                   (str "%." number-of-places "f"))]
+         (str "$" #?(:clj (format fmt number)
+                     :cljs (gstring/format fmt number))))
+       (throw (error/error "#VALUE!" "Function DOLLAR parameter 2 expects number values.")))
+     (throw (error/error "#VALUE!" "Function DOLLAR parameter 1 expects number values.")))))
 
 (defn exact-fn [str1 str2]
-  (= str1 str2))
+  (= (coercion/excel-str str1)
+     (coercion/excel-str str2)))
 
 (defn find-fn
   ([substr str] (find-fn substr str 0))
   ([substr str from-index]
    (some-> str
            (string/index-of substr from-index)
-           (inc))))
+           inc)))
 
 ;; TODO
 ;; (defn fixed-fn [])
