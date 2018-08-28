@@ -76,7 +76,7 @@
       1 "foo")
 
     (t/is (= {:type "#VALUE!"
-              :reason "Function MIN parameters expects number values."}
+              :reason "Function MIN parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "MIN(\"foo\")")))))
 
 (t/deftest MAX
@@ -88,7 +88,7 @@
       3 "foo")
 
     (t/is (= {:type "#VALUE!"
-              :reason "Function MAX parameters expects number values."}
+              :reason "Function MAX parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "MAX(\"foo\")")))))
 
 (t/deftest SUM

@@ -7,3 +7,9 @@
                     {:reason reason})
                   (when data
                     {:data data}))))
+
+(defn format-not-a-number-error [fnname arg-position value]
+  (str "Function " fnname " parameter "
+       arg-position
+       (when arg-position " ")
+       "expects number values. But '" value "' is a text and cannot be coerced to a number."))
