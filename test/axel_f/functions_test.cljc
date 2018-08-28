@@ -136,7 +136,7 @@
       2 "{1,2,3}"
       nil "bar"
       2 "foo"
-      4/3 "1, 2, TRUE")))
+      1 "1, 1, TRUE")))
 
 (t/deftest AND
 
