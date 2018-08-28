@@ -32,7 +32,7 @@
                             n
                             (throw (error/error "#VALUE!" (error/format-not-a-number-error "MAX" nil n))))))
         tr-flatten-numbers (flatten-numbers tr-coercer)]
-    (reduce max (eduction tr-flatten-numbers items))))
+    (apply max (into [] tr-flatten-numbers items))))
 
 (defn min-fn [& items]
   (let [tr-coercer (map (fn [n]
@@ -40,4 +40,4 @@
                             n
                             (throw (error/error "#VALUE!" (error/format-not-a-number-error "MIN" nil n))))))
         tr-flatten-numbers (flatten-numbers tr-coercer)]
-    (reduce min (eduction tr-flatten-numbers items))))
+    (apply min (into [] tr-flatten-numbers items))))
