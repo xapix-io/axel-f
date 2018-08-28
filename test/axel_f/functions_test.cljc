@@ -45,7 +45,17 @@
       123123.12  2
       123123.123 3)
 
-    (t/is (= 123123 (sut/run "ROUND(123123.123)")))))
+    (t/is (= 123123 (sut/run "ROUND(123123.123)")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason
+              "Function ROUND parameter 1 expects number values. But 'foo' is a text and cannot be coerced to a number."}
+             (sut/run "ROUND(\"foo\")")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason
+              "Function ROUND parameter 2 expects number values. But 'foo' is a text and cannot be coerced to a number."}
+             (sut/run "ROUND(123123.123, \"foo\")")))))
 
 (t/deftest COUNT
 
@@ -66,7 +76,7 @@
       1 "foo")
 
     (t/is (= {:type "#VALUE!"
-              :reason "Function MIN parameters expects number values."}
+              :reason "Function MIN parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "MIN(\"foo\")")))))
 
 (t/deftest MAX
@@ -78,20 +88,25 @@
       3 "foo")
 
     (t/is (= {:type "#VALUE!"
-              :reason "Function MAX parameters expects number values."}
+              :reason "Function MAX parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "MAX(\"foo\")")))))
 
 (t/deftest SUM
 
   (t/testing "SUM function should work as expected"
 
-    (t/are [x y] (t/is (= x (sut/run (str "SUM(" y ")") {:foo [1 2 3]})))
+    (t/are [x y] (t/is (= x (sut/run (str "SUM(" y ")") {:foo [1 2 3]
+                                                         :bar ["2.1" 3.9]})))
       6 "foo"
       7 "foo, 1"
-      6 "{1,2,3}")
+      6 "{1,2,3}"
+      1 "'1'"
+      3 "{'1', '2'}"
+      6.0 "bar"
+      1 "TRUE, FALSE")
 
     (t/is (= {:type "#VALUE!"
-              :reason "Function SUM parameters expects number values."}
+              :reason "Function SUM parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "SUM(\"foo\")")))))
 
 (t/deftest CONCATENATE
@@ -120,7 +135,8 @@
     (t/are [x y] (t/is (= x (sut/run (str "AVERAGE(" y ")") {:foo [1 2 3] :bar []})))
       2 "{1,2,3}"
       nil "bar"
-      2 "foo")))
+      2 "foo"
+      1 "1, 1, TRUE")))
 
 (t/deftest AND
 

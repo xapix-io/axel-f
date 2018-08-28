@@ -1,16 +1,11 @@
 (ns axel-f.functions.text
   (:require [axel-f.error :as error]
             [clojure.string :as string]
+            [axel-f.functions.coercion :as coercion]
             [axel-f.functions.math :as math]
             #?@(:cljs
                 [[goog.string :as gstring]
                  [goog.string.format]])))
-
-(defn- excel-str [item]
-  (case item
-    true "TRUE"
-    false "FALSE"
-    (str item)))
 
 (defn- regex-escape [pattern]
   (let [cmap {\. "\\."
@@ -78,7 +73,7 @@
 (defn join-fn [delimeter & items]
   (->> items
       flatten
-      (map excel-str)
+      (map coercion/excel-str)
       (string/join delimeter)))
 
 (defn left-fn
@@ -92,14 +87,14 @@
   (let [text (cond
                (string? text) text
                (seqable? text) (first text))]
-    (count (excel-str text))))
+    (count (coercion/excel-str text))))
 
 (defn lower-fn [text]
-  (string/lower-case (excel-str text)))
+  (string/lower-case (coercion/excel-str text)))
 
 (defn mid-fn [text start number]
   (if (and (number? start) (number? number))
-    (let [text (excel-str text)
+    (let [text (coercion/excel-str text)
           text-end (count text)
           params-start (dec start)
           params-end (+ (dec start) number)
@@ -113,7 +108,7 @@
     (throw (error/error "#VALUE!" "Function MID parameter 1 and 2 expects number values."))))
 
 (defn proper-fn [text]
-  (string/replace (excel-str text) #"\w*" string/capitalize))
+  (string/replace (coercion/excel-str text) #"\w*" string/capitalize))
 
 ;; TODO
 ;; (defn regexextract-fn [])
@@ -129,7 +124,7 @@
   (if (and (number? position)
            (number? length))
     (str (subs text 0 (dec position))
-         (excel-str new-text)
+         (coercion/excel-str new-text)
          (subs text (+ (dec position) length)))
     (throw (error/error "#VALUE!" "Function REPLACE parameters 2 and 3 expects number values."))))
 
@@ -176,11 +171,11 @@
            remove-empty-text)
      not-empty
      identity)
-   (string/split (excel-str text)
+   (string/split (coercion/excel-str text)
                  (re-pattern (if split-by-each
                                (string/join "|" (map regex-escape
-                                                     (vec (excel-str delimeter))))
-                               (regex-escape (excel-str delimeter))))
+                                                     (vec (coercion/excel-str delimeter))))
+                               (regex-escape (coercion/excel-str delimeter))))
                  -1)))
 
 (defn- substitute-fn* [text old-text new-text occurrence]
@@ -208,9 +203,9 @@
     :otherwise
     (let [[text old-text new-text & [occurrence]] args]
       (substitute-fn*
-       (excel-str text)
-       (excel-str old-text)
-       (excel-str new-text)
+       (coercion/excel-str text)
+       (coercion/excel-str old-text)
+       (coercion/excel-str new-text)
        occurrence))))
 
 ;; TODO
@@ -221,12 +216,12 @@
 
 (defn trim-fn [& args]
   (string/trim
-   (string/replace (-> args first excel-str) #"\ +" " ")))
+   (string/replace (-> args first coercion/excel-str) #"\ +" " ")))
 
 (defn upper-fn [& args]
   (-> args
       first
-      excel-str
+      coercion/excel-str
       string/upper-case))
 
 ;; TODO
