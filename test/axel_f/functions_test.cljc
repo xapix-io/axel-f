@@ -45,7 +45,17 @@
       123123.12  2
       123123.123 3)
 
-    (t/is (= 123123 (sut/run "ROUND(123123.123)")))))
+    (t/is (= 123123 (sut/run "ROUND(123123.123)")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason
+              "Function ROUND parameter 1 expects number values. But 'foo' is a text and cannot be coerced to a number."}
+             (sut/run "ROUND(\"foo\")")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason
+              "Function ROUND parameter 2 expects number values. But 'foo' is a text and cannot be coerced to a number."}
+             (sut/run "ROUND(123123.123, \"foo\")")))))
 
 (t/deftest COUNT
 
@@ -92,7 +102,8 @@
       6 "{1,2,3}"
       1 "'1'"
       3 "{'1', '2'}"
-      6.0 "bar")
+      6.0 "bar"
+      1 "TRUE, FALSE")
 
     (t/is (= {:type "#VALUE!"
               :reason "Function SUM parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
