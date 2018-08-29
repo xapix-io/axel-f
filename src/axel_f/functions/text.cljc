@@ -38,7 +38,8 @@
 (defn code-fn [text]
   (if-let [text (coercion/excel-str text)]
     #?(:clj (some-> text first int)
-       :cljs (.charCodeAt text 0))))
+       :cljs (let [res (.charCodeAt text 0)]
+               (when-not (js/isNaN res) res)))))
 
 (defn dollar-fn
   ([number] (dollar-fn number 2))
