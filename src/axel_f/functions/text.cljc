@@ -91,19 +91,23 @@
   (string/lower-case (coercion/excel-str text)))
 
 (defn mid-fn [text start number]
-  (if (and (number? start) (number? number))
-    (let [text (coercion/excel-str text)
-          text-end (count text)
-          params-start (dec start)
-          params-end (+ (dec start) number)
-          start (if (> params-start text-end)
+  (if-let [start (coercion/excel-number start)]
+    (if-let [number (coercion/excel-number number)]
+      (let [text (coercion/excel-str text)
+            text-end (count text)
+            params-start (dec start)
+            params-end (+ (dec start) number)
+            start (if (> params-start text-end)
+                    text-end
+                    params-start)
+            end (if (> params-end text-end)
                   text-end
-                  params-start)
-          end (if (> params-end text-end)
-                text-end
-                params-end)]
-      (subs text start end))
-    (throw (error/error "#VALUE!" "Function MID parameter 1 and 2 expects number values."))))
+                  params-end)]
+        (subs text start end))
+      (throw (error/error "#VALUE!"
+                          (error/format-not-a-number-error "MID" 3 number))))
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-number-error "MID" 2 start)))))
 
 (defn proper-fn [text]
   (string/replace (coercion/excel-str text) #"\w*" string/capitalize))
@@ -119,18 +123,24 @@
 
 (defn replace-fn
   [text position length new-text]
-  (if (and (number? position)
-           (number? length))
-    (str (subs text 0 (dec position))
-         (coercion/excel-str new-text)
-         (subs text (+ (dec position) length)))
-    (throw (error/error "#VALUE!" "Function REPLACE parameters 2 and 3 expects number values."))))
+  (if-let [position (coercion/excel-number position)]
+    (if-let [length (coercion/excel-number length)]
+      (str (subs text 0 (dec position))
+           (coercion/excel-str new-text)
+           (subs text (+ (dec position) length)))
+      (throw (error/error "#VALUE!"
+                          (error/format-not-a-number-error "REPLACE" 3 length))))
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-number-error "REPLACE" 2 position)))))
 
 (defn rept-fn
   [text number]
-  (->> (constantly text)
-      (repeatedly number)
-      (apply str)))
+  (if-let [number (coercion/excel-number number)]
+    (->> (constantly text)
+        (repeatedly number)
+        (apply str))
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-number-error "REPT" 2 number)))))
 
 (defn right-fn
   ([text] (right-fn text 1))
@@ -141,19 +151,21 @@
                    number)))))
 
 (defn roman-fn [n]
-  (if (and (number? n)
-           (<= 0 n 3999))
-    (let [n (int n)
-          alphabet (sort-by val >
-                            {\I   1   \V   5   \X   10   \L   50
-                             \C   100 \D   500 \M   1000 "IV" 4
-                             "IX" 9   "XL" 40  "XC" 90   "CD" 400
-                             "CM" 900})]
-      (loop [res "" n n]
-        (if (zero? n) res
-            (let [[rom arab] (some #(when (<= (val %) n) %) alphabet)]
-              (recur (str res rom) (- n arab))))))
-    (throw (error/error "#VALUE!" (str "Function ROMAN parameter 1 value is " n ". Valid values are between 1 and 3999 inclusive.")))))
+  (if-let [n (coercion/excel-number n)]
+    (if (<= 0 n 3999)
+      (let [n (int n)
+            alphabet (sort-by val >
+                              {\I   1   \V   5   \X   10   \L   50
+                               \C   100 \D   500 \M   1000 "IV" 4
+                               "IX" 9   "XL" 40  "XC" 90   "CD" 400
+                               "CM" 900})]
+        (loop [res "" n n]
+          (if (zero? n) res
+              (let [[rom arab] (some #(when (<= (val %) n) %) alphabet)]
+                (recur (str res rom) (- n arab))))))
+      (throw (error/error "#VALUE!" (str "Function ROMAN parameter 1 value is " n ". Valid values are between 1 and 3999 inclusive."))))
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-number-error "ROMAN" 1 n)))))
 
 (defn search-fn
   ([find-text within-text] (search-fn find-text within-text 0))
@@ -179,32 +191,28 @@
 (defn- substitute-fn* [text old-text new-text occurrence]
   (if (empty? old-text)
     text
-    (if (nil? occurrence)
+    (if (= occurrence :all)
       (string/replace text (re-pattern old-text) new-text)
-      (loop [i 1
-             index (string/index-of text old-text)]
-        (if index
-          (if (= i occurrence)
-            (str (subs text 0 index)
-                 new-text
-                 (subs text (+ index (count old-text))))
-            (recur (inc i) (string/index-of text old-text (inc index))))
-          text)))))
+      (let [occurrence (int occurrence)]
+        (loop [i 1 index (string/index-of text old-text)]
+          (if index
+            (if (= i occurrence)
+              (str (subs text 0 index)
+                   new-text
+                   (subs text (+ index (count old-text))))
+              (recur (inc i) (string/index-of text old-text (inc index))))
+            text))))))
 
-(defn substitute-fn [& args]
-  (cond
-
-    (and (nth args 3 nil)
-         (not (integer? (nth args 3))))
-    (throw (error/error "#VALUE!" (str "Function SUBSTITUTE parameter 4 expects number values. But '" (nth args 3) "' is a text and cannot be coerced to a number.")))
-
-    :otherwise
-    (let [[text old-text new-text & [occurrence]] args]
-      (substitute-fn*
-       (coercion/excel-str text)
-       (coercion/excel-str old-text)
-       (coercion/excel-str new-text)
-       occurrence))))
+(defn substitute-fn [text old-text new-text & [occurrence]]
+  (if-let [occurrence (cond
+                        (nil? occurrence) :all
+                        :otherwise (coercion/excel-number occurrence))]
+    (substitute-fn* (coercion/excel-str text)
+                    (coercion/excel-str old-text)
+                    (coercion/excel-str new-text)
+                    occurrence)
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-number-error "SUBSTITUTE" 4 occurrence)))))
 
 ;; TODO
 ;; (defn t-fn [])
