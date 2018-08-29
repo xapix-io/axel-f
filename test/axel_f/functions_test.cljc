@@ -3,7 +3,6 @@
                :cljs [cljs.test :as t :include-macros true])
             [axel-f.core :as sut]))
 
-
 (t/deftest nested-function-test
   (t/testing "nested function calls"
     (let [[fncall & _] (last (sut/compile "SUM(SUM(1,2,3),5)") )]
@@ -32,7 +31,7 @@
              (last (sut/compile "SUM( 1, 2,3 )")))))
   )
 
-(t/deftest ROUND
+(t/deftest round-function-test
 
   (t/testing "ROUND function should work as expected"
 
@@ -57,7 +56,7 @@
               "Function ROUND parameter 2 expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "ROUND(123123.123, \"foo\")")))))
 
-(t/deftest COUNT
+(t/deftest count-function-test
 
   (t/testing "COUNT function should work as expected"
 
@@ -67,7 +66,7 @@
       1 "{1}"
       3 "foo")))
 
-(t/deftest MIN
+(t/deftest min-function-test
 
   (t/testing "MIN function should work as expected"
 
@@ -79,7 +78,7 @@
               :reason "Function MIN parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "MIN(\"foo\")")))))
 
-(t/deftest MAX
+(t/deftest max-function-test
 
   (t/testing "MAX function should work as expected"
 
@@ -91,7 +90,7 @@
               :reason "Function MAX parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "MAX(\"foo\")")))))
 
-(t/deftest SUM
+(t/deftest sum-function-test
 
   (t/testing "SUM function should work as expected"
 
@@ -109,7 +108,7 @@
               :reason "Function SUM parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "SUM(\"foo\")")))))
 
-(t/deftest CONCATENATE
+(t/deftest concatenate-function-test
 
   (t/testing "CONCATENATE function should work as expected"
 
@@ -118,7 +117,7 @@
       "2" "foo[1]"
       "123" "foo")))
 
-(t/deftest IF
+(t/deftest if-function-test
 
   (t/testing "IF function should work as expected"
 
@@ -128,7 +127,7 @@
       1 "True, 1"
       nil "False, 1")))
 
-(t/deftest AVERAGE
+(t/deftest average-function-test
 
   (t/testing "AVERAGE function should work as expected"
 
@@ -138,7 +137,7 @@
       2 "foo"
       1 "1, 1, TRUE")))
 
-(t/deftest AND
+(t/deftest and-function-test
 
   (t/testing "AND function should work as expected"
 
@@ -148,7 +147,7 @@
       true "COUNT(foo)"
       false "AVERAGE(foo) < COUNT(bar)")))
 
-(t/deftest OR
+(t/deftest or-function-test
 
   (t/testing "OR function should work as expected"
 
@@ -158,7 +157,7 @@
       true "COUNT(foo)"
       false "AVERAGE(foo) < COUNT(bar)")))
 
-(t/deftest NOT
+(t/deftest not-function-test
 
   (t/testing "NOT function should work as expected"
 
@@ -167,7 +166,7 @@
       false "True"
       true "False")))
 
-(t/deftest OBJREF
+(t/deftest objref-function-test
 
   (t/testing "OBJREF function should work as expected"
 
@@ -182,8 +181,9 @@
     (t/is (= 65
              (sut/run "CODE(\"A\")")))
     (t/is (= 1000
-             (sut/run "CODE(\"Ϩ\")"))))
-  )
+             (sut/run "CODE(\"Ϩ\")")))
+
+    (t/is (nil? (sut/run "CODE(\"\")")))))
 
 (t/deftest concatenate-function-test
   (t/testing "CONCATENATE function"
@@ -253,66 +253,140 @@
     (let [context {:data "Fluid Flow"}]
       (t/is (= "Fluid"
                (sut/run "MID(data, 1, 5)" context)))
+
       (t/is (= "Flow"
                (sut/run "MID(data, 7, 20)" context)))
+
       (t/is (= ""
                (sut/run "MID(data, 20, 50)" context)))
 
-      )))
+      (t/is (= {:type "#VALUE!"
+                :reason "Function MID parameter 2 expects number values. But 'foo' is a text and cannot be coerced to a number."}
+               (sut/run "MID(data, \"foo\", 0)")))
+
+      (t/is (= {:type "#VALUE!"
+                :reason
+                "Function MID parameter 3 expects number values. But 'foo' is a text and cannot be coerced to a number."}
+               (sut/run "MID(data, 2, \"foo\")"))))))
 
 (t/deftest proper-function-test
   (t/testing "PROPER function"
     (t/is (= "A Title Case"
              (sut/run "PROPER(\"a title case\")")))
+
     (t/is (= "True"
              (sut/run "PROPER(true)")))
+
     (t/is (= "90"
              (sut/run "PROPER(90)")))
+
     (t/is (= "Foo-Bar.Baz"
-             (sut/run "PROPER(\"foo-bar.baz\")")))
-    ))
+             (sut/run "PROPER(\"foo-bar.baz\")")))))
 
 (t/deftest replace-function-test
   (t/testing "REPLACE function"
     (t/is (= "abcde*k"
              (sut/run "REPLACE(\"abcdefghijk\", 6, 5, \"*\")")))
+
     (t/is (= "2010"
              (sut/run "REPLACE(\"2009\", 3, 2, \"10\")")))
+
     (t/is (= "@456"
              (sut/run "REPLACE(\"123456\", 1, 3, \"@\")")))
 
-    ))
+    (t/is (= {:type "#VALUE!"
+              :reason
+              "Function REPLACE parameter 2 expects number values. But 'foo' is a text and cannot be coerced to a number."}
+             (sut/run "REPLACE(\"123123\", \"foo\", 5, \"*\")")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason
+              "Function REPLACE parameter 3 expects number values. But 'foo' is a text and cannot be coerced to a number."}
+             (sut/run "REPLACE(\"123123\", 1, \"foo\", \"*\")")))))
 
 (t/deftest rept-function-test
   (t/testing "REPT function"
     (t/is (= "foo foo foo "
              (sut/run "REPT(\"foo \", 3)")))
-    ))
+
+    (t/is (= {:type "#VALUE!"
+              :reason
+              "Function REPT parameter 2 expects number values. But 'bar' is a text and cannot be coerced to a number."}
+             (sut/run "REPT(\"foo\", \"bar\")")))))
 
 (t/deftest right-function-test
   (t/testing "RIGHT function"
     (t/is (= "Price"
              (sut/run "RIGHT(\"Sale Price\", 5)")))
+
     (t/is (= "r"
              (sut/run "RIGHT(\"Stock Number\")")))
-    ))
+
+    (t/is (= "Price"
+             (sut/run "RIGHT(\"Price\", 10)")))))
+
+(t/deftest roman-function-test
+  (t/testing "ROMAN function"
+
+    (t/are [x y] (= y (sut/run (str "ROMAN(" x ")")))
+      5     "V"
+      9     "IX"
+      12    "XII"
+      16    "XVI"
+      29    "XXIX"
+      44    "XLIV"
+      45    "XLV"
+      68    "LXVIII"
+      83    "LXXXIII"
+      97    "XCVII"
+      99    "XCIX"
+      500   "D"
+      501   "DI"
+      649   "DCXLIX"
+      798   "DCCXCVIII"
+      891   "DCCCXCI"
+      1000  "M"
+      1004  "MIV"
+      1006  "MVI"
+      1023  "MXXIII"
+      2014  "MMXIV"
+      3999  "MMMCMXCIX")
+
+    (t/is (= {:type "#VALUE!"
+              :reason
+              "Function ROMAN parameter 1 value is -1. Valid values are between 1 and 3999 inclusive."}
+             (sut/run "ROMAN(-1)")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason
+              "Function ROMAN parameter 1 value is 4000. Valid values are between 1 and 3999 inclusive."}
+             (sut/run "ROMAN(4000)")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason "Function ROMAN parameter 1 expects number values. But 'foo' is a text and cannot be coerced to a number."}
+             (sut/run "ROMAN(\"foo\")")))))
 
 (t/deftest search-function-test
   (t/testing "SEARCH function"
     (t/is (= 7
              (sut/run "SEARCH(\"e\", \"Statements\", 6)")))
+
     (t/is (= 8
              (sut/run "SEARCH(\"margin\", \"Profit Margin\")")))
+
     (t/is (= 1
-             (sut/run "SEARCH(\"ba\", \"bar\")")))
-    ))
+             (sut/run "SEARCH(\"ba\", \"bar\")")))))
 
 (t/deftest split-function-test
   (t/testing "SPLIT function"
     (t/is (= ["foo" "bar" "baz"]
              (sut/run "SPLIT(\"foo/bar/baz\", \"/\")")))
-    ))
 
+    (t/is (= ["foo" "bar" "baz"]
+             (sut/run "SPLIT(\"foo!bar,baz\", \"!,\", TRUE)")))
+
+    (t/is (= ["foo" "" "baz"]
+             (sut/run "SPLIT(\"foonnbaz\", \"n\", FALSE, FALSE)")))))
 
 (t/deftest substitute-function-test
   (t/testing "SUBSTITUTE function"
@@ -332,7 +406,10 @@
              (sut/run "SUBSTITUTE(\"James Alateras\", \"im\", \"ames\", 2)")))
     (t/is (= "1"
              (sut/run "SUBSTITUTE(1, \"foo\", \"bar\")")))
-    ))
+
+    (t/is (= {:type "#VALUE!"
+              :reason "Function SUBSTITUTE parameter 4 expects number values. But 'baz' is a text and cannot be coerced to a number."}
+             (sut/run "SUBSTITUTE(1, \"foo\", \"bar\", \"baz\")")))))
 
 (t/deftest trim-function-test
   (t/testing "TRIM function"
