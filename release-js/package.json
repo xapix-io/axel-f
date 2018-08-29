@@ -1,6 +1,6 @@
 {
     "name": "axel-f",
-    "version": "0.2.1-SNAPSHOT",
+    "version": "0.2.1",
     "description": "axel-f is an engine that can evaluate excel-like expressions.",
     "homepage": "https://github.com/xapix-io/axel-f",
     "author": "Kirill Chernyshov (https://github.com/DeLaGuardo)",
@@ -21,7 +21,7 @@
     "bugs": {
         "url": "https://github.com/xapix-io/axel-f/issues"
     },
-    "license": "EPL-2.0",
+    "license": "EPL-1.0",
     "main": "./axel_f.js",
     "repository": {
         "type": "git",
