@@ -21,8 +21,29 @@
       (or (get cmap pattern) pattern)
       (string/escape pattern cmap))))
 
-;; TODO
-;; (defn arabic-fn [roman-numeral])
+(def roman-numerals
+  {\I   1   \V   5   \X   10   \L   50
+   \C   100 \D   500 \M   1000 "IV" 4
+   "IX" 9   "XL" 40  "XC" 90   "CD" 400
+   "CM" 900})
+
+(defn arabic-fn [s]
+  (let [sign (if (string/starts-with? s "-")
+               -1 1)
+        s (partition-all 2 (vec (string/replace-first s #"-" "")))]
+    (loop [acc 0 current (first s) other (rest s)]
+      (if current
+        (let [is-pair? (get roman-numerals (apply str current))
+              value (or is-pair?
+                        (get roman-numerals (first current)))]
+          (if is-pair?
+            (recur (+ acc value) (first other) (rest other))
+            (let [new-other (->> (concat current other)
+                                flatten
+                                rest
+                                (partition-all 2))]
+              (recur (+ acc value) (first new-other) (rest new-other)))))
+        (* sign acc)))))
 
 ;; TODO
 ;; (defn asc-fn [])
@@ -68,12 +89,6 @@
 
 ;; TODO
 ;; (defn fixed-fn [])
-
-(defn join-fn [delimeter & items]
-  (->> items
-      flatten
-      (map coercion/excel-str)
-      (string/join delimeter)))
 
 (defn left-fn
   ([text] (left-fn text 1))
@@ -155,11 +170,7 @@
   (if-let [n (coercion/excel-number n)]
     (if (<= 0 n 3999)
       (let [n (int n)
-            alphabet (sort-by val >
-                              {\I   1   \V   5   \X   10   \L   50
-                               \C   100 \D   500 \M   1000 "IV" 4
-                               "IX" 9   "XL" 40  "XC" 90   "CD" 400
-                               "CM" 900})]
+            alphabet (sort-by val > roman-numerals)]
         (loop [res "" n n]
           (if (zero? n) res
               (let [[rom arab] (some #(when (<= (val %) n) %) alphabet)]
@@ -231,8 +242,17 @@
       coercion/excel-str
       string/upper-case))
 
-;; TODO
-;; (defn value-fn [])
+(defn value-fn [s]
+  (or
+   (when-not (boolean? s)
+     (coercion/excel-number s))
+   (throw (error/error "#VALUE!" (str "VALUE parameter '" (coercion/excel-str s) "' cannot be parsed to number.")))))
 
-;; TODO
-;; (defn textjoin-fn [])
+(defn textjoin-fn [delimeter ignore-empty & items]
+  (->> items
+      flatten
+      (map coercion/excel-str)
+      (filter (if ignore-empty
+                not-empty
+                identity))
+      (string/join delimeter)))

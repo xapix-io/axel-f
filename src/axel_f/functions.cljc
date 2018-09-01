@@ -66,6 +66,10 @@
                   :desc "Returns the text with the non-printable ASCII characters removed."
                   :args [{:desc "The text whose non-printable characters are to be removed."}]}
 
+   "ARABIC"      {:impl #'text/arabic-fn
+                  :desc "Computes the value of a Roman numeral."
+                  :args [{:desc "The Roman numeral to format, whose value must be between 1 and 3999, inclusive."}]}
+
    "CHAR"        {:impl #'text/char-fn
                   :desc "Convert a number into a character according to the current Unicode table."
                   :args [{:desc "The number of the character to look up from the current Unicode table in decimal format."}]}
@@ -74,7 +78,7 @@
                   :desc "Returns the numeric Unicode map value of the first character in the string provided."
                   :args [{:desc "The string whose first character's Unicode map value will be returned."}]}
 
-   "CONCATENATE" {:impl (partial text/join-fn "")
+   "CONCATENATE" {:impl (partial text/textjoin-fn "" false)
                   :desc "Appends strings to one another."
                   :args [{:desc "The initial string."}
                          {:desc "More strings to append in sequence."
@@ -99,7 +103,8 @@
                          {:desc "The character within arg2 at which to start the search."
                           :opt true}]}
 
-   "JOIN"        {:impl #'text/join-fn
+   "JOIN"        {:impl (fn [delimeter & args]
+                          (apply text/textjoin-fn delimeter false args))
                   :desc "Concatenates the elements of one or more one-dimensional arrays using a specified delimiter."
                   :args [{:desc "The character or string to place between each concatenated value."}
                          {:desc "The value or values to be appended using arg1."}
@@ -184,6 +189,19 @@
    "UPPER"       {:impl #'text/upper-fn
                   :desc "Converts a specified string to uppercase."
                   :args [{:desc "The string to convert to uppercase."}]}
+
+   "VALUE"       {:impl #'text/value-fn
+                  :desc "Converts a string in any of the date, time or number formats that axel-f understands into a number."
+                  :args [{:desc "The string containing the value to be converted."}]}
+
+   "TEXTJOIN"    {:impl #'text/textjoin-fn
+                  :desc "Combines the text from multiple strings and/or arrays, with a specifiable delimiter separating the different texts."
+                  :args [{:desc "A string, possibly empty, or a reference to a valid string. If empty, text will be simply concatenated."}
+                         {:desc "A boolean; if TRUE, empty strings selected in the text arguments won't be included in the result."}
+                         {:desc "Any text item. This could be a string, or an array of strings in a range."}
+                         {:desc "Additional text item(s)."
+                          :opt true
+                          :repeatable true}]}
 
    "COUNT"       {:impl #'stat/count-fn
                   :desc "Returns a count of the number of numeric values in a dataset."
