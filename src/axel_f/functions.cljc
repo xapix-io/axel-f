@@ -136,6 +136,22 @@
                   :desc "Capitalizes each word in a specified string."
                   :args [{:desc "The text which will be returned with the first letter of each word in uppercase and all other letters in lowercase."}]}
 
+   "REGEXEXTRACT" {:impl #'text/regexextract-fn
+                   :desc "Extracts matching substrings according to a regular expression."
+                   :args [{:desc "The input text."}
+                          {:desc "The first part of arg1 that matches this expression will be returned."}]}
+
+   "REGEXMATCH"  {:impl #'text/regexmatch-fn
+                  :desc "Whether a piece of text matches a regular expression."
+                  :args [{:desc "The text to be tested against the regular expression."}
+                         {:desc "The regular expression to test the text against."}]}
+
+   "REGEXREPLACE" {:impl #'text/regexreplace-fn
+                   :desc "Replaces part of a text string with a different text string using regular expressions."
+                   :args [{:desc "The text, a part of which will be replaced."}
+                          {:desc "The regular expression. All matching instances in text will be replaced."}
+                          {:desc "The text which will be inserted into the original text."}]}
+
    "REPLACE"     {:impl #'text/replace-fn
                   :desc "Replaces part of a text string with a different text string."
                   :args [{:desc "The text, a part of which will be replaced."}
@@ -181,6 +197,10 @@
                          {:desc "The string that will replace search_for."}
                          {:desc "The instance of arg2 within arg1 to replace with arg3. By default, all occurrences of arg2 are replaced; however, if arg4 is specified, only the indicated instance of arg2 is replaced."
                           :opt true}]}
+
+   "T"           {:impl #'text/t-fn
+                  :desc "Returns string arguments as text."
+                  :args [{:desc "The argument to be converted to text."}]}
 
    "TRIM"        {:impl #'text/trim-fn
                   :desc "Removes leading, trailing, and repeated spaces in text."
