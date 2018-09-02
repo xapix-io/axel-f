@@ -284,6 +284,9 @@
 
 (defn value-fn [s]
   (or
+   (when (and (seqable? s)
+              (empty? s))
+     0)
    (when-not (boolean? s)
      (coercion/excel-number s))
    (throw (error/error "#VALUE!" (str "VALUE parameter '" (coercion/excel-str s) "' cannot be parsed to number.")))))

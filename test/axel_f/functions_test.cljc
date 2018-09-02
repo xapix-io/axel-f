@@ -283,6 +283,67 @@
     (t/is (= "Foo-Bar.Baz"
              (sut/run "PROPER(\"foo-bar.baz\")")))))
 
+(t/deftest regexextract-function-test
+  (t/testing "REGEXEXTRACT function"
+    (t/is (= "826.25"
+             (sut/run "REGEXEXTRACT('The price today is $826.25', '[0-9]*\\.[0-9]+[0-9]+')")))
+
+    (t/is (= "Content"
+             (sut/run "REGEXEXTRACT('(Content) between brackets', '\\(([A-Za-z]+)\\)')")))
+
+    (t/is (= nil
+             (sut/run "REGEXEXTRACT('FOO', '[a-z]+')")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason "Function REGEXEXTRACT parameter 1 expects text values. But '123' is a number and cannot be coerced to a string."}
+             (sut/run "REGEXEXTRACT(123, '123')")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason "Function REGEXEXTRACT parameter 2 expects text values. But '123' is a number and cannot be coerced to a string."}
+             (sut/run "REGEXEXTRACT('123', 123)")))))
+
+(t/deftest regexmatch-function-test
+  (t/testing "REGEXMATCH function"
+    (t/is (= true
+             (sut/run "REGEXMATCH('The price today is $826.25', '[0-9]*\\.[0-9]+[0-9]+')")))
+
+    (t/is (= true
+             (sut/run "REGEXMATCH('(Content) between brackets', '\\(([A-Za-z]+)\\)')")))
+
+    (t/is (= false
+             (sut/run "REGEXMATCH('FOO', '[a-z]+')")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason "Function REGEXMATCH parameter 1 expects text values. But '123' is a number and cannot be coerced to a string."}
+             (sut/run "REGEXMATCH(123, '123')")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason "Function REGEXMATCH parameter 2 expects text values. But '123' is a number and cannot be coerced to a string."}
+             (sut/run "REGEXMATCH('123', 123)")))))
+
+(t/deftest regexreplace-function-test
+  (t/testing "REGEXREPLACE function"
+    (t/is (= "The price today is $0.00"
+             (sut/run "REGEXREPLACE('The price today is $826.25', '[0-9]*\\.[0-9]+[0-9]+', '0.00')")))
+
+    (t/is (= "Word between brackets"
+             (sut/run "REGEXREPLACE('(Content) between brackets', '\\(([A-Za-z]+)\\)', 'Word')")))
+
+    (t/is (= "FOO"
+             (sut/run "REGEXREPLACE('FOO', '[a-z]+', 'OOF')")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason "Function REGEXREPLACE parameter 1 expects text values. But '123' is a number and cannot be coerced to a string."}
+             (sut/run "REGEXREPLACE(123, '123', '321')")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason "Function REGEXREPLACE parameter 2 expects text values. But '123' is a number and cannot be coerced to a string."}
+             (sut/run "REGEXREPLACE('123', 123, '321')")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason "Function REGEXREPLACE parameter 3 expects text values. But '321' is a number and cannot be coerced to a string."}
+             (sut/run "REGEXREPLACE('123', '123', 321)")))))
+
 (t/deftest replace-function-test
   (t/testing "REPLACE function"
     (t/is (= "abcde*k"
@@ -461,6 +522,14 @@
               :reason "Function SUBSTITUTE parameter 4 expects number values. But 'baz' is a text and cannot be coerced to a number."}
              (sut/run "SUBSTITUTE(1, \"foo\", \"bar\", \"baz\")")))))
 
+(t/deftest t-function-text
+  (t/testing "T function"
+
+    (t/is (= "foo"
+             (sut/run "T('foo')")))
+
+    (t/is (nil? (sut/run "T(123)")))))
+
 (t/deftest trim-function-test
   (t/testing "TRIM function"
     (t/is (= "more spaces"
@@ -474,6 +543,22 @@
     (t/is (= "1"
              (sut/run "UPPER(1)")))
     ))
+
+(t/deftest value-function-test
+  (t/testing "VALUE function"
+
+    (t/is (= 123.1
+             (sut/run "VALUE('123.1')")))
+
+    (t/is (= 0
+             (sut/run "VALUE('')")))
+
+    (t/is (= 0
+             (sut/run "VALUE(0)")))
+
+    (t/is (= {:type "#VALUE!"
+              :reason "VALUE parameter 'TRUE' cannot be parsed to number."}
+             (sut/run "VALUE(TRUE)")))))
 
 (t/deftest count-function-test
   (let [context {:data [1 2 3]}]
