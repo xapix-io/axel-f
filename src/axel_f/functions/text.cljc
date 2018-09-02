@@ -128,14 +128,53 @@
 (defn proper-fn [text]
   (string/replace (coercion/excel-str text) #"\w*" string/capitalize))
 
-;; TODO
-;; (defn regexextract-fn [])
+(defn regexextract-fn [text regular-expression]
+  (cond
+    (not (string? text))
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-string-error "REGEXEXTRACT" 1 text)))
 
-;; TODO
-;; (defn regexmatch-fn [])
+    (not (string? regular-expression))
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-string-error "REGEXEXTRACT" 2 regular-expression)))
 
-;; TODO
-;; (defn regexreplace-fn [])
+    :otherwise
+    (let [res (re-find (re-pattern regular-expression)
+                       text)]
+      (cond
+        (string? res) res
+        (vector? res) (second res)
+        :otherwise res))))
+
+(defn regexmatch-fn [text regular-expression]
+  (cond
+    (not (string? text))
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-string-error "REGEXMATCH" 1 text)))
+
+    (not (string? regular-expression))
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-string-error "REGEXMATCH" 2 regular-expression)))
+
+    :otherwise
+    (boolean (regexextract-fn text regular-expression))))
+
+(defn regexreplace-fn [text regular-expression replacement]
+  (cond
+    (not (string? text))
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-string-error "REGEXREPLACE" 1 text)))
+
+    (not (string? regular-expression))
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-string-error "REGEXREPLACE" 2 regular-expression)))
+
+    (not (string? replacement))
+    (throw (error/error "#VALUE!"
+                        (error/format-not-a-string-error "REGEXREPLACE" 3 replacement)))
+
+    :otherwise
+    (string/replace text (re-pattern regular-expression) replacement)))
 
 (defn replace-fn
   [text position length new-text]
@@ -226,8 +265,9 @@
     (throw (error/error "#VALUE!"
                         (error/format-not-a-number-error "SUBSTITUTE" 4 occurrence)))))
 
-;; TODO
-;; (defn t-fn [])
+(defn t-fn [value]
+  (when (string? value)
+    value))
 
 ;; TODO
 ;; (defn text-fn [])
