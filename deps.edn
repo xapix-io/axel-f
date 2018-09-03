@@ -19,7 +19,7 @@
   :test {:extra-paths ["test"]
          :extra-deps  {org.clojure/test.check {:mvn/version "RELEASE"}}}
 
-  :coverage {:extra-deps {cloverage {:mvn/version "1.0.11"}}
+  :coverage {:extra-deps {cloverage {:mvn/version "RELEASE"}}
              :main-opts  ["-m" "cloverage.coverage"
                           "--src-ns-path" "src"
                           "--test-ns-path" "test"
