@@ -237,6 +237,11 @@
                          {:desc "The value the function returns if arg1 is FALSE."
                           :opt true}]}
 
+   "MAP"         {:impl :special-form
+                  :desc "Returns a result of applying first argument as a anonumous function for each element in second argument."
+                  :args [{:desc "Anonumous function. Any valid formula with a dynamic references (_) as a placeholder for the value."}
+                         {:desc "An expression or reference to a context value containing an expression that represents an array."}]}
+
    "OBJREF"      {:impl :special-form
                   :desc "Returns a value from execution context."
                   :args [{:desc "Key-reference, number index or star (*)."

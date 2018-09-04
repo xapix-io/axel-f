@@ -610,3 +610,21 @@
   (t/is (= {:type "#N/A"
             :reason "Wrong number of arguments to CHAR. Expected exact 1 argument, but got 0 arguments."}
            (sut/run "CHAR()"))))
+
+(t/deftest map-function-test
+
+  (t/testing "MAP function should work as expected"
+
+    (t/is (= "Hello!World!"
+             (sut/run "CONCATENATE(MAP(CONCATENATE(_, '!'), foo))" {:foo ["Hello" "World"]})))
+
+    (t/is (= 10
+             (sut/run "SUM(MAP(VALUE(_), foo))" {:foo [1 "5" 4]})))
+
+    (t/is (= "fish and chips"
+             (sut/run "JOIN(' and ', MAP(JOIN('or', _), foo))" {:foo ["fish" "chips"]})))
+
+    (t/is (= [["[\"red!\" \"green!\" \"blue!\"] test "]
+              ["[\"foo!\" \"oof!\"] test " "[\"blue!\" \"green!\" \"red!\"] test "]]
+             (sut/run "MAP(MAP(MAP(_ & '!', _) & ' test ', _), foo.bar)"
+               {:foo {:bar [[["red" "green" "blue"]] [["foo" "oof"] ["blue" "green" "red"]]]}})))))
