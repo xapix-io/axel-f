@@ -6,6 +6,14 @@
 
 (t/deftest autocomplete-test
 
+  (t/testing "autocomplete function return empty vector for unbalanced quotes"
+
+    (t/are [x] (= [] (sut/autocomplete x))
+      "\""
+      "'"
+      "CONCATENATE('"
+      "CONCATENATE(\""))
+
   (t/testing "autocomplete function return array of suggestions for incomplete formula with"
 
     (with-redefs [functions/functions-map {"SUM"   {}

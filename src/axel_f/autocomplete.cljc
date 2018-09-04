@@ -134,25 +134,34 @@
 
 (defn get-last-part [incomplete-formula]
   (let [chx (string/split incomplete-formula #"")]
-    (loop [ch (last chx) chx (butlast chx) acc [] terms {:open-round       0
-                                                         :close-round      0
-                                                         :unbalanced-quote false
-                                                         :pre-terminate    false
-                                                         :terminate        false}]
+    (loop [ch (last chx) chx (butlast chx) acc [] terms {:open-round              0
+                                                         :close-round             0
+                                                         :unbalanced-single-quote false
+                                                         :unbalanced-double-quote false
+                                                         :pre-terminate           false
+                                                         :terminate               false}]
       (cond
         (and (= ch " ")
-             (not (:unbalanced-quote terms)))
+             (not (:unbalanced-single-quote terms))
+             (not (:unbalanced-double-quote terms)))
         (recur (last chx) (butlast chx) acc terms)
 
         (and (not= ch "\"")
-             (:unbalanced-quote terms))
+             (not-empty ch)
+             (:unbalanced-double-quote terms))
+        (recur (last chx) (butlast chx) (cons ch acc) terms)
+
+        (and (not= ch "'")
+             (not-empty ch)
+             (:unbalanced-single-quote terms))
         (recur (last chx) (butlast chx) (cons ch acc) terms)
 
         :otherwise
         (if (or (not ch) (:terminate terms))
           (apply str acc)
           (let [terms (cond-> terms
-                        (= "\"" ch)                    (update :unbalanced-quote not)
+                        (= "\"" ch)                    (update :unbalanced-double-quote not)
+                        (= "'" ch)                     (update :unbalanced-single-quote not)
                         (= ")" ch)                     (update :close-round inc)
                         (= "(" ch)                     (#(if (or (valid-reference? (apply str acc))
                                                                  (> (:open-round %)
