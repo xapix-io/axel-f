@@ -242,6 +242,20 @@
                   :args [{:desc "Anonumous function. Any valid formula with a dynamic references (_) as a placeholder for the value."}
                          {:desc "An expression or reference to a context value containing an expression that represents an array."}]}
 
+   "FILTER"      {:impl :special-form
+                  :desc "Returns a filtered version of the source array."
+                  :args [{:desc "The data to be filtered."}
+                         {:desc "Anonumous function. Any valid formula with a dynamic references (_) as a placeholder for the examined value."}]}
+
+   "SORT"        {:impl :special-form
+                  :desc "Sorts the rows of a given array or range by the result of function call."
+                  :args [{:desc "The data to be sorted."}
+                         {:desc "Anonumous function. Any valid formula with a dynamic references (_) as a placeholder for the examined value."}]}
+
+   "UNIQUE"      {:impl :special-form
+                  :desc "Returns unique values in the provided source range, discarding duplicates. Values are returned in the order in which they first appear in the source range."
+                  :args [{:desc "The data to filter by unique entries."}]}
+
    "OBJREF"      {:impl :special-form
                   :desc "Returns a value from execution context."
                   :args [{:desc "Key-reference, number index or star (*)."

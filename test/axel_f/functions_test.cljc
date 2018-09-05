@@ -628,3 +628,24 @@
               ["[\"foo!\" \"oof!\"] test " "[\"blue!\" \"green!\" \"red!\"] test "]]
              (sut/run "MAP(MAP(MAP(_ & '!', _) & ' test ', _), foo.bar)"
                {:foo {:bar [[["red" "green" "blue"]] [["foo" "oof"] ["blue" "green" "red"]]]}})))))
+
+(t/deftest filter-function-test
+
+  (t/testing "FILTER function should work as expected"
+
+    (t/is (= ["qwe" "ewqq"]
+             (sut/run "FILTER(foo, LEN(_) > 2)" {:foo ["qwe" "ewqq" "1"]})))))
+
+(t/deftest sort-function-test
+
+  (t/testing "SORT function should work as expected"
+
+    (t/is (= [0 123 999 90000]
+             (sut/run "SORT(foo, _)" {:foo [999 123 0 90000]})))))
+
+(t/deftest unique-function-test
+
+  (t/testing "UNIQUE function should work as expected"
+
+    (t/is (= ["qwe" 1 4321]
+             (sut/run "UNIQUE(foo)" {:foo ["qwe" 1 "qwe" 4321]})))))

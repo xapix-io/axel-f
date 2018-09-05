@@ -260,7 +260,12 @@ STAR                     ::= '*'?
                  (when-let [else (nth args 2 nil)]
                    (run* else context)))
     "MAP"      (mapv (make-fn (first args) context)
-                     (run* (second args) context))))
+                     (run* (second args) context))
+    "FILTER"   (filter (make-fn (second args) context)
+                       (run* (first args) context))
+    "SORT"     (sort-by (make-fn (second args) context)
+                        (run* (first args) context))
+    "UNIQUE"   (distinct (run* (first args) context))))
 
 (defn- run-fncall* [f args context]
   (let [_ (functions/check-arity f args)
