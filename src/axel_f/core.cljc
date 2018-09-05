@@ -31,7 +31,7 @@ MULTIPLICATIVE_EXPS      ::= MULT_EXPR | DIV_EXPR
 MULT_EXPR                ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<mult-op> EXP_EXPR}
 DIV_EXPR                 ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<div-op> EXP_EXPR}
 EXP_EXPR                 ::= PRIMARY {<exp-op> PRIMARY}
-PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR | ERROR ) <whitespace> *
+PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR | ERROR | DYNAMIC_REF ) <whitespace> *
 SIGN_EXPR                ::= ( '+' | '-' ) PRIMARY
 PERCENT_EXPR             ::= PRIMARY <percent-op>
 ARRAY_EXPR               ::= <opening-curly-bracket> ( EXPR {<comma> EXPR} )? <closing-curly-bracket>
@@ -47,10 +47,11 @@ FN                       ::= " (-> functions/functions-map
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
 OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( NUMBER_FIELD | FNCALL | STAR ) <closing-square-bracket> ) )*
-FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | FNCALL
+FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | FNCALL | DYNAMIC_REF
 STRING_FIELD             ::= STRING
 SYMBOL_FIELD             ::= #'[a-zA-Z0-9-_]+'
 NUMBER_FIELD             ::= #'[0-9]+'
+DYNAMIC_REF              ::= '_'
 STAR                     ::= '*'?
 <opening-square-bracket> ::= '['
 <closing-square-bracket> ::= ']'
@@ -75,7 +76,6 @@ STAR                     ::= '*'?
 <comma>                  ::= ','
 <dot>                    ::= '.'
   "))
-
 
 (defn- with-indifferent-access [m ks]
   (if (= "*" (first ks))
@@ -221,7 +221,34 @@ STAR                     ::= '*'?
                       (insta/get-failure res)))
       res)))
 
+(defn- replace-dynamic-ref-with-value
+  ([expr value]
+   (if (= expr [:DYNAMIC_REF "_"])
+     value
+     (cond
+       (string? expr)
+       expr
+
+       (and (coll? expr)
+            (= "MAP" (second expr)))
+       [:FNCALL "MAP" [(-> expr (nth 2) first)
+                       (replace-dynamic-ref-with-value
+                        (-> expr (nth 2) second)
+                        value)]]
+
+       (coll? expr)
+       (mapv (fn [x]
+               (replace-dynamic-ref-with-value x value))
+             expr)
+
+       :otherwise
+       expr))))
+
 (declare run*)
+
+(defn- make-fn [expr context]
+  (fn [el]
+    (run* (replace-dynamic-ref-with-value expr el) context)))
 
 (defn- run-special
   "Run fn which requires special/custom args evaluation"
@@ -231,7 +258,14 @@ STAR                     ::= '*'?
     "IF"       (if (run* (first args) context)
                  (run* (second args) context)
                  (when-let [else (nth args 2 nil)]
-                   (run* else context)))))
+                   (run* else context)))
+    "MAP"      (mapv (make-fn (first args) context)
+                     (run* (second args) context))
+    "FILTER"   (filter (make-fn (second args) context)
+                       (run* (first args) context))
+    "SORT"     (sort-by (make-fn (second args) context)
+                        (run* (first args) context))
+    "UNIQUE"   (distinct (run* (first args) context))))
 
 (defn- run-fncall* [f args context]
   (let [_ (functions/check-arity f args)
@@ -309,12 +343,14 @@ STAR                     ::= '*'?
         :VECTOR          (mapv #(run* % context) args)
         :FNCALL          (run-fncall* (first args) (second args) context))
 
+      (and token args)
+      arg
+
       (or (string? token)
           (number? token)
           (boolean? token)
           (keyword? token))
       token)))
-
 
 (defn compile [formula-str & custom-transforms]
   (try

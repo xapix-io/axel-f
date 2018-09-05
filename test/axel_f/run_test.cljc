@@ -28,7 +28,7 @@
 
       (t/testing "without context"
 
-        (t/is (= 0 (sut/run [0])))
+        (t/is (= [0] (sut/run [0])))
         (t/is (= nil (sut/run [:OBJREF "foo" "bar"])))
         (t/is (= nil (sut/run ["OBJREF" "foo" "bar"])))))
 

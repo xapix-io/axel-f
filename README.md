@@ -10,9 +10,9 @@ In some applications, the lion's share of business logic is concentrated in dyna
 
 ## Clojure(Script)
 
-* **Leiningen** : `[io.xapix/axel-f "0.2.3"]`
-* **Boot**: `(set-env! :dependencies #(conj % [io.xapix/axel-f "0.2.3"]))`
-* **deps.edn**: `{:deps {io.xapix/axel-f {:mvn/version "0.2.3"}}}`
+* **Leiningen** : `[io.xapix/axel-f "0.2.4"]`
+* **Boot**: `(set-env! :dependencies #(conj % [io.xapix/axel-f "0.2.4"]))`
+* **deps.edn**: `{:deps {io.xapix/axel-f {:mvn/version "0.2.4"}}}`
 
 ## JavaScript
 
@@ -138,8 +138,12 @@ Any expression can be used as an operand for any operator. axel-f has the same o
 - [x] [TEXTJOIN](https://support.office.com/en-us/article/textjoin-function-357b449a-ec91-49d0-80c3-0e8fc845691c)
 - [x] [COUNT](https://support.office.com/en-us/article/count-function-a59cd7fc-b623-4d93-87a4-d23bf411294c)
 - [x] [IF](https://support.office.com/en-us/article/if-function-69aed7c9-4e8a-4755-a9bc-aa8bbff73be2)
+- [x] [FILTER](https://support.google.com/docs/answer/3093197)
+- [x] [SORT](https://support.google.com/docs/answer/3093150)
+- [x] [UNIQUE](https://support.google.com/docs/answer/3093198)
 
 In addition we have special functions for accessing the data in context: `OBJREF(arg1, [arg2...])`
+And a special map function for applying partially defined function for each element in collection: `MAP(10 ^ _, {1, 2, 3})`
 
 - [ ] [ABS](https://support.office.com/en-us/article/abs-function-3420200f-5628-4e8c-99da-c99d7c87713c)
 - [ ] [ACCRINT](https://support.office.com/en-us/article/accrint-function-fe45d089-6722-4fb3-9379-e1f911d8dc74)

@@ -610,3 +610,42 @@
   (t/is (= {:type "#N/A"
             :reason "Wrong number of arguments to CHAR. Expected exact 1 argument, but got 0 arguments."}
            (sut/run "CHAR()"))))
+
+(t/deftest map-function-test
+
+  (t/testing "MAP function should work as expected"
+
+    (t/is (= "Hello!World!"
+             (sut/run "CONCATENATE(MAP(CONCATENATE(_, '!'), foo))" {:foo ["Hello" "World"]})))
+
+    (t/is (= 10
+             (sut/run "SUM(MAP(VALUE(_), foo))" {:foo [1 "5" 4]})))
+
+    (t/is (= "fish and chips"
+             (sut/run "JOIN(' and ', MAP(JOIN('or', _), foo))" {:foo ["fish" "chips"]})))
+
+    (t/is (= [["[\"red!\" \"green!\" \"blue!\"] test "]
+              ["[\"foo!\" \"oof!\"] test " "[\"blue!\" \"green!\" \"red!\"] test "]]
+             (sut/run "MAP(MAP(MAP(_ & '!', _) & ' test ', _), foo.bar)"
+               {:foo {:bar [[["red" "green" "blue"]] [["foo" "oof"] ["blue" "green" "red"]]]}})))))
+
+(t/deftest filter-function-test
+
+  (t/testing "FILTER function should work as expected"
+
+    (t/is (= ["qwe" "ewqq"]
+             (sut/run "FILTER(foo, LEN(_) > 2)" {:foo ["qwe" "ewqq" "1"]})))))
+
+(t/deftest sort-function-test
+
+  (t/testing "SORT function should work as expected"
+
+    (t/is (= [0 123 999 90000]
+             (sut/run "SORT(foo, _)" {:foo [999 123 0 90000]})))))
+
+(t/deftest unique-function-test
+
+  (t/testing "UNIQUE function should work as expected"
+
+    (t/is (= ["qwe" 1 4321]
+             (sut/run "UNIQUE(foo)" {:foo ["qwe" 1 "qwe" 4321]})))))
