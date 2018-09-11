@@ -80,4 +80,11 @@
       "foo[*].bar[*].baz" {:foo [{:bar [{:baz 1} {:baz 2} {:baz 3}]}
                                  {:bar [{:baz 4} {:baz 5} {:baz 6}]}]} [[1 2 3] [4 5 6]]
       "foo[*]"            {:foo 1}                                     1
-      "foo[*].bar"        {:foo []}                                    [])))
+      "foo[*].bar"        {:foo []}                                    []))
+
+  (t/testing "dynamic references"
+
+    (t/is (= 1 (sut/run "OBJREF({1,2,3}, 0)")))
+
+    (t/is (= [{:bar 1} {:bar 2} {:bar 3}]
+             (sut/run "FILTER(foo, _.bar < 4)" {:foo [{:bar 1} {:bar 4} {:bar 2} {:bar 3}]})))))

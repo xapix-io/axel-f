@@ -246,6 +246,20 @@ STAR                     ::= '*'?
 
 (declare run*)
 
+(defn objref-function [context args]
+  (let [first-arg (first args)
+        maybe-context (if (vector? first-arg)
+                        (run* first-arg context)
+                        first-arg)
+        rest-args (map #(run* % context) (rest args))
+        context (if ((some-fn string? keyword?) maybe-context)
+                  context
+                  maybe-context)
+        args (if ((some-fn string? keyword?) maybe-context)
+               (cons maybe-context rest-args)
+               rest-args)]
+    (with-indifferent-access context args)))
+
 (defn- make-fn [expr context]
   (fn [el]
     (run* (replace-dynamic-ref-with-value expr el) context)))
@@ -254,18 +268,18 @@ STAR                     ::= '*'?
   "Run fn which requires special/custom args evaluation"
   [f args context]
   (case f
-    "OBJREF"   (with-indifferent-access context (map #(run* % context) args))
-    "IF"       (if (run* (first args) context)
-                 (run* (second args) context)
-                 (when-let [else (nth args 2 nil)]
-                   (run* else context)))
-    "MAP"      (mapv (make-fn (first args) context)
-                     (run* (second args) context))
-    "FILTER"   (filter (make-fn (second args) context)
-                       (run* (first args) context))
-    "SORT"     (sort-by (make-fn (second args) context)
-                        (run* (first args) context))
-    "UNIQUE"   (distinct (run* (first args) context))))
+    "OBJREF" (objref-function context args)
+    "IF"     (if (run* (first args) context)
+               (run* (second args) context)
+               (when-let [else (nth args 2 nil)]
+                 (run* else context)))
+    "MAP"    (mapv (make-fn (first args) context)
+                   (run* (second args) context))
+    "FILTER" (filter (make-fn (second args) context)
+                     (run* (first args) context))
+    "SORT"   (sort-by (make-fn (second args) context)
+                      (run* (first args) context))
+    "UNIQUE" (distinct (run* (first args) context))))
 
 (defn- run-fncall* [f args context]
   (let [_ (functions/check-arity f args)
@@ -339,7 +353,7 @@ STAR                     ::= '*'?
                              res))
         :PERCENT_EXPR    (let [r (run* (first args) context)]
                            (float (/ r 100)))
-        :OBJREF          (with-indifferent-access context (map #(run* % context) args))
+        :OBJREF          (objref-function context args)
         :VECTOR          (mapv #(run* % context) args)
         :FNCALL          (run-fncall* (first args) (second args) context))
 
