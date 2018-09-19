@@ -223,7 +223,8 @@ STAR                     ::= '*'?
 
 (defn- replace-dynamic-ref-with-value
   ([expr value]
-   (if (= expr [:DYNAMIC_REF "_"])
+   (if (or (= expr [:DYNAMIC_REF "_"])
+           (= expr ["DYNAMIC_REF" "_"]))
      value
      (cond
        (string? expr)
