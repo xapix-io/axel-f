@@ -195,11 +195,7 @@ STAR                     ::= '*'?
                             (cond
                               (boolean? operand)         (* sign (if operand 1 0))
                               (number? operand)          (* sign operand)
-                              (keyword? (first operand)) (vec (cons :SIGN_EXPR args))
-                              :otherwise (throw (#?(:clj Exception.
-                                                    :cljs js/Error.)
-                                                 (str "The operator “" (first args) "” expects a number or boolean but found " operand ".")))
-                              )))
+                              (keyword? (first operand)) (vec (cons :SIGN_EXPR args)))))
    :PERCENT_EXPR        (fn [arg]
                           (if (number? arg)
                             (float (/ arg 100))
@@ -344,9 +340,11 @@ STAR                     ::= '*'?
                                r (if (boolean? r)
                                    (if r 1 0)
                                    r)]
-                           (if (= (first args) "-")
-                             (* -1 r)
-                             r))
+                           (if (number? r)
+                             (if (= (first args) "-")
+                               (* -1 r)
+                               r)
+                             (throw (error/error "#VALUE!" (error/format-not-a-number-error "SIGN" 1 r)))))
         :EXP_EXPR        (let [f (run* (first args) context)
                                s (run* (second args) context)
                                res (Math/pow f s)]
@@ -390,3 +388,5 @@ STAR                     ::= '*'?
            (if (#{"#N/A" "#VALUE!" "#REF!" "#DIV/0!" "#NUM!" "#NAME?" "#NULL!"} type)
              data
              (throw e))))))))
+
+(run "-'foo'")
