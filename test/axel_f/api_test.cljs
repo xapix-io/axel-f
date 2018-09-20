@@ -9,7 +9,7 @@
     (t/is (= ["OBJREF" "foo" "bar"]
              (js->clj (sut/compile "foo.bar"))))
 
-    (t/is (= ["FNCALL" "SUM" [1 "foo"]]
+    (t/is (= ["FNCALL" "SUM" [1 ["STRING" "foo"]]]
              (js->clj (sut/compile "SUM(1, \"foo\")"))))))
 
 (t/deftest run-test

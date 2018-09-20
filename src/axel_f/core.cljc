@@ -128,7 +128,8 @@ STAR                     ::= '*'?
         :OBJREF
         :VECTOR
         :FNCALL
-        :EXP_EXPR]))
+        :EXP_EXPR
+        :STRING]))
 
 (defn- reserved? [token]
   (let [token (if (string? token)
@@ -167,7 +168,7 @@ STAR                     ::= '*'?
                             (if (reserved? s)
                               (throw (#?(:clj Exception.
                                          :cljs js/Error.) (str "String " s " is reserved.")))
-                              s)))
+                              [:STRING s])))
    :BOOL                (fn [b]
                           (let [b (string/lower-case b)]
                             (cond
@@ -194,11 +195,7 @@ STAR                     ::= '*'?
                             (cond
                               (boolean? operand)         (* sign (if operand 1 0))
                               (number? operand)          (* sign operand)
-                              (keyword? (first operand)) (vec (cons :SIGN_EXPR args))
-                              :otherwise (throw (#?(:clj Exception.
-                                                    :cljs js/Error.)
-                                                 (str "The operator “" (first args) "” expects a number or boolean but found " operand ".")))
-                              )))
+                              (keyword? (first operand)) (vec (cons :SIGN_EXPR args)))))
    :PERCENT_EXPR        (fn [arg]
                           (if (number? arg)
                             (float (/ arg 100))
@@ -223,7 +220,8 @@ STAR                     ::= '*'?
 
 (defn- replace-dynamic-ref-with-value
   ([expr value]
-   (if (= expr [:DYNAMIC_REF "_"])
+   (if (or (= expr [:DYNAMIC_REF "_"])
+           (= expr ["DYNAMIC_REF" "_"]))
      value
      (cond
        (string? expr)
@@ -342,9 +340,11 @@ STAR                     ::= '*'?
                                r (if (boolean? r)
                                    (if r 1 0)
                                    r)]
-                           (if (= (first args) "-")
-                             (* -1 r)
-                             r))
+                           (if (number? r)
+                             (if (= (first args) "-")
+                               (* -1 r)
+                               r)
+                             (throw (error/error "#VALUE!" (error/format-not-a-number-error "SIGN" 1 r)))))
         :EXP_EXPR        (let [f (run* (first args) context)
                                s (run* (second args) context)
                                res (Math/pow f s)]
@@ -355,7 +355,8 @@ STAR                     ::= '*'?
                            (float (/ r 100)))
         :OBJREF          (objref-function context args)
         :VECTOR          (mapv #(run* % context) args)
-        :FNCALL          (run-fncall* (first args) (second args) context))
+        :FNCALL          (run-fncall* (first args) (second args) context)
+        :STRING          (first args))
 
       (and token args)
       arg
@@ -387,3 +388,5 @@ STAR                     ::= '*'?
            (if (#{"#N/A" "#VALUE!" "#REF!" "#DIV/0!" "#NUM!" "#NAME?" "#NULL!"} type)
              data
              (throw e))))))))
+
+(run "-'foo'")
