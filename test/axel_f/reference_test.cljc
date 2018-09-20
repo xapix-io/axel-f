@@ -33,7 +33,7 @@
 
     (t/testing "with calculated keywords"
 
-      (t/is (= [:OBJREF "foo" [:FNCALL "CONCATENATE" ["b" "a" "r"]]]
+      (t/is (= [:OBJREF "foo" [:FNCALL "CONCATENATE" [[:STRING "b"] [:STRING "a"] [:STRING "r"]]]]
                (sut/compile "foo.CONCATENATE(\"b\", \"a\", \"r\")")))
       (t/is (= [:OBJREF "foo" [:FNCALL "SUM" [1 2]]]
                (sut/compile "foo.SUM(1,2)")))

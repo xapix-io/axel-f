@@ -74,7 +74,7 @@
         "1.e123" 1.E123))
 
     (t/testing "string constants"
-      (t/is (= "foo" (sut/compile "\"foo\""))))
+      (t/is (= [:STRING "foo"] (sut/compile "\"foo\""))))
 
     (t/testing "all possible unary operators"
 
@@ -128,7 +128,7 @@
       (t/is (= [:OBJREF "foo" "bar" 1]
                (sut/compile "foo.bar[1]")))
 
-      (t/is (= [:OBJREF "foo" "bar buz" 1]
+      (t/is (= [:OBJREF "foo" [:STRING "bar buz"] 1]
                (sut/compile "foo.\"bar buz\"[1]")))))
 
   (t/testing "can not compile"

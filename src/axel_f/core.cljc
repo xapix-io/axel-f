@@ -128,7 +128,8 @@ STAR                     ::= '*'?
         :OBJREF
         :VECTOR
         :FNCALL
-        :EXP_EXPR]))
+        :EXP_EXPR
+        :STRING]))
 
 (defn- reserved? [token]
   (let [token (if (string? token)
@@ -167,7 +168,7 @@ STAR                     ::= '*'?
                             (if (reserved? s)
                               (throw (#?(:clj Exception.
                                          :cljs js/Error.) (str "String " s " is reserved.")))
-                              s)))
+                              [:STRING s])))
    :BOOL                (fn [b]
                           (let [b (string/lower-case b)]
                             (cond
@@ -356,7 +357,8 @@ STAR                     ::= '*'?
                            (float (/ r 100)))
         :OBJREF          (objref-function context args)
         :VECTOR          (mapv #(run* % context) args)
-        :FNCALL          (run-fncall* (first args) (second args) context))
+        :FNCALL          (run-fncall* (first args) (second args) context)
+        :STRING          (first args))
 
       (and token args)
       arg
