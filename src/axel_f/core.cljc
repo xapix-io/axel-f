@@ -388,5 +388,3 @@ STAR                     ::= '*'?
            (if (#{"#N/A" "#VALUE!" "#REF!" "#DIV/0!" "#NUM!" "#NAME?" "#NULL!"} type)
              data
              (throw e))))))))
-
-(run "-'foo'")
