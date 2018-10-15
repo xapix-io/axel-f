@@ -211,7 +211,7 @@
                   :args [{:desc "The string to convert to uppercase."}]}
 
    "VALUE"       {:impl #'text/value-fn
-                  :desc "Converts a string in any of the date, time or number formats that axel-f understands into a number."
+                  :desc "Converts a string in any of the recognizeable date, time or number formats into a number."
                   :args [{:desc "The string containing the value to be converted."}]}
 
    "TEXTJOIN"    {:impl #'text/textjoin-fn
