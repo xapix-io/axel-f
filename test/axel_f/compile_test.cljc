@@ -30,11 +30,11 @@
 
   (t/testing "throw an error object with explanation if formula can't be parsed"
 
-    (let [error-sample "1+"]
+    (let [error-sample "1("]
 
       (t/is (thrown? #?(:clj clojure.lang.ExceptionInfo
                         :cljs ExceptionInfo)
-                     #"Formula \"1+\" can't be parsed"
+                     #"Formula \"1\(\" can't be parsed"
                      (sut/compile error-sample)))
 
       (let [failure (try
@@ -44,10 +44,10 @@
                           e
                         (:data (ex-data e))))]
 
-        (t/is (= {:index  2
+        (t/is (= {:index  1
                   :line   1
-                  :column 3
-                  :text   "1+"}
+                  :column 2
+                  :text   "1("}
                  (select-keys failure
                               [:index :line :column :text])))
         (t/is (contains? failure :reason))
