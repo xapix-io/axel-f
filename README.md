@@ -1,4 +1,4 @@
-# Axel-f [![codecov](https://codecov.io/gh/xapix-io/axel-f/branch/master/graph/badge.svg)](https://codecov.io/gh/xapix-io/axel-f) [![CircleCI](https://circleci.com/gh/xapix-io/axel-f/tree/master.svg?style=svg)](https://circleci.com/gh/xapix-io/axel-f/tree/master)
+# Axel-f [![codecov](https://codecov.io/gh/xapix-io/axel-f/branch/master/graph/badge.svg)](https://codecov.io/gh/xapix-io/axel-f) [![CircleCI](https://circleci.com/gh/xapix-io/axel-f/tree/master.svg?style=svg)](https://circleci.com/gh/xapix-io/axel-f/tree/master) [![cljdoc badge](https://cljdoc.org/badge/io.xapix/axel-f)](https://cljdoc.org/d/io.xapix/axel-f/CURRENT)
 
 > Expressions language for Clojure(Script) and JavaScript inspired by Microsoft Excel ™
 
@@ -10,9 +10,9 @@ In some applications, the lion's share of business logic is concentrated in dyna
 
 ## Clojure(Script)
 
-* **Leiningen** : `[io.xapix/axel-f "0.2.6"]`
-* **Boot**: `(set-env! :dependencies #(conj % [io.xapix/axel-f "0.2.6"]))`
-* **deps.edn**: `{:deps {io.xapix/axel-f {:mvn/version "0.2.6"}}}`
+* **Leiningen** : `[io.xapix/axel-f "0.2.8"]`
+* **Boot**: `(set-env! :dependencies #(conj % [io.xapix/axel-f "0.2.8"]))`
+* **deps.edn**: `{:deps {io.xapix/axel-f {:mvn/version "0.2.8"}}}`
 
 ## JavaScript
 
