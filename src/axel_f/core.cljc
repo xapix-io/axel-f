@@ -46,7 +46,7 @@ FN                       ::= " (-> functions/functions-map
                                    strings->rule) "
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
-OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( NUMBER_FIELD | FNCALL | STAR ) <closing-square-bracket> ) )*
+OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( OBJREF | NUMBER_FIELD | FNCALL | STAR ) <closing-square-bracket> ) )*
 FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | FNCALL | DYNAMIC_REF
 STRING_FIELD             ::= STRING
 SYMBOL_FIELD             ::= #'[^ .,\"\\'\\[\\]\\(\\)]+'
