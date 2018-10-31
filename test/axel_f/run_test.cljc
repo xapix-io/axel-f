@@ -8,6 +8,10 @@
 
   (t/testing "run function"
 
+    (t/testing "can use inherited maps as array index"
+      (t/is (= 1
+               (sut/run "foo[bar.baz]" {:foo [1 2 3] :bar {:baz 0}}))))
+
     (t/testing "can execute formula as a string"
 
       (t/testing "with context"
