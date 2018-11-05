@@ -1,10 +1,11 @@
-(ns axel-f.functions.logic)
+(ns axel-f.functions.logic
+  (:require [axel-f.macros #?(:clj :refer :cljs :refer-macros) [def-excel-fn]]))
 
-(defn and-fn [& args]
+(def-excel-fn and [& args]
   (every? identity args))
 
-(defn not-fn [logical-expression]
+(def-excel-fn not [logical-expression]
   (not logical-expression))
 
-(defn or-fn [& args]
+(def-excel-fn or [& args]
   (boolean (some identity args)))

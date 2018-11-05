@@ -3,13 +3,9 @@
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
             [clojure.string :as string]
             [axel-f.error :as error]
-            [axel-f.functions :as functions])
+            #?(:clj [axel-f.macros :refer [def-excel-fn find-impl]]
+               :cljs [axel-f.macros :refer [find-impl] :refer-macros [def-excel-fn]]))
   (:refer-clojure :exclude [compile]))
-
-(defn- strings->rule [strings]
-  (->> strings
-       (map #(str "'" % "'"))
-       (string/join " | ")))
 
 (defparser parser
   (str
@@ -41,9 +37,7 @@ NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
 STRING                   ::= #'\"[^\"]*\"' | #\"'[^']*'\"
 BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
 FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
-FN                       ::= " (-> functions/functions-map
-                                   keys
-                                   strings->rule) "
+FN                       ::= #'[A-Z]+'
 ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
 ARGUMENT                 ::= EXPR | Epsilon
 OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( OBJREF | NUMBER_FIELD | FNCALL | STAR  ) <closing-square-bracket> ) )*
@@ -244,7 +238,7 @@ STAR                     ::= '*'?
 
 (declare run*)
 
-(defn objref-function [context args]
+(defn objref-function [args context]
   (let [first-arg (first args)
         maybe-context (if (vector? first-arg)
                         (run* first-arg context)
@@ -262,31 +256,97 @@ STAR                     ::= '*'?
   (fn [el]
     (run* (replace-dynamic-ref-with-value expr el) context)))
 
-(defn- run-special
-  "Run fn which requires special/custom args evaluation"
-  [f args context]
-  (case f
-    "OBJREF" (objref-function context args)
-    "IF"     (if (run* (first args) context)
-               (run* (second args) context)
-               (when-let [else (nth args 2 nil)]
-                 (run* else context)))
-    "MAP"    (mapv (make-fn (first args) context)
-                   (run* (second args) context))
-    "FILTER" (filter (make-fn (second args) context)
-                     (run* (first args) context))
-    "SORT"   (sort-by (make-fn (second args) context)
-                      (run* (first args) context))
-    "UNIQUE" (distinct (run* (first args) context))))
+(def-excel-fn objref
+  {:special-form true}
+  [args context]
+  (objref-function args context))
+
+(def-excel-fn if
+  {:special-form true}
+  [args context]
+  (if (run* (first args) context)
+    (run* (second args) context)
+    (when-let [else-expr (nth args 2 nil)]
+      (run* else-expr context))))
+
+(def-excel-fn map
+  {:special-form true}
+  [args context]
+  (mapv (make-fn (first args) context)
+        (run* (second args) context)))
+
+(def-excel-fn filter
+  {:special-form true}
+  [args context]
+  (filter (make-fn (second args) context)
+          (run* (first args) context)))
+
+(def-excel-fn sort
+  {:special-form true}
+  [args context]
+  (sort-by (make-fn (second args) context)
+           (run* (first args) context)))
+
+(def-excel-fn unique
+  {:special-form true}
+  [args context]
+  (distinct (run* (first args) context)))
+
+(defn- infinity-args? [args]
+  (-> args
+      last
+      :repeatable))
+
+(defn- min-arity [args]
+  (->> args
+      (filter #(not (:opt %)))
+      count))
+
+(defn- max-arity [args]
+  (when-not (infinity-args? args)
+    (count args)))
+
+(defn- format-wrong-arity-error [fnname min-arity max-arity total]
+  (str "Wrong number of arguments to "
+       fnname
+       ". Expected "
+       (if (and min-arity max-arity
+                (not= min-arity max-arity))
+         (str "between " min-arity " and " max-arity " arguments,")
+         (if (and min-arity (nil? max-arity))
+           (str "at least " min-arity " argument" (when-not (= 1 min-arity) "s") ",")
+           (str "exact " min-arity " argument" (when-not (= 1 min-arity) "s") ",")))
+       " but got "
+       total
+       " arguments."))
+
+(defn check-arity [fn-name {fn-args :args} args]
+  (let [infinity-args? (infinity-args? fn-args)
+        min-arity (min-arity fn-args)
+        max-arity (max-arity fn-args)]
+    (or (and (= min-arity 0) infinity-args?)
+        (<= min-arity (count args) (or max-arity #?(:clj Double/POSITIVE_INFINITY
+                                                    :cljs js/Infinity)))
+        (throw (error/error "#N/A"
+                            (format-wrong-arity-error fn-name min-arity max-arity (count args)))))))
 
 (defn- run-fncall* [f args context]
-  (let [_ (functions/check-arity f args)
-        f-implementation (get-in functions/functions-map [f :impl])]
-    (if (= :special-form f-implementation)
-      (run-special f args context)
-      (->> args
-          (map #(run* % context))
-          (apply f-implementation)))))
+  (if-let [fn-impl (find-impl f)]
+    (try
+      (if (:special-form (meta fn-impl))
+        (fn-impl args context)
+        (let [args (mapv #(run* % context) args)]
+          (if (empty? args)
+            (fn-impl)
+            (apply fn-impl args))))
+      (catch #?(:clj clojure.lang.ExceptionInfo
+                :cljs ExceptionInfo) e
+        (throw e))
+      (catch #?(:clj clojure.lang.ArityException
+                :cljs js/Error) e
+        (let [{:keys [name]} (meta fn-impl)]
+          (throw (error/error "#N/A"
+                              (str "Wrong number of args (" (count args) ") passed to: " name))))))))
 
 (defmulti ->keyword (fn [v] (type v)))
 
@@ -353,7 +413,7 @@ STAR                     ::= '*'?
                              res))
         :PERCENT_EXPR    (let [r (run* (first args) context)]
                            (float (/ r 100)))
-        :OBJREF          (objref-function context args)
+        :OBJREF          (objref-function args context)
         :VECTOR          (mapv #(run* % context) args)
         :FNCALL          (run-fncall* (first args) (second args) context)
         :STRING          (first args))

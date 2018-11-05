@@ -86,5 +86,5 @@
 
       (let [res (sut/run "ROUND()")]
         (t/is (= {:type "#N/A"
-                  :reason "Wrong number of arguments to ROUND. Expected between 1 and 2 arguments, but got 0 arguments."}
+                  :reason "Wrong number of args (0) passed to: ROUND"}
                  res))))))

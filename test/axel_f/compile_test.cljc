@@ -2,7 +2,8 @@
   (:require  #?(:clj [clojure.test :as t]
                 :cljs [cljs.test :as t :include-macros true])
              [clojure.string :as string]
-             [axel-f.core :as sut]))
+             [axel-f.core :as sut]
+             axel-f.functions))
 
 (t/deftest compile-tests
 
