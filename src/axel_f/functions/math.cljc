@@ -3,7 +3,9 @@
             [axel-f.functions.coercion :as coercion]
             [axel-f.macros #?(:clj :refer :cljs :refer-macros) [def-excel-fn]]))
 
-(def-excel-fn round [d & [precision]]
+(def-excel-fn round
+  "Rounds a number to a certain number of decimal places according to standard rules."
+  [d & [precision]]
   (if d
     (let [precision (or precision 0)]
       (if-let [d (coercion/excel-number d)]
@@ -25,5 +27,7 @@
                    (throw (error/error "#VALUE!" (error/format-not-a-number-error "SUM" nil n)))))
                (flatten items))))
 
-(def-excel-fn sum [& items]
+(def-excel-fn sum
+  "Returns the sum of a series of numbers and/or references."
+  [& items]
   (apply sum-fn items))

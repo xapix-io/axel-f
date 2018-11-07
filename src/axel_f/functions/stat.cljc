@@ -15,7 +15,9 @@
         tr-coercer
         (filter number?)))
 
-(def-excel-fn average [& items]
+(def-excel-fn average
+  "Returns the numerical average value in a dataset, ignoring text."
+  [& items]
   (let [tr-flatten-numbers (flatten-numbers (map coercion/excel-number))
         items (sequence tr-flatten-numbers items)
         len (count items)]
@@ -23,11 +25,15 @@
       (/ (apply math/sum-fn items)
          len))))
 
-(def-excel-fn count [& items]
+(def-excel-fn count
+  "Returns a count of the number of numeric values in a dataset."
+  [& items]
   (let [tr-flatten-numbers (flatten-numbers (map coercion/excel-number))]
     (count (sequence tr-flatten-numbers items))))
 
-(def-excel-fn max [& items]
+(def-excel-fn max
+  "Returns the maximum value in a numeric dataset."
+  [& items]
   (let [tr-coercer (map (fn [n]
                           (if-let [n (coercion/excel-number n)]
                             n
@@ -35,7 +41,9 @@
         tr-flatten-numbers (flatten-numbers tr-coercer)]
     (apply max (into [] tr-flatten-numbers items))))
 
-(def-excel-fn min [& items]
+(def-excel-fn min
+  "Returns the minimum value in a numeric dataset."
+  [& items]
   (let [tr-coercer (map (fn [n]
                           (if-let [n (coercion/excel-number n)]
                             n

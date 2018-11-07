@@ -27,7 +27,9 @@
    "IX" 9   "XL" 40  "XC" 90   "CD" 400
    "CM" 900})
 
-(def-excel-fn arabic [s]
+(def-excel-fn arabic
+  "Computes the value of a Roman numeral."
+  [s]
   (let [sign (if (string/starts-with? s "-")
                -1 1)
         s (partition-all 2 (vec (string/replace-first s #"-" "")))]
@@ -48,7 +50,9 @@
 ;; TODO
 ;; (defn asc-fn [])
 
-(def-excel-fn char [number]
+(def-excel-fn char
+  "Convert a number into a character according to the current Unicode table."
+  [number]
   (if number
     (if-let [number (some-> number coercion/excel-number int)]
       (if (< 0 number 65536)
@@ -58,16 +62,22 @@
       (throw (error/error "#VALUE!" (str "Function CHAR parameter 1 expects number values. But '" number "' is a text."))))
     (throw (error/error "#N/A" "Wrong number of args (0) passed to: CHAR"))))
 
-(def-excel-fn code [text]
+(def-excel-fn code
+  "Returns the numeric Unicode map value of the first character in the string provided."
+  [text]
   (if-let [text (coercion/excel-str text)]
     #?(:clj (some-> text first int)
        :cljs (let [res (.charCodeAt text 0)]
                (when-not (js/isNaN res) res)))))
 
-(def-excel-fn concatenate [st1 & stx]
+(def-excel-fn concatenate
+  "Appends strings to one another."
+  [st1 & stx]
   (apply (find-impl "TEXTJOIN") "" false st1 stx))
 
-(def-excel-fn dollar [number & [number-of-places]]
+(def-excel-fn dollar
+  "Formats a number into the locale-specific currency format."
+  [number & [number-of-places]]
   (let [number-of-places (or number-of-places 2)]
     (if-let [number (coercion/excel-number number)]
       (if-let [number-of-places (coercion/excel-number number-of-places)]
@@ -80,17 +90,23 @@
         (throw (error/error "#VALUE!" "Function DOLLAR parameter 2 expects number values.")))
       (throw (error/error "#VALUE!" "Function DOLLAR parameter 1 expects number values.")))))
 
-(def-excel-fn exact [str1 str2]
+(def-excel-fn exact
+  "Tests whether two strings are identical."
+  [str1 str2]
   (= (coercion/excel-str str1)
      (coercion/excel-str str2)))
 
-(def-excel-fn find [substr str & [from-index]]
+(def-excel-fn find
+  "Returns the position at which a string is first found within text where the capitalization of letters matters. Returns #VALUE! if the string is not found."
+  [substr str & [from-index]]
   (let [from-index (or from-index 0)]
     (some-> str
             (string/index-of substr from-index)
             inc)))
 
-(def-excel-fn join [delimeter arg & args]
+(def-excel-fn join
+  "Concatenates the elements of one or more one-dimensional arrays using a specified delimiter."
+  [delimeter arg & args]
   (if (and delimeter arg)
     (apply (find-impl "TEXTJOIN") delimeter false arg args)
     (throw (error/error "#N/A" (str "Wrong number of args (" (count (filter identity [delimeter arg]))
@@ -99,22 +115,30 @@
 ;; TODO
 ;; (defn fixed-fn [])
 
-(def-excel-fn left [text & [number]]
+(def-excel-fn left
+  "Returns a substring from the beginning of a specified string."
+  [text & [number]]
   (let [number (or number 1)]
     (if (> number (count text))
       text
       (subs text 0 number))))
 
-(def-excel-fn len [text]
+(def-excel-fn len
+  "Returns the length of a string."
+  [text]
   (let [text (cond
                (string? text) text
                (seqable? text) (first text))]
     (count (coercion/excel-str text))))
 
-(def-excel-fn lower [text]
+(def-excel-fn lower
+  "Converts a specified string to lowercase."
+  [text]
   (string/lower-case (coercion/excel-str text)))
 
-(def-excel-fn mid [text start number]
+(def-excel-fn mid
+  "Returns a segment of a string."
+  [text start number]
   (if-let [start (coercion/excel-number start)]
     (if-let [number (coercion/excel-number number)]
       (let [text (coercion/excel-str text)
@@ -133,10 +157,14 @@
     (throw (error/error "#VALUE!"
                         (error/format-not-a-number-error "MID" 2 start)))))
 
-(def-excel-fn proper [text]
+(def-excel-fn proper
+  "Capitalizes each word in a specified string."
+  [text]
   (string/replace (coercion/excel-str text) #"\w*" string/capitalize))
 
-(def-excel-fn regexextract [text regular-expression]
+(def-excel-fn regexextract
+  "Extracts matching substrings according to a regular expression."
+  [text regular-expression]
   (cond
     (not (string? text))
     (throw (error/error "#VALUE!"
@@ -154,7 +182,9 @@
         (vector? res) (second res)
         :otherwise res))))
 
-(def-excel-fn regexmatch [text regular-expression]
+(def-excel-fn regexmatch
+  "Whether a piece of text matches a regular expression."
+  [text regular-expression]
   (cond
     (not (string? text))
     (throw (error/error "#VALUE!"
@@ -167,7 +197,9 @@
     :otherwise
     (boolean ((find-impl "REGEXEXTRACT") text regular-expression))))
 
-(def-excel-fn regexreplace [text regular-expression replacement]
+(def-excel-fn regexreplace
+  "Replaces part of a text string with a different text string using regular expressions."
+  [text regular-expression replacement]
   (cond
     (not (string? text))
     (throw (error/error "#VALUE!"
@@ -184,7 +216,9 @@
     :otherwise
     (string/replace text (re-pattern regular-expression) replacement)))
 
-(def-excel-fn replace [text position length new-text]
+(def-excel-fn replace
+  "Replaces part of a text string with a different text string."
+  [text position length new-text]
   (if-let [position (coercion/excel-number position)]
     (if-let [length (coercion/excel-number length)]
       (str (subs text 0 (dec position))
@@ -195,7 +229,9 @@
     (throw (error/error "#VALUE!"
                         (error/format-not-a-number-error "REPLACE" 2 position)))))
 
-(def-excel-fn rept [text number]
+(def-excel-fn rept
+  "Returns specified text repeated a number of times."
+  [text number]
   (if-let [number (coercion/excel-number number)]
     (->> (constantly text)
         (repeatedly number)
@@ -203,14 +239,18 @@
     (throw (error/error "#VALUE!"
                         (error/format-not-a-number-error "REPT" 2 number)))))
 
-(def-excel-fn right [text & [number]]
+(def-excel-fn right
+  "Returns a substring from the end of a specified string."
+  [text & [number]]
   (let [number (or number 1)]
     (if (<= (count text) number)
       text
       (subs text (- (count text)
                     number)))))
 
-(def-excel-fn roman [n]
+(def-excel-fn roman
+  "Formats a number in Roman numerals."
+  [n]
   (if-let [n (coercion/excel-number n)]
     (if (<= 0 n 3999)
       (let [n (int n)
@@ -223,14 +263,18 @@
     (throw (error/error "#VALUE!"
                         (error/format-not-a-number-error "ROMAN" 1 n)))))
 
-(def-excel-fn search [find-text within-text & [position]]
+(def-excel-fn search
+  "Returns the position at which a string is first found within text and ignores capitalization of letters. Returns #VALUE! if the string is not found."
+  [find-text within-text & [position]]
   (let [position (or position 0)]
     (inc
      (string/index-of (string/lower-case within-text)
                       (string/lower-case find-text)
                       position))))
 
-(def-excel-fn split [text delimeter & [split-by-each & [remove-empty-text]]]
+(def-excel-fn split
+  "Divides text around a specified character or string, and puts each fragment into an array."
+  [text delimeter & [split-by-each & [remove-empty-text]]]
   (keep
    (if (or (nil? remove-empty-text)
            remove-empty-text)
@@ -258,7 +302,9 @@
               (recur (inc i) (string/index-of text old-text (inc index))))
             text))))))
 
-(def-excel-fn substitute [text old-text new-text & [occurrence]]
+(def-excel-fn substitute
+  "Replaces existing text with new text in a string."
+  [text old-text new-text & [occurrence]]
   (if-let [occurrence (cond
                         (nil? occurrence) :all
                         :otherwise (coercion/excel-number occurrence))]
@@ -269,24 +315,32 @@
     (throw (error/error "#VALUE!"
                         (error/format-not-a-number-error "SUBSTITUTE" 4 occurrence)))))
 
-(def-excel-fn t [value]
+(def-excel-fn t
+  "Returns string arguments as text."
+  [value]
   (when (string? value)
     value))
 
 ;; TODO
 ;; (defn text-fn [])
 
-(def-excel-fn trim [& args]
+(def-excel-fn trim
+  "Removes leading, trailing, and repeated spaces in text."
+  [& args]
   (string/trim
    (string/replace (-> args first coercion/excel-str) #"\ +" " ")))
 
-(def-excel-fn upper [& args]
+(def-excel-fn upper
+  "Converts a specified string to uppercase."
+  [& args]
   (-> args
       first
       coercion/excel-str
       string/upper-case))
 
-(def-excel-fn value [s]
+(def-excel-fn value
+  "Converts a string in any of the recognizeable date, time or number formats into a number."
+  [s]
   (or
    (when (and (seqable? s)
               (empty? s))
@@ -295,7 +349,9 @@
      (coercion/excel-number s))
    (throw (error/error "#VALUE!" (str "VALUE parameter '" (coercion/excel-str s) "' cannot be parsed to number.")))))
 
-(def-excel-fn textjoin [delimeter ignore-empty & items]
+(def-excel-fn textjoin
+  "Combines the text from multiple strings and/or arrays, with a specifiable delimiter separating the different texts."
+  [delimeter ignore-empty & items]
   (->> items
       flatten
       (map coercion/excel-str)
