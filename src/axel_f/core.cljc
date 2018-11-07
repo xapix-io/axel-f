@@ -8,8 +8,7 @@
   (:refer-clojure :exclude [compile]))
 
 (defparser parser
-  (str
-   "
+  "
 FORMULA                  ::= EXPR | <eq-op> EXPR
 EXPR                     ::= COMPARISON_EXPS
 COMPARISON_EXPS          ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
@@ -69,7 +68,7 @@ STAR                     ::= '*'?
 <div-op>                 ::= '/'
 <comma>                  ::= ','
 <dot>                    ::= '.'
-  "))
+  ")
 
 (defn- with-indifferent-access [m ks]
   (if (= "*" (first ks))
