@@ -264,7 +264,12 @@ STAR                     ::= '*'?
   (objref-function args context))
 
 (def-excel-fn if
-  {:special-form true}
+  "Returns one value if a logical expression is TRUE and another if it is FALSE."
+  {:special-form true
+   :args [{:desc "An expression or reference to a context value containing an expression that represents some logical value, i.e. TRUE or FALSE."}
+          {:desc "The value the function returns if arg1 is TRUE."}
+          {:desc "The value the function returns if arg1 is FALSE."
+           :opt true}]}
   [args context]
   (if (run* (first args) context)
     (run* (second args) context)
@@ -272,25 +277,36 @@ STAR                     ::= '*'?
       (run* else-expr context))))
 
 (def-excel-fn map
-  {:special-form true}
+  "Returns a result of applying first argument as a anonumous function for each element in second argument."
+  {:special-form true
+   :args [{:desc "Anonumous function. Any valid formula with a dynamic references (_) as a placeholder for the value."}
+          {:desc "An expression or reference to a context value containing an expression that represents an array."}]}
   [args context]
   (mapv (make-fn (first args) context)
         (run* (second args) context)))
 
 (def-excel-fn filter
-  {:special-form true}
+  "Returns a filtered version of the source array."
+  {:special-form true
+   :args [{:desc "The data to be filtered."}
+          {:desc "Anonumous function. Any valid formula with a dynamic references (_) as a placeholder for the examined value."}]}
   [args context]
   (filter (make-fn (second args) context)
           (run* (first args) context)))
 
 (def-excel-fn sort
-  {:special-form true}
+  "Sorts the rows of a given array or range by the result of function call."
+  {:special-form true
+   :args [{:desc "The data to be sorted."}
+          {:desc "Anonumous function. Any valid formula with a dynamic references (_) as a placeholder for the examined value."}]}
   [args context]
   (sort-by (make-fn (second args) context)
            (run* (first args) context)))
 
 (def-excel-fn unique
-  {:special-form true}
+  "Returns unique values in the provided source range, discarding duplicates. Values are returned in the order in which they first appear in the source range."
+  {:special-form true
+   :args [{:desc "The data to filter by unique entries."}]}
   [args context]
   (distinct (run* (first args) context)))
 

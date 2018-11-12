@@ -37,24 +37,43 @@
     (t/testing "fuzzy match"
       (t/is (= [{:type  :FN
                  :value "MID"
-                 :doc  "Returns a segment of a string."}
+                 :doc  "Returns a segment of a string."
+                 :args  [{:desc "The string to extract a segment from."}
+                         {:desc "The index from the left of arg1 from which to begin extracting. The first character in arg1 has the index 1."}
+                         {:desc "The length of the segment to extract."}]}
                 {:type  :FN
                  :value "MIN"
-                 :doc  "Returns the minimum value in a numeric dataset."}
+                 :doc  "Returns the minimum value in a numeric dataset."
+                 :args  [{:desc "The first value or range to consider when calculating the minimum value."}
+                         {:desc       "Additional values or ranges to consider when calculating the minimum value."
+                          :opt        true
+                          :repeatable true}]}
                 {:type  :FN
                  :value "MAX"
-                 :doc  "Returns the maximum value in a numeric dataset."}]
+                 :doc  "Returns the maximum value in a numeric dataset."
+                 :args  [{:desc "The first value or range to consider when calculating the maximum value."}
+                         {:desc       "Additional values or ranges to consider when calculating the maximum value."
+                          :opt        true
+                          :repeatable true}]}]
                (sut/autocomplete "MIX")))
 
       (t/is (= [{:type  :FN
                  :value "MID"
-                 :doc  "Returns a segment of a string."}
+                 :doc  "Returns a segment of a string."
+                 :args  [{:desc "The string to extract a segment from."}
+                         {:desc "The index from the left of arg1 from which to begin extracting. The first character in arg1 has the index 1."}
+                         {:desc "The length of the segment to extract."}]}
                 {:type  :FN
                  :value "MIN"
-                 :doc  "Returns the minimum value in a numeric dataset."}
+                 :doc  "Returns the minimum value in a numeric dataset."
+                 :args  [{:desc "The first value or range to consider when calculating the minimum value."}
+                         {:desc       "Additional values or ranges to consider when calculating the minimum value."
+                          :opt        true
+                          :repeatable true}]}
                 {:type  :FN
                  :value "TRIM"
-                 :doc  "Removes leading, trailing, and repeated spaces in text."}
+                 :doc  "Removes leading, trailing, and repeated spaces in text."
+                 :args  [{:desc "The text or reference to a cell containing text to be trimmed."}]}
                 {:type  :OBJREF
                  :value "mio"
                  :doc  "Field in the context"}]
@@ -64,55 +83,91 @@
       (t/is (= [{:type :FNCALL
                  :value "SUM"
                  :current-arg 0
-                 :doc "Returns the sum of a series of numbers and/or references."}]
+                 :doc "Returns the sum of a series of numbers and/or references."
+                 :args [{:desc "The first number or range to add together."}
+                        {:desc "Additional numbers or ranges to add to arg1."
+                         :opt true
+                         :repeatable true}]}]
                (sut/autocomplete "SUM(")))
 
       (t/is (= [{:type :FNCALL
                  :value "SUM"
                  :current-arg 1
-                 :doc "Returns the sum of a series of numbers and/or references."}]
+                 :doc "Returns the sum of a series of numbers and/or references."
+                 :args [{:desc "The first number or range to add together."}
+                        {:desc "Additional numbers or ranges to add to arg1."
+                         :opt true
+                         :repeatable true}]}]
                (sut/autocomplete "SUM(0, 1")))
 
       (t/is (= [{:type :FNCALL
                  :value "SUM"
                  :current-arg 2
-                 :doc "Returns the sum of a series of numbers and/or references."}]
+                 :doc "Returns the sum of a series of numbers and/or references."
+                 :args [{:desc "The first number or range to add together."}
+                        {:desc "Additional numbers or ranges to add to arg1."
+                         :opt true
+                         :repeatable true}]}]
                (sut/autocomplete "SUM(-1,1,  5")))
 
       (t/is (= [{:type :FNCALL
                  :value "SUM"
                  :current-arg 2
-                 :doc "Returns the sum of a series of numbers and/or references."}]
+                 :doc "Returns the sum of a series of numbers and/or references."
+                 :args [{:desc "The first number or range to add together."}
+                        {:desc "Additional numbers or ranges to add to arg1."
+                         :opt true
+                         :repeatable true}]}]
                (sut/autocomplete "MIN(SUM(-1,1,  5")))
 
       (t/is (= [{:type :FNCALL
                  :value "MIN"
                  :current-arg 0
-                 :doc "Returns the minimum value in a numeric dataset."}]
+                 :doc "Returns the minimum value in a numeric dataset."
+                 :args [{:desc "The first value or range to consider when calculating the minimum value."}
+                        {:desc "Additional values or ranges to consider when calculating the minimum value."
+                         :opt true
+                         :repeatable true}]}]
                (sut/autocomplete "MIN(SUM(-1,1,  5)")))
 
       (t/is (= [{:type :FNCALL
                  :value "MIN"
                  :current-arg 1
-                 :doc "Returns the minimum value in a numeric dataset."}]
+                 :doc "Returns the minimum value in a numeric dataset."
+                 :args [{:desc "The first value or range to consider when calculating the minimum value."}
+                        {:desc "Additional values or ranges to consider when calculating the minimum value."
+                         :opt true
+                         :repeatable true}]}]
                (sut/autocomplete "MIN(1, SUM(-1,1,  5)")))
 
       (t/is (= [{:type :FNCALL
                  :value "MIN"
                  :current-arg 1
-                 :doc "Returns the minimum value in a numeric dataset."}]
+                 :doc "Returns the minimum value in a numeric dataset."
+                 :args [{:desc "The first value or range to consider when calculating the minimum value."}
+                        {:desc "Additional values or ranges to consider when calculating the minimum value."
+                         :opt true
+                         :repeatable true}]}]
                (sut/autocomplete "MAX(MIN(1, SUM(-1,1,  5)")))
 
       (t/is (= [{:type :FNCALL
                  :value "MIN"
                  :current-arg 1
-                 :doc "Returns the minimum value in a numeric dataset."}]
+                 :doc "Returns the minimum value in a numeric dataset."
+                 :args [{:desc "The first value or range to consider when calculating the minimum value."}
+                        {:desc "Additional values or ranges to consider when calculating the minimum value."
+                         :opt true
+                         :repeatable true}]}]
                (sut/autocomplete "MAX(MIN(1, SUM(-1,1,  5)")))
 
       (t/is (= [{:type :FNCALL
                  :value "MIN"
                  :current-arg 1
-                 :doc "Returns the minimum value in a numeric dataset."}]
+                 :doc "Returns the minimum value in a numeric dataset."
+                 :args [{:desc "The first value or range to consider when calculating the minimum value."}
+                        {:desc "Additional values or ranges to consider when calculating the minimum value."
+                         :opt true
+                         :repeatable true}]}]
                (sut/autocomplete "MIN(SUM(-1,1,  5), \"FOO\""))))
 
     (t/testing "function call with reference as a last argument"

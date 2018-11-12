@@ -13,7 +13,7 @@
         fn-name (-> s first str string/upper-case)]
     `(do
        (defn- ~fn-sym ~@(rest s))
-       (swap! functions-store assoc ~fn-name (select-keys (meta #'~fn-sym) [:doc #_:arglists]))
+       (swap! functions-store assoc ~fn-name (select-keys (meta #'~fn-sym) [:doc :args]))
        (defmethod find-impl ~fn-name [~'_]
          (with-meta ~fn-sym
            (merge (meta #'~fn-sym)

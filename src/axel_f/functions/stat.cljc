@@ -17,6 +17,10 @@
 
 (def-excel-fn average
   "Returns the numerical average value in a dataset, ignoring text."
+  {:args [{:desc "The first value or range to consider when calculating the average value."}
+          {:desc "Additional values or ranges to consider when calculating the average value."
+           :opt true
+           :repeatable true}]}
   [& items]
   (let [tr-flatten-numbers (flatten-numbers (map coercion/excel-number))
         items (sequence tr-flatten-numbers items)
@@ -27,12 +31,20 @@
 
 (def-excel-fn count
   "Returns a count of the number of numeric values in a dataset."
+  {:args [{:desc "The first value or range to consider when counting."}
+          {:desc "Additional values or ranges to consider when counting."
+           :repeatable true
+           :opt true}]}
   [& items]
   (let [tr-flatten-numbers (flatten-numbers (map coercion/excel-number))]
     (count (sequence tr-flatten-numbers items))))
 
 (def-excel-fn max
   "Returns the maximum value in a numeric dataset."
+  {:args [{:desc "The first value or range to consider when calculating the maximum value."}
+          {:desc "Additional values or ranges to consider when calculating the maximum value."
+           :opt true
+           :repeatable true}]}
   [& items]
   (let [tr-coercer (map (fn [n]
                           (if-let [n (coercion/excel-number n)]
@@ -43,6 +55,10 @@
 
 (def-excel-fn min
   "Returns the minimum value in a numeric dataset."
+  {:args [{:desc "The first value or range to consider when calculating the minimum value."}
+          {:desc "Additional values or ranges to consider when calculating the minimum value."
+           :opt true
+           :repeatable true}]}
   [& items]
   (let [tr-coercer (map (fn [n]
                           (if-let [n (coercion/excel-number n)]

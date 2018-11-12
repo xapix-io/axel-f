@@ -6,5 +6,8 @@
             axel-f.functions.stat
             axel-f.functions.logic))
 
-(def-excel-fn clean [text]
+(def-excel-fn clean
+  "Returns the text with the non-printable ASCII characters removed."
+  {:args [{:desc "The text whose non-printable characters are to be removed."}]}
+  [text]
   (string/replace text #"[\x00-\x1F]" ""))

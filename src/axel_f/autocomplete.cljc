@@ -50,14 +50,14 @@
                     :doc "Field in the context"}
            :FN (merge {:value item}
                       (select-keys (get @functions-store item)
-                                   [:doc :arglists]))
+                                   [:doc :args]))
            :FNCALL (merge {:value item
                            :current-arg (let [position (dec (count args))]
                                           (if (< position 0)
                                             0
                                             position))}
                           (select-keys (get @functions-store item)
-                                       [:doc :arglists])))))
+                                       [:doc :args])))))
 
 (defn- reconstruct-path [path]
   (string/join "." (map (fn [s]

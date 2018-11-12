@@ -29,6 +29,7 @@
 
 (def-excel-fn arabic
   "Computes the value of a Roman numeral."
+  {:args [{:desc "The Roman numeral to format, whose value must be between 1 and 3999, inclusive."}]}
   [s]
   (let [sign (if (string/starts-with? s "-")
                -1 1)
@@ -52,6 +53,7 @@
 
 (def-excel-fn char
   "Convert a number into a character according to the current Unicode table."
+  {:args [{:desc "The number of the character to look up from the current Unicode table in decimal format."}]}
   [number]
   (if number
     (if-let [number (some-> number coercion/excel-number int)]
@@ -64,6 +66,7 @@
 
 (def-excel-fn code
   "Returns the numeric Unicode map value of the first character in the string provided."
+  {:args [{:desc "The string whose first character's Unicode map value will be returned."}]}
   [text]
   (if-let [text (coercion/excel-str text)]
     #?(:clj (some-> text first int)
@@ -72,11 +75,18 @@
 
 (def-excel-fn concatenate
   "Appends strings to one another."
+  {:args [{:desc "The initial string."}
+          {:desc "More strings to append in sequence."
+           :opt true
+           :repeatable true}]}
   [st1 & stx]
   (apply (find-impl "TEXTJOIN") "" false st1 stx))
 
 (def-excel-fn dollar
   "Formats a number into the locale-specific currency format."
+  {:args [{:desc "The value to be formatted."}
+          {:desc "The number of decimal places to display."
+           :opt true}]}
   [number & [number-of-places]]
   (let [number-of-places (or number-of-places 2)]
     (if-let [number (coercion/excel-number number)]
@@ -92,12 +102,18 @@
 
 (def-excel-fn exact
   "Tests whether two strings are identical."
+  {:args [{:desc "The first string to compare"}
+          {:desc "The second string to compare"}]}
   [str1 str2]
   (= (coercion/excel-str str1)
      (coercion/excel-str str2)))
 
 (def-excel-fn find
   "Returns the position at which a string is first found within text where the capitalization of letters matters. Returns #VALUE! if the string is not found."
+  {:args [{:desc "The string to look for within arg2."}
+          {:desc "The text to search for the first occurrence of arg1."}
+          {:desc "The character within arg2 at which to start the search."
+           :opt true}]}
   [substr str & [from-index]]
   (let [from-index (or from-index 0)]
     (some-> str
@@ -106,6 +122,11 @@
 
 (def-excel-fn join
   "Concatenates the elements of one or more one-dimensional arrays using a specified delimiter."
+  {:args [{:desc "The character or string to place between each concatenated value."}
+          {:desc "The value or values to be appended using arg1."}
+          {:desc "Additional value or array to be appended using arg1."
+           :opt true
+           :repeatable true}]}
   [delimeter arg & args]
   (if (and delimeter arg)
     (apply (find-impl "TEXTJOIN") delimeter false arg args)
@@ -117,6 +138,9 @@
 
 (def-excel-fn left
   "Returns a substring from the beginning of a specified string."
+  {:args [{:desc "The string from which the left portion will be returned."}
+          {:desc "The number of characters to return from the left side of arg1."
+           :opt true}]}
   [text & [number]]
   (let [number (or number 1)]
     (if (> number (count text))
@@ -125,6 +149,7 @@
 
 (def-excel-fn len
   "Returns the length of a string."
+  {:args [{:desc "The string whose length will be returned."}]}
   [text]
   (let [text (cond
                (string? text) text
@@ -133,11 +158,15 @@
 
 (def-excel-fn lower
   "Converts a specified string to lowercase."
+  {:args [{:desc "The string to convert to lowercase."}]}
   [text]
   (string/lower-case (coercion/excel-str text)))
 
 (def-excel-fn mid
   "Returns a segment of a string."
+  {:args [{:desc "The string to extract a segment from."}
+          {:desc "The index from the left of arg1 from which to begin extracting. The first character in arg1 has the index 1."}
+          {:desc "The length of the segment to extract."}]}
   [text start number]
   (if-let [start (coercion/excel-number start)]
     (if-let [number (coercion/excel-number number)]
@@ -159,11 +188,14 @@
 
 (def-excel-fn proper
   "Capitalizes each word in a specified string."
+  {:args [{:desc "The text which will be returned with the first letter of each word in uppercase and all other letters in lowercase."}]}
   [text]
   (string/replace (coercion/excel-str text) #"\w*" string/capitalize))
 
 (def-excel-fn regexextract
   "Extracts matching substrings according to a regular expression."
+  {:args [{:desc "The input text."}
+          {:desc "The first part of arg1 that matches this expression will be returned."}]}
   [text regular-expression]
   (cond
     (not (string? text))
@@ -184,6 +216,8 @@
 
 (def-excel-fn regexmatch
   "Whether a piece of text matches a regular expression."
+  {:args [{:desc "The text to be tested against the regular expression."}
+          {:desc "The regular expression to test the text against."}]}
   [text regular-expression]
   (cond
     (not (string? text))
@@ -199,6 +233,9 @@
 
 (def-excel-fn regexreplace
   "Replaces part of a text string with a different text string using regular expressions."
+  {:args [{:desc "The text, a part of which will be replaced."}
+          {:desc "The regular expression. All matching instances in text will be replaced."}
+          {:desc "The text which will be inserted into the original text."}]}
   [text regular-expression replacement]
   (cond
     (not (string? text))
@@ -218,6 +255,10 @@
 
 (def-excel-fn replace
   "Replaces part of a text string with a different text string."
+  {:args [{:desc "The text, a part of which will be replaced."}
+          {:desc "The position where the replacement will begin (starting from 1)."}
+          {:desc "The number of characters in the text to be replaced."}
+          {:desc "The text which will be inserted into the original text."}]}
   [text position length new-text]
   (if-let [position (coercion/excel-number position)]
     (if-let [length (coercion/excel-number length)]
@@ -231,6 +272,8 @@
 
 (def-excel-fn rept
   "Returns specified text repeated a number of times."
+  {:args [{:desc "The character or string to repeat."}
+          {:desc "The number of times arg1 should appear in the value returned."}]}
   [text number]
   (if-let [number (coercion/excel-number number)]
     (->> (constantly text)
@@ -241,6 +284,9 @@
 
 (def-excel-fn right
   "Returns a substring from the end of a specified string."
+  {:args [{:desc "The string from which the right portion will be returned."}
+          {:desc "The number of characters to return from the right side of arg1."
+           :opt true}]}
   [text & [number]]
   (let [number (or number 1)]
     (if (<= (count text) number)
@@ -250,6 +296,7 @@
 
 (def-excel-fn roman
   "Formats a number in Roman numerals."
+  {:args [{:desc "The number to format, between 1 and 3999, inclusive."}]}
   [n]
   (if-let [n (coercion/excel-number n)]
     (if (<= 0 n 3999)
@@ -265,6 +312,10 @@
 
 (def-excel-fn search
   "Returns the position at which a string is first found within text and ignores capitalization of letters. Returns #VALUE! if the string is not found."
+  {:args [{:desc "The string to look for within arg2."}
+          {:desc "The text to search for the first occurrence of arg1."}
+          {:desc "The character within arg2 at which to start the search."
+           :opt true}]}
   [find-text within-text & [position]]
   (let [position (or position 0)]
     (inc
@@ -274,6 +325,12 @@
 
 (def-excel-fn split
   "Divides text around a specified character or string, and puts each fragment into an array."
+  {:args [{:desc "The text to divide."}
+          {:desc "The character or characters to use to split arg1."}
+          {:desc "Whether or not to divide arg1 around each character contained in arg2."
+           :opt true}
+          {:desc "Whether or not to remove empty text messages from the split results. The default behavior is to treat consecutive delimiters as one (if TRUE). If FALSE, null values are added between consecutive delimiters."
+           :opt true}]}
   [text delimeter & [split-by-each & [remove-empty-text]]]
   (keep
    (if (or (nil? remove-empty-text)
@@ -304,6 +361,11 @@
 
 (def-excel-fn substitute
   "Replaces existing text with new text in a string."
+  {:args [{:desc "The text within which to search and replace."}
+          {:desc "The string to search for within text_to_search."}
+          {:desc "The string that will replace search_for."}
+          {:desc "The instance of arg2 within arg1 to replace with arg3. By default, all occurrences of arg2 are replaced; however, if arg4 is specified, only the indicated instance of arg2 is replaced."
+           :opt true}]}
   [text old-text new-text & [occurrence]]
   (if-let [occurrence (cond
                         (nil? occurrence) :all
@@ -317,6 +379,7 @@
 
 (def-excel-fn t
   "Returns string arguments as text."
+  {:args [{:desc "The argument to be converted to text."}]}
   [value]
   (when (string? value)
     value))
@@ -326,12 +389,14 @@
 
 (def-excel-fn trim
   "Removes leading, trailing, and repeated spaces in text."
+  {:args [{:desc "The text or reference to a cell containing text to be trimmed."}]}
   [& args]
   (string/trim
    (string/replace (-> args first coercion/excel-str) #"\ +" " ")))
 
 (def-excel-fn upper
   "Converts a specified string to uppercase."
+  {:args [{:desc "The string to convert to uppercase."}]}
   [& args]
   (-> args
       first
@@ -340,6 +405,7 @@
 
 (def-excel-fn value
   "Converts a string in any of the recognizeable date, time or number formats into a number."
+  {:args [{:desc "The string containing the value to be converted."}]}
   [s]
   (or
    (when (and (seqable? s)
@@ -351,6 +417,12 @@
 
 (def-excel-fn textjoin
   "Combines the text from multiple strings and/or arrays, with a specifiable delimiter separating the different texts."
+  {:args [{:desc "A string, possibly empty, or a reference to a valid string. If empty, text will be simply concatenated."}
+          {:desc "A boolean; if TRUE, empty strings selected in the text arguments won't be included in the result."}
+          {:desc "Any text item. This could be a string, or an array of strings in a range."}
+          {:desc "Additional text item(s)."
+           :opt true
+           :repeatable true}]}
   [delimeter ignore-empty & items]
   (->> items
       flatten
