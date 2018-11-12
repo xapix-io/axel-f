@@ -2,9 +2,10 @@
   (:require [clojure.string :as string]
             [axel-f.core :as axel-f]
             [axel-f.macros :refer [functions-store]]
-            [clj-fuzzy.metrics :as fuzzy]))
+            [clj-fuzzy.metrics :as fuzzy]
+            [clojure.set :refer [rename-keys]]))
 
- (defn- fuzzy-match? [ex dict]
+(defn- fuzzy-match? [ex dict]
   (if (string? ex)
     (->> dict
         (map #(hash-map :value %
@@ -47,17 +48,21 @@
   (merge {:type type}
          (case type
            :OBJREF {:value (axel-f/->string item)
-                    :doc "Field in the context"}
-           :FN (merge {:value item}
-                      (select-keys (get @functions-store item)
-                                   [:doc :args]))
-           :FNCALL (merge {:value item
+                    :desc  "Field in the context"}
+           :FN     (merge {:value item}
+                          (-> @functions-store
+                              (get item)
+                              (select-keys [:doc :args])
+                              (rename-keys {:doc :desc})))
+           :FNCALL (merge {:value       item
                            :current-arg (let [position (dec (count args))]
                                           (if (< position 0)
                                             0
                                             position))}
-                          (select-keys (get @functions-store item)
-                                       [:doc :args])))))
+                          (-> @functions-store
+                              (get item)
+                              (select-keys [:doc :args])
+                              (rename-keys {:doc :desc}))))))
 
 (defn- reconstruct-path [path]
   (string/join "." (map (fn [s]
