@@ -87,4 +87,10 @@
     (t/is (= 1 (sut/run "OBJREF({1,2,3}, 0)")))
 
     (t/is (= [{:bar 1} {:bar 2} {:bar 3}]
-             (sut/run "FILTER(foo, _.bar < 4)" {:foo [{:bar 1} {:bar 4} {:bar 2} {:bar 3}]})))))
+             (sut/run "FILTER(foo, _.bar < 4)" {:foo [{:bar 1} {:bar 4} {:bar 2} {:bar 3}]}))))
+
+  (t/testing "dynamic references evaluates into full context object"
+
+    (t/is (= 2 (sut/run "1 + _" 1)))
+
+    (t/is (= {:foo 1 :bar 2} (sut/run "IF(foo = 1, _, #VALUE!)" {:foo 1 :bar 2})))))
