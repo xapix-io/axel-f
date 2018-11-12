@@ -7,7 +7,7 @@
                :cljs [axel-f.macros :refer [find-impl] :refer-macros [def-excel-fn]]))
   (:refer-clojure :exclude [compile]))
 
-(defparser parser
+(def parser-str
   "
 FORMULA                  ::= EXPR | <eq-op> EXPR
 EXPR                     ::= COMPARISON_EXPS
@@ -70,6 +70,8 @@ STAR                     ::= '*'?
 <dot>                    ::= '.'
   ")
 
+(def parser (insta/parser parser-str))
+
 (defn- with-indifferent-access [m ks]
   (if (= "*" (first ks))
     (if (and (seqable? m)
@@ -122,7 +124,8 @@ STAR                     ::= '*'?
         :VECTOR
         :FNCALL
         :EXP_EXPR
-        :STRING]))
+        :STRING
+        :DYNAMIC_REF]))
 
 (defn- reserved? [token]
   (let [token (if (string? token)
@@ -363,6 +366,10 @@ STAR                     ::= '*'?
 (defmethod ->string #?(:clj clojure.lang.Keyword
                        :cljs cljs.core/Keyword) [v] (name v))
 
+(defn- excel-error? [maybe-error]
+  (if-let [{error-type :type} (ex-data maybe-error)]
+    (contains? #{"#N/A" "#VALUE!" "#REF!" "#DIV/0!" "#NUM!" "#NAME?" "#NULL!"} error-type)))
+
 (defn- run* [arg context]
   (let [token (if (vector? arg)
                 (first arg)
@@ -413,6 +420,7 @@ STAR                     ::= '*'?
         :PERCENT_EXPR    (let [r (run* (first args) context)]
                            (float (/ r 100)))
         :OBJREF          (objref-function args context)
+        :DYNAMIC_REF     context
         :VECTOR          (mapv #(run* % context) args)
         :FNCALL          (run-fncall* (first args) (second args) context)
         :STRING          (first args))
@@ -423,7 +431,8 @@ STAR                     ::= '*'?
       (or (string? token)
           (number? token)
           (boolean? token)
-          (keyword? token))
+          (keyword? token)
+          (excel-error? token))
       token)))
 
 (defn compile [formula-str & custom-transforms]
@@ -443,7 +452,6 @@ STAR                     ::= '*'?
        (run* formula-or-error context)
        (catch #?(:clj Throwable
                  :cljs js/Error) e
-         (let [{:keys [type] :as data} (ex-data e)]
-           (if (#{"#N/A" "#VALUE!" "#REF!" "#DIV/0!" "#NUM!" "#NAME?" "#NULL!"} type)
-             data
-             (throw e))))))))
+         (if (excel-error? e)
+           (ex-data e)
+           (throw e)))))))
