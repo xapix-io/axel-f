@@ -30,7 +30,22 @@
     (t/is (= {:type "#VALUE!"}
              (#?(:clj ex-data
                  :cljs .-data)
-              (af-sut/run "#VALUE!")))))
+              (af-sut/run "#VALUE!"))))
+
+    (t/is (= {:type "#N/A"
+              :reason "Wrong number of args (0) passed to: ROUND"}
+             (af-sut/run "ROUND()")))
+
+    (t/are [x] (= {:type "#N/A"
+                   :reason (str "Wrong number of args (0) passed to: " x)}
+                  (af-sut/run (str x "()")))
+      "ROUND"
+      "CHAR"
+      "JOIN")
+
+    (t/is (thrown? #?(:clj clojure.lang.ExceptionInfo
+                      :cljs ExceptionInfo)
+             (af-sut/run "ADJADKHAJDLA()"))))
 
   #?(:clj
      (t/testing "non-excel errors are thrown from run function"
