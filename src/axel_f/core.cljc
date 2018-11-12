@@ -294,48 +294,6 @@ STAR                     ::= '*'?
   [args context]
   (distinct (run* (first args) context)))
 
-(comment
-
-  (defn- infinity-args? [args]
-    (-> args
-        last
-        :repeatable))
-
-  (defn- min-arity [args]
-    (->> args
-        (filter #(not (:opt %)))
-        count))
-
-  (defn- max-arity [args]
-    (when-not (infinity-args? args)
-      (count args)))
-
-  (defn- format-wrong-arity-error [fnname min-arity max-arity total]
-    (str "Wrong number of arguments to "
-         fnname
-         ". Expected "
-         (if (and min-arity max-arity
-                  (not= min-arity max-arity))
-           (str "between " min-arity " and " max-arity " arguments,")
-           (if (and min-arity (nil? max-arity))
-             (str "at least " min-arity " argument" (when-not (= 1 min-arity) "s") ",")
-             (str "exact " min-arity " argument" (when-not (= 1 min-arity) "s") ",")))
-         " but got "
-         total
-         " arguments."))
-
-  (defn check-arity [fn-name {fn-args :args} args]
-    (let [infinity-args? (infinity-args? fn-args)
-          min-arity (min-arity fn-args)
-          max-arity (max-arity fn-args)]
-      (or (and (= min-arity 0) infinity-args?)
-          (<= min-arity (count args) (or max-arity #?(:clj Double/POSITIVE_INFINITY
-                                                      :cljs js/Infinity)))
-          (throw (error/error "#N/A"
-                              (format-wrong-arity-error fn-name min-arity max-arity (count args)))))))
-
-  )
-
 (defn- run-fncall* [f args context]
   (if-let [fn-impl (find-impl f)]
     (try
