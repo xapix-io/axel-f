@@ -64,6 +64,9 @@ In addition to a formula, the run function can accept execution context as a sec
   * `foo[*][*]` we support nested vectors (vector of vectors of vectors ...)
   * and objects in vectors `foo[*].bar[*].baz`
   * it is possible to use indexes to get the data inside of arrays: `foo[1].bar`
+* `_` can be used as a self reference. When used in special functions (MAP, FILTER, SORT) will reference single item of collection.
+* field reference can have any character except space, single/double quote, dot, comma, opening/closing square/round brackets and operators
+  * fields with mentioned symbols inside must be quoted by wrapping into `#''`: `#'bar > baz'[0].foo`
 
 # Data types
 
@@ -96,6 +99,26 @@ Any expression can be used as an operand for any operator. axel-f has the same o
   - not equal (`<>`)
 - [x] Exponential operator (`^`)
 - [x] Concatenate operator (`&`)
+
+# Custom Functions
+
+Since 0.3.0 version it is possible to add custom functions without changing the core of axel-f. You can use macro `def-excel-fn`. Please check docstring for it. In general this macro could be used as a replacement for `defn` but it also will add autocomplete functionality by fetching dockstring and arguments metadata.
+
+```
+(def-excel-fn base64
+  "Convert given string into base64 format"
+  {:args [{:desc "String to be converted into base64"}]}
+  [s]
+  (string->base64 s))
+
+;; 1. New function with generated name will be created
+;; 2. Excel function will have a name as upcased function name (base64 -> "BASE64")
+;; 3. New keyword will be added into function-store in macro namespace.
+;; 4. find-impl multimethod will have new implementation for "BASE64" name
+
+(run "BASE64('some simple string')") ;; => "c29tZSBzaW1wbGUgc3RyaW5n"
+(autocomplete "BASE64(") ;; => {:type :FNCALL, :value "BASE64", :desc "Convert given string into base64 format", :args [{:desc "String to be converted into base64"}]}
+```
 
 # Implemented excel functions
 

@@ -68,8 +68,7 @@
       "foo[1].bar" {:foo [{:bar 1}]}
       "foo.bar" nil
       "foo[1].bar" nil
-      [:OBJREF "foo" 1.2] {:foo 1}
-      ))
+      [:OBJREF "foo" 1.2] {:foo 1}))
 
   (t/testing "references with array wildcarts"
 
@@ -93,4 +92,11 @@
 
     (t/is (= 2 (sut/run "1 + _" 1)))
 
-    (t/is (= {:foo 1 :bar 2} (sut/run "IF(foo = 1, _, #VALUE!)" {:foo 1 :bar 2})))))
+    (t/is (= {:foo 1 :bar 2} (sut/run "IF(foo = 1, _, #VALUE!)" {:foo 1 :bar 2})))
+
+    (t/is (= [{:bar 1} {:bar 2} {:bar 3}]
+             (sut/run "FILTER(_.foo, _.bar < 4)" {:foo [{:bar 1} {:bar 4} {:bar 2} {:bar 3}]}))))
+
+  (t/testing "quoted references with restricted symbols"
+
+    (t/is (= 1 (sut/run "foo.#'bar > 1'[0]" {:foo {"bar > 1" [1 2 3]}})))))

@@ -9,65 +9,66 @@
 
 (def parser-str
   "
-FORMULA                  ::= EXPR | <eq-op> EXPR
-EXPR                     ::= COMPARISON_EXPS
-COMPARISON_EXPS          ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
-MORE_EXPR                ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-op> COMPARISON_EXPS }
-LESS_EXPR                ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-op> COMPARISON_EXPS }
-MORE_OR_EQ_EXPR          ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-or-eq-op> COMPARISON_EXPS }
-LESS_OR_EQ_EXPR          ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-or-eq-op> COMPARISON_EXPS }
-EQ_EXPR                  ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<eq-op> COMPARISON_EXPS }
-NOT_EQ_EXPR              ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<not-eq-op> COMPARISON_EXPS }
-CONCAT_EXPR              ::= ADDITIVE_EXPS {<concat-op> ADDITIVE_EXPS}
-ADDITIVE_EXPS            ::= ADD_EXPR | SUB_EXPR
-ADD_EXPR                 ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<add-op> MULTIPLICATIVE_EXPS}
-SUB_EXPR                 ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<sub-op> MULTIPLICATIVE_EXPS}
-MULTIPLICATIVE_EXPS      ::= MULT_EXPR | DIV_EXPR
-MULT_EXPR                ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<mult-op> EXP_EXPR}
-DIV_EXPR                 ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<div-op> EXP_EXPR}
-EXP_EXPR                 ::= PRIMARY {<exp-op> PRIMARY}
-PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR | ERROR | DYNAMIC_REF ) <whitespace> *
-SIGN_EXPR                ::= ( '+' | '-' ) PRIMARY
-PERCENT_EXPR             ::= PRIMARY <percent-op>
-ARRAY_EXPR               ::= <opening-curly-bracket> ( EXPR {<comma> EXPR} )? <closing-curly-bracket>
-ERROR                    ::= #'#N/A|#VALUE!|#REF!|#DIV/0!|#NUM!|#NAME?|#NULL!'
-CONST                    ::= NUMBER | STRING | BOOL
-NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
-STRING                   ::= #'\"[^\"]*\"' | #\"'[^']*'\"
-BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
-FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
-FN                       ::= #'[A-Z]+'
-ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
-ARGUMENT                 ::= EXPR | Epsilon
-OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( OBJREF | NUMBER_FIELD | FNCALL | STAR  ) <closing-square-bracket> ) )*
-FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | FNCALL | DYNAMIC_REF
-STRING_FIELD             ::= STRING
-SYMBOL_FIELD             ::= #'[^ .,\"\\'\\[\\]\\(\\)]+'
-NUMBER_FIELD             ::= #'[0-9]+'
-DYNAMIC_REF              ::= '_'
-STAR                     ::= '*'?
-<opening-square-bracket> ::= '['
-<closing-square-bracket> ::= ']'
-<opening-curly-bracket>  ::= '{'
-<closing-curly-bracket>  ::= '}'
-<whitespace>             ::= #'(\\s)+'
-<opening-parenthesis>    ::= '('
-<closing-parenthesis>    ::= ')'
-<percent-op>             ::= '%'
-<concat-op>              ::= '&'
-<exp-op>                 ::= '^'
-<more-op>                ::= '>'
-<less-op>                ::= '<'
-<more-or-eq-op>          ::= '>='
-<less-or-eq-op>          ::= '<='
-<eq-op>                  ::= '='
-<not-eq-op>              ::= '<>'
-<add-op>                 ::= '+'
-<sub-op>                 ::= '-'
-<mult-op>                ::= '*'
-<div-op>                 ::= '/'
-<comma>                  ::= ','
-<dot>                    ::= '.'
+  FORMULA                  ::= EXPR | <eq-op> EXPR
+  EXPR                     ::= COMPARISON_EXPS
+  COMPARISON_EXPS          ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
+  MORE_EXPR                ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-op> COMPARISON_EXPS }
+  LESS_EXPR                ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-op> COMPARISON_EXPS }
+  MORE_OR_EQ_EXPR          ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-or-eq-op> COMPARISON_EXPS }
+  LESS_OR_EQ_EXPR          ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-or-eq-op> COMPARISON_EXPS }
+  EQ_EXPR                  ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<eq-op> COMPARISON_EXPS }
+  NOT_EQ_EXPR              ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<not-eq-op> COMPARISON_EXPS }
+  CONCAT_EXPR              ::= ADDITIVE_EXPS {<concat-op> ADDITIVE_EXPS}
+  ADDITIVE_EXPS            ::= ADD_EXPR | SUB_EXPR
+  ADD_EXPR                 ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<add-op> MULTIPLICATIVE_EXPS}
+  SUB_EXPR                 ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<sub-op> MULTIPLICATIVE_EXPS}
+  MULTIPLICATIVE_EXPS      ::= MULT_EXPR | DIV_EXPR
+  MULT_EXPR                ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<mult-op> EXP_EXPR}
+  DIV_EXPR                 ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<div-op> EXP_EXPR}
+  EXP_EXPR                 ::= PRIMARY {<exp-op> PRIMARY}
+  PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR | ERROR | DYNAMIC_REF ) <whitespace> *
+  SIGN_EXPR                ::= ( '+' | '-' ) PRIMARY
+  PERCENT_EXPR             ::= PRIMARY <percent-op>
+  ARRAY_EXPR               ::= <opening-curly-bracket> ( EXPR {<comma> EXPR} )? <closing-curly-bracket>
+  ERROR                    ::= #'#N/A|#VALUE!|#REF!|#DIV/0!|#NUM!|#NAME?|#NULL!'
+  CONST                    ::= NUMBER | STRING | BOOL
+  NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
+  STRING                   ::= #'\"[^\"]*\"' | #\"'[^']*'\"
+  BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
+  FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
+  FN                       ::= #'[A-Z]+'
+  ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
+  ARGUMENT                 ::= EXPR | Epsilon
+  OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( OBJREF | NUMBER_FIELD | FNCALL | STAR  ) <closing-square-bracket> ) )*
+  FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | QUOTED_SYMBOL_FIELD | FNCALL | DYNAMIC_REF
+  STRING_FIELD             ::= STRING
+  SYMBOL_FIELD             ::= #'[^ .,\"\\'\\[\\]\\(\\)\\+\\*/<=>\\^&%]+'
+  QUOTED_SYMBOL_FIELD      ::= #\"#'[^']*'\"
+  NUMBER_FIELD             ::= #'[0-9]+'
+  DYNAMIC_REF              ::= '_'
+  STAR                     ::= '*'?
+  <opening-square-bracket> ::= '['
+  <closing-square-bracket> ::= ']'
+  <opening-curly-bracket>  ::= '{'
+  <closing-curly-bracket>  ::= '}'
+  <whitespace>             ::= #'(\\s)+'
+  <opening-parenthesis>    ::= '('
+  <closing-parenthesis>    ::= ')'
+  <percent-op>             ::= '%'
+  <concat-op>              ::= '&'
+  <exp-op>                 ::= '^'
+  <more-op>                ::= '>'
+  <less-op>                ::= '<'
+  <more-or-eq-op>          ::= '>='
+  <less-or-eq-op>          ::= '<='
+  <eq-op>                  ::= '='
+  <not-eq-op>              ::= '<>'
+  <add-op>                 ::= '+'
+  <sub-op>                 ::= '-'
+  <mult-op>                ::= '*'
+  <div-op>                 ::= '/'
+  <comma>                  ::= ','
+  <dot>                    ::= '.'
   ")
 
 (def parser (insta/parser parser-str))
@@ -159,6 +160,8 @@ STAR                     ::= '*'?
                            :cljs js/parseFloat)
    :STRING_FIELD        identity
    :SYMBOL_FIELD        identity
+   :QUOTED_SYMBOL_FIELD (fn [s]
+                          (second (string/split s #"'")))
    :STRING              (fn [s]
                           (let [s (apply str (-> s rest butlast))]
                             (if (reserved? s)

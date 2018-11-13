@@ -1,5 +1,6 @@
 (ns axel-f.macros
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [clojure.set :refer [rename-keys]]))
 
 (def ^:dynamic  functions-store (atom {}))
 
@@ -13,7 +14,10 @@
         fn-name (-> s first str string/upper-case)]
     `(do
        (defn- ~fn-sym ~@(rest s))
-       (swap! functions-store assoc ~fn-name (select-keys (meta #'~fn-sym) [:doc :args]))
+       (swap! functions-store assoc ~fn-name
+              (-> (meta #'~fn-sym)
+                  (select-keys [:doc :args])
+                  (rename-keys {:doc :desc})))
        (defmethod find-impl ~fn-name [~'_]
          (with-meta ~fn-sym
            (merge (meta #'~fn-sym)

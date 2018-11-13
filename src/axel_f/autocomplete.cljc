@@ -2,8 +2,7 @@
   (:require [clojure.string :as string]
             [axel-f.core :as axel-f]
             [axel-f.macros :refer [functions-store]]
-            [clj-fuzzy.metrics :as fuzzy]
-            [clojure.set :refer [rename-keys]]))
+            [clj-fuzzy.metrics :as fuzzy]))
 
 (defn- fuzzy-match? [ex dict]
   (if (string? ex)
@@ -51,18 +50,14 @@
                     :desc  "Field in the context"}
            :FN     (merge {:value item}
                           (-> @functions-store
-                              (get item)
-                              (select-keys [:doc :args])
-                              (rename-keys {:doc :desc})))
+                              (get item)))
            :FNCALL (merge {:value       item
                            :current-arg (let [position (dec (count args))]
                                           (if (< position 0)
                                             0
                                             position))}
                           (-> @functions-store
-                              (get item)
-                              (select-keys [:doc :args])
-                              (rename-keys {:doc :desc}))))))
+                              (get item))))))
 
 (defn- reconstruct-path [path]
   (string/join "." (map (fn [s]
