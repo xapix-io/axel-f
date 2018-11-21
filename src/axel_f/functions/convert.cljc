@@ -1,19 +1,20 @@
 (ns axel-f.functions.convert
   (:require [axel-f.macros #?(:clj :refer :cljs :refer-macros) [def-excel-fn]]
-            #?@(:clj [[cheshire.core :as json]]))
+            #?(:clj [cheshire.core :as json]
+               :cljs [goog.crypt.base64 :as b64]))
   #?(:clj (:import java.util.Base64)))
 
 (defn base64-encode [to-encode]
   #?(:clj
      (.encodeToString (Base64/getEncoder) (.getBytes to-encode))
      :cljs
-     (js/btoa to-encode)))
+     (b64/encodeString to-encode)))
 
 (defn base64-decode [to-decode]
   #?(:clj
      (String. (.decode (Base64/getDecoder) to-decode))
      :cljs
-     (js/atob to-decode)))
+     (b64/decodeString to-decode)))
 
 (defn json-encode [to-encode]
   #?(:clj

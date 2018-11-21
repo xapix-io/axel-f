@@ -185,7 +185,7 @@
 
     (t/is (nil? (sut/run "CODE(\"\")")))))
 
-(t/deftest concatenate-function-test
+(t/deftest concatenate-1-function-test
   (t/testing "CONCATENATE function"
     (t/is (= "hello world"
              (sut/run "CONCATENATE(\"hello\", \" \", \"world\")")))
