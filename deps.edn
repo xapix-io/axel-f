@@ -11,6 +11,8 @@
  :aliases
  {:master {:override-deps {org.clojure/clojure {:mvn/version "1.10.0-master-SNAPSHOT"}}}
 
+  :with-optional-deps {:extra-deps {cheshire {:mvn/version "5.8.1"}}}
+
   :cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "1.10.439"}}}
 
   :bench {:extra-deps {criterium          {:mvn/version "0.4.4"}

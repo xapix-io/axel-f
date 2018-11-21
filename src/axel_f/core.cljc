@@ -36,7 +36,7 @@
   STRING                   ::= #'\"[^\"]*\"' | #\"'[^']*'\"
   BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
   FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
-  FN                       ::= #'[A-Z]+'
+  FN                       ::= #'[A-Z0-9]+'
   ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
   ARGUMENT                 ::= EXPR | Epsilon
   OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( OBJREF | NUMBER_FIELD | FNCALL | STAR  ) <closing-square-bracket> ) )*

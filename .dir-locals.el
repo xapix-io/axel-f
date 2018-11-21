@@ -2,4 +2,4 @@
 ;;; For more information see (info "(emacs) Directory Variables")
 
 ((clojure-mode
-  (cider-clojure-cli-global-options . "-A:dev:test")))
+  (cider-clojure-cli-global-options . "-A:with-optional-deps:bench:test")))

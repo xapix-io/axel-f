@@ -45,9 +45,9 @@
                           e
                         (:data (ex-data e))))]
 
-        (t/is (= {:index  1
+        (t/is (= {:index  2
                   :line   1
-                  :column 2
+                  :column 3
                   :text   "1("}
                  (select-keys failure
                               [:index :line :column :text])))
