@@ -39,8 +39,9 @@
   FN                       ::= #'[A-Z0-9]+'
   ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
   ARGUMENT                 ::= EXPR | Epsilon
-  OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( OBJREF | NUMBER_FIELD | FNCALL | STAR  ) <closing-square-bracket> ) )*
-  FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | QUOTED_SYMBOL_FIELD | FNCALL | DYNAMIC_REF
+  OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? ARRAY_FIELD ) )*
+  ARRAY_FIELD              ::= <opening-square-bracket> ( OBJREF | NUMBER_FIELD | FNCALL | STAR  ) <closing-square-bracket>
+  FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | QUOTED_SYMBOL_FIELD | FNCALL | DYNAMIC_REF | ARRAY_FIELD
   STRING_FIELD             ::= STRING
   SYMBOL_FIELD             ::= #'[^ .,\"\\'\\[\\]\\(\\)\\+\\*/<=>\\^&%]+'
   QUOTED_SYMBOL_FIELD      ::= #\"#'[^']*'\"
@@ -162,6 +163,7 @@
    :SYMBOL_FIELD        identity
    :QUOTED_SYMBOL_FIELD (fn [s]
                           (second (string/split s #"'")))
+   :ARRAY_FIELD         identity
    :STRING              (fn [s]
                           (let [s (apply str (-> s rest butlast))]
                             (if (reserved? s)

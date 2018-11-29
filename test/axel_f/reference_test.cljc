@@ -29,7 +29,10 @@
       (t/is (= [:OBJREF "foo" "*" "bar" "*"]
                (sut/compile "foo.[*].bar[*]")
                (sut/compile "foo[].bar[]")
-               (sut/compile "foo.[].bar.[]"))))
+               (sut/compile "foo.[].bar.[]")))
+      (t/is (= [:OBJREF "*" "foo"]
+               (sut/compile "[].foo")
+               (sut/compile "[*].foo"))))
 
     (t/testing "with calculated keywords"
 
@@ -79,7 +82,8 @@
       "foo[*].bar[*].baz" {:foo [{:bar [{:baz 1} {:baz 2} {:baz 3}]}
                                  {:bar [{:baz 4} {:baz 5} {:baz 6}]}]} [[1 2 3] [4 5 6]]
       "foo[*]"            {:foo 1}                                     1
-      "foo[*].bar"        {:foo []}                                    []))
+      "foo[*].bar"        {:foo []}                                    []
+      "[*].foo"           [{:foo 1} {:foo 2}]                          [1 2]))
 
   (t/testing "dynamic references"
 
