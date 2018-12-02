@@ -32,8 +32,10 @@
   ARRAY_EXPR               ::= <opening-curly-bracket> ( EXPR {<comma> EXPR} )? <closing-curly-bracket>
   ERROR                    ::= #'#N/A|#VALUE!|#REF!|#DIV/0!|#NUM!|#NAME?|#NULL!'
   CONST                    ::= NUMBER | STRING | BOOL
+  SYMBOL                   ::= #\"[^0-9][a-zA-Z.*+!?_'-]+\"
   NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
   STRING                   ::= #'\"[^\"]*\"' | #\"'[^']*'\"
+  KEYWORD                  ::= <colon> SYMBOL ( <div-op> SYMBOL_FIELD )?
   BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
   FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
   FN                       ::= #'[A-Z0-9]+'
@@ -41,8 +43,9 @@
   ARGUMENT                 ::= EXPR | Epsilon
   OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? ARRAY_FIELD ) )*
   ARRAY_FIELD              ::= <opening-square-bracket> ( OBJREF | NUMBER_FIELD | FNCALL | STAR  ) <closing-square-bracket>
-  FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | QUOTED_SYMBOL_FIELD | FNCALL | DYNAMIC_REF | ARRAY_FIELD
+  FIELD                    ::= ( KEYWORD_FIELD / STRING_FIELD / SYMBOL_FIELD ) | QUOTED_SYMBOL_FIELD | FNCALL | DYNAMIC_REF | ARRAY_FIELD
   STRING_FIELD             ::= STRING
+  KEYWORD_FIELD            ::= KEYWORD
   SYMBOL_FIELD             ::= #'[^ .,\"\\'\\[\\]\\(\\)\\+\\*/<=>\\^&%]+'
   QUOTED_SYMBOL_FIELD      ::= #\"#'[^']*'\"
   NUMBER_FIELD             ::= #'[0-9]+'
@@ -70,6 +73,7 @@
   <div-op>                 ::= '/'
   <comma>                  ::= ','
   <dot>                    ::= '.'
+  <colon>                  ::= ':'
   ")
 
 (def parser (insta/parser parser-str))
@@ -161,6 +165,10 @@
                            :cljs js/parseFloat)
    :STRING_FIELD        identity
    :SYMBOL_FIELD        identity
+   :KEYWORD_FIELD       identity
+   :KEYWORD             (fn [& sx]
+                          (apply keyword sx))
+   :SYMBOL              identity
    :QUOTED_SYMBOL_FIELD (fn [s]
                           (second (string/split s #"'")))
    :ARRAY_FIELD         identity

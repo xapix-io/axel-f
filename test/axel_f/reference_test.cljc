@@ -104,3 +104,14 @@
   (t/testing "quoted references with restricted symbols"
 
     (t/is (= 1 (sut/run "foo.#'bar > 1'[0]" {:foo {"bar > 1" [1 2 3]}})))))
+
+(t/deftest qualified-keywords-in-objref
+
+  (t/is (= 1 (sut/run ":axel-f.reference-test/test" {::test 1})))
+
+  (t/testing "mixing with dynamic references"
+
+    (t/is (= 1 (sut/run "_.:axel-f.reference-test/test" {::test 1})))
+    (t/is (= [{::b 1} {::b 2}]
+             (sut/run "FILTER(:axel-f.reference-test/to-filter, _.:axel-f.reference-test/b < 4)"
+               {::to-filter [{::b 1} {::b 2} {::b 5}]})))))
