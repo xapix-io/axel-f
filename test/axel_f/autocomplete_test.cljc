@@ -1,13 +1,12 @@
 (ns axel-f.autocomplete-test
   (:require [axel-f.autocomplete :as sut]
-            [axel-f.functions :as functions]
+            [axel-f.macros :refer [functions-store]]
+            axel-f.functions
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])))
 
 (t/deftest autocomplete-test
-
   (t/testing "autocomplete function return empty vector for unbalanced quotes"
-
     (t/are [x] (= [] (sut/autocomplete x))
       "\""
       "'"
@@ -15,12 +14,10 @@
       "CONCATENATE(\""))
 
   (t/testing "autocomplete function return array of suggestions for incomplete formula with"
-
-    (with-redefs [functions/functions-map {"SUM"   {}
-                                           "ROUND" {}
-                                           "MIN"   {}
-                                           "MAX"   {}}]
-
+    (with-redefs [functions-store (atom {"SUM"   {}
+                                         "ROUND" {}
+                                         "MIN"   {}
+                                         "MAX"   {}})]
       (t/is (= [{:type :FN, :value "SUM"}
                 {:type :FN, :value "ROUND"}
                 {:type :FN, :value "MIN"}
@@ -28,7 +25,6 @@
                (sut/autocomplete "" {})))
 
       (t/testing "begining of the function"
-
         (t/is (= [{:type :FN :value "SUM"}]
                  (sut/autocomplete "SU")))
 
@@ -39,7 +35,6 @@
                  (sut/autocomplete "M")))))
 
     (t/testing "fuzzy match"
-
       (t/is (= [{:type  :FN
                  :value "MID"
                  :desc  "Returns a segment of a string."
@@ -85,7 +80,6 @@
                (sut/autocomplete "MI" {:mio 1}))))
 
     (t/testing "function call with incomplete list of arguments"
-
       (t/is (= [{:type :FNCALL
                  :value "SUM"
                  :current-arg 0
@@ -177,7 +171,6 @@
                (sut/autocomplete "MIN(SUM(-1,1,  5), \"FOO\""))))
 
     (t/testing "function call with reference as a last argument"
-
       (t/is (= [{:type :OBJREF :value "foo"}]
                (map #(select-keys % [:type :value])
                     (sut/autocomplete "SUM(foo" {:foo {:bar {:bar 1 :baz 2}}}))))

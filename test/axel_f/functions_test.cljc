@@ -185,7 +185,7 @@
 
     (t/is (nil? (sut/run "CODE(\"\")")))))
 
-(t/deftest concatenate-function-test
+(t/deftest concatenate-1-function-test
   (t/testing "CONCATENATE function"
     (t/is (= "hello world"
              (sut/run "CONCATENATE(\"hello\", \" \", \"world\")")))
@@ -560,7 +560,7 @@
               :reason "VALUE parameter 'TRUE' cannot be parsed to number."}
              (sut/run "VALUE(TRUE)")))))
 
-(t/deftest count-function-test
+(t/deftest count-function-test-1
   (let [context {:data [1 2 3]}]
     (t/testing "COUNT function"
       (t/is (= 3
@@ -604,11 +604,11 @@
              (sut/run "DOLLAR(100, \"foo\")")))))
 
 (t/deftest wrong-arity-test
-  (t/is (= {:type "#N/A", :reason "Wrong number of arguments to JOIN. Expected at least 2 arguments, but got 1 arguments."}
+  (t/is (= {:type "#N/A", :reason "Wrong number of args (1) passed to: JOIN"}
            (sut/run "JOIN(\",\")")))
 
   (t/is (= {:type "#N/A"
-            :reason "Wrong number of arguments to CHAR. Expected exact 1 argument, but got 0 arguments."}
+            :reason "Wrong number of args (0) passed to: CHAR"}
            (sut/run "CHAR()"))))
 
 (t/deftest map-function-test

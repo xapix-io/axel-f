@@ -29,7 +29,7 @@ jobs:
           name: Test with clojure 1.9
           type: shell
           command: |
-            clojure -A:test:coverage
+            clojure -A:with-optional-deps:test:coverage
             bash <(curl -s https://codecov.io/bash)
 
       - save_cache:
@@ -51,7 +51,7 @@ jobs:
           name: Test with clojure 1.10-master
           type: shell
           command: |
-            clojure -A:master:test:clj-runner
+            clojure -A:with-optional-deps:master:test:clj-runner
 
       - save_cache:
           paths:

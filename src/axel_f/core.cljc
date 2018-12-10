@@ -3,79 +3,80 @@
                :cljs [instaparse.core :as insta :refer-macros [defparser]])
             [clojure.string :as string]
             [axel-f.error :as error]
-            [axel-f.functions :as functions])
+            #?(:clj [axel-f.macros :refer [def-excel-fn find-impl]]
+               :cljs [axel-f.macros :refer [find-impl] :refer-macros [def-excel-fn]]))
   (:refer-clojure :exclude [compile]))
 
-(defn- strings->rule [strings]
-  (->> strings
-       (map #(str "'" % "'"))
-       (string/join " | ")))
+(def parser-str
+  "
+  FORMULA                  ::= EXPR | <eq-op> EXPR
+  EXPR                     ::= COMPARISON_EXPS
+  COMPARISON_EXPS          ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
+  MORE_EXPR                ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-op> COMPARISON_EXPS }
+  LESS_EXPR                ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-op> COMPARISON_EXPS }
+  MORE_OR_EQ_EXPR          ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-or-eq-op> COMPARISON_EXPS }
+  LESS_OR_EQ_EXPR          ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-or-eq-op> COMPARISON_EXPS }
+  EQ_EXPR                  ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<eq-op> COMPARISON_EXPS }
+  NOT_EQ_EXPR              ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<not-eq-op> COMPARISON_EXPS }
+  CONCAT_EXPR              ::= ADDITIVE_EXPS {<concat-op> ADDITIVE_EXPS}
+  ADDITIVE_EXPS            ::= ADD_EXPR | SUB_EXPR
+  ADD_EXPR                 ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<add-op> MULTIPLICATIVE_EXPS}
+  SUB_EXPR                 ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<sub-op> MULTIPLICATIVE_EXPS}
+  MULTIPLICATIVE_EXPS      ::= MULT_EXPR | DIV_EXPR
+  MULT_EXPR                ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<mult-op> EXP_EXPR}
+  DIV_EXPR                 ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<div-op> EXP_EXPR}
+  EXP_EXPR                 ::= PRIMARY {<exp-op> PRIMARY}
+  PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR | ERROR | DYNAMIC_REF ) <whitespace> *
+  SIGN_EXPR                ::= ( '+' | '-' ) PRIMARY
+  PERCENT_EXPR             ::= PRIMARY <percent-op>
+  ARRAY_EXPR               ::= <opening-curly-bracket> ( EXPR {<comma> EXPR} )? <closing-curly-bracket>
+  ERROR                    ::= #'#N/A|#VALUE!|#REF!|#DIV/0!|#NUM!|#NAME?|#NULL!'
+  CONST                    ::= NUMBER | STRING | BOOL
+  SYMBOL                   ::= #\"[^0-9][a-zA-Z.*+!?_'-]+\"
+  NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
+  STRING                   ::= #'\"[^\"]*\"' | #\"'[^']*'\"
+  KEYWORD                  ::= <colon> SYMBOL ( <div-op> SYMBOL_FIELD )?
+  BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
+  FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
+  FN                       ::= #'[A-Z0-9]+'
+  ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
+  ARGUMENT                 ::= EXPR | Epsilon
+  OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? ARRAY_FIELD ) )*
+  ARRAY_FIELD              ::= <opening-square-bracket> ( OBJREF | NUMBER_FIELD | FNCALL | STAR  ) <closing-square-bracket>
+  FIELD                    ::= ( KEYWORD_FIELD / STRING_FIELD / SYMBOL_FIELD ) | QUOTED_SYMBOL_FIELD | FNCALL | DYNAMIC_REF | ARRAY_FIELD
+  STRING_FIELD             ::= STRING
+  KEYWORD_FIELD            ::= KEYWORD
+  SYMBOL_FIELD             ::= #'[^ .,\"\\'\\[\\]\\(\\)\\+\\*/<=>\\^&%]+'
+  QUOTED_SYMBOL_FIELD      ::= #\"#'[^']*'\"
+  NUMBER_FIELD             ::= #'[0-9]+'
+  DYNAMIC_REF              ::= '_'
+  STAR                     ::= '*'?
+  <opening-square-bracket> ::= '['
+  <closing-square-bracket> ::= ']'
+  <opening-curly-bracket>  ::= '{'
+  <closing-curly-bracket>  ::= '}'
+  <whitespace>             ::= #'(\\s)+'
+  <opening-parenthesis>    ::= '('
+  <closing-parenthesis>    ::= ')'
+  <percent-op>             ::= '%'
+  <concat-op>              ::= '&'
+  <exp-op>                 ::= '^'
+  <more-op>                ::= '>'
+  <less-op>                ::= '<'
+  <more-or-eq-op>          ::= '>='
+  <less-or-eq-op>          ::= '<='
+  <eq-op>                  ::= '='
+  <not-eq-op>              ::= '<>'
+  <add-op>                 ::= '+'
+  <sub-op>                 ::= '-'
+  <mult-op>                ::= '*'
+  <div-op>                 ::= '/'
+  <comma>                  ::= ','
+  <dot>                    ::= '.'
+  <colon>                  ::= ':'
+  ")
 
-(defparser parser
-  (str
-   "
-FORMULA                  ::= EXPR | <eq-op> EXPR
-EXPR                     ::= COMPARISON_EXPS
-COMPARISON_EXPS          ::= MORE_EXPR | LESS_EXPR | MORE_OR_EQ_EXPR | LESS_OR_EQ_EXPR | EQ_EXPR | NOT_EQ_EXPR
-MORE_EXPR                ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-op> COMPARISON_EXPS }
-LESS_EXPR                ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-op> COMPARISON_EXPS }
-MORE_OR_EQ_EXPR          ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<more-or-eq-op> COMPARISON_EXPS }
-LESS_OR_EQ_EXPR          ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<less-or-eq-op> COMPARISON_EXPS }
-EQ_EXPR                  ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<eq-op> COMPARISON_EXPS }
-NOT_EQ_EXPR              ::= ( CONCAT_EXPR | COMPARISON_EXPS ) {<not-eq-op> COMPARISON_EXPS }
-CONCAT_EXPR              ::= ADDITIVE_EXPS {<concat-op> ADDITIVE_EXPS}
-ADDITIVE_EXPS            ::= ADD_EXPR | SUB_EXPR
-ADD_EXPR                 ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<add-op> MULTIPLICATIVE_EXPS}
-SUB_EXPR                 ::= ( MULTIPLICATIVE_EXPS | ADDITIVE_EXPS ) {<sub-op> MULTIPLICATIVE_EXPS}
-MULTIPLICATIVE_EXPS      ::= MULT_EXPR | DIV_EXPR
-MULT_EXPR                ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<mult-op> EXP_EXPR}
-DIV_EXPR                 ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<div-op> EXP_EXPR}
-EXP_EXPR                 ::= PRIMARY {<exp-op> PRIMARY}
-PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR | ERROR | DYNAMIC_REF ) <whitespace> *
-SIGN_EXPR                ::= ( '+' | '-' ) PRIMARY
-PERCENT_EXPR             ::= PRIMARY <percent-op>
-ARRAY_EXPR               ::= <opening-curly-bracket> ( EXPR {<comma> EXPR} )? <closing-curly-bracket>
-ERROR                    ::= #'#N/A|#VALUE!|#REF!|#DIV/0!|#NUM!|#NAME?|#NULL!'
-CONST                    ::= NUMBER | STRING | BOOL
-NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
-STRING                   ::= #'\"[^\"]*\"' | #\"'[^']*'\"
-BOOL                     ::= #'TRUE|FALSE|True|False|true|false'
-FNCALL                   ::= FN <opening-parenthesis> ARGUMENTS <closing-parenthesis>
-FN                       ::= " (-> functions/functions-map
-                                   keys
-                                   strings->rule) "
-ARGUMENTS                ::= ARGUMENT {<comma> ARGUMENT}
-ARGUMENT                 ::= EXPR | Epsilon
-OBJREF                   ::= FIELD (( <dot> FIELD ) | ( <dot>? <opening-square-bracket> ( OBJREF | NUMBER_FIELD | FNCALL | STAR  ) <closing-square-bracket> ) )*
-FIELD                    ::= STRING_FIELD | SYMBOL_FIELD | FNCALL | DYNAMIC_REF
-STRING_FIELD             ::= STRING
-SYMBOL_FIELD             ::= #'[^ .,\"\\'\\[\\]\\(\\)]+'
-NUMBER_FIELD             ::= #'[0-9]+'
-DYNAMIC_REF              ::= '_'
-STAR                     ::= '*'?
-<opening-square-bracket> ::= '['
-<closing-square-bracket> ::= ']'
-<opening-curly-bracket>  ::= '{'
-<closing-curly-bracket>  ::= '}'
-<whitespace>             ::= #'(\\s)+'
-<opening-parenthesis>    ::= '('
-<closing-parenthesis>    ::= ')'
-<percent-op>             ::= '%'
-<concat-op>              ::= '&'
-<exp-op>                 ::= '^'
-<more-op>                ::= '>'
-<less-op>                ::= '<'
-<more-or-eq-op>          ::= '>='
-<less-or-eq-op>          ::= '<='
-<eq-op>                  ::= '='
-<not-eq-op>              ::= '<>'
-<add-op>                 ::= '+'
-<sub-op>                 ::= '-'
-<mult-op>                ::= '*'
-<div-op>                 ::= '/'
-<comma>                  ::= ','
-<dot>                    ::= '.'
-  "))
+(def parser (insta/parser parser-str))
 
 (defn- with-indifferent-access [m ks]
   (if (= "*" (first ks))
@@ -129,7 +130,8 @@ STAR                     ::= '*'?
         :VECTOR
         :FNCALL
         :EXP_EXPR
-        :STRING]))
+        :STRING
+        :DYNAMIC_REF]))
 
 (defn- reserved? [token]
   (let [token (if (string? token)
@@ -163,6 +165,13 @@ STAR                     ::= '*'?
                            :cljs js/parseFloat)
    :STRING_FIELD        identity
    :SYMBOL_FIELD        identity
+   :KEYWORD_FIELD       identity
+   :KEYWORD             (fn [& sx]
+                          (apply keyword sx))
+   :SYMBOL              identity
+   :QUOTED_SYMBOL_FIELD (fn [s]
+                          (second (string/split s #"'")))
+   :ARRAY_FIELD         identity
    :STRING              (fn [s]
                           (let [s (apply str (-> s rest butlast))]
                             (if (reserved? s)
@@ -244,7 +253,7 @@ STAR                     ::= '*'?
 
 (declare run*)
 
-(defn objref-function [context args]
+(defn objref-function [args context]
   (let [first-arg (first args)
         maybe-context (if (vector? first-arg)
                         (run* first-arg context)
@@ -262,31 +271,75 @@ STAR                     ::= '*'?
   (fn [el]
     (run* (replace-dynamic-ref-with-value expr el) context)))
 
-(defn- run-special
-  "Run fn which requires special/custom args evaluation"
-  [f args context]
-  (case f
-    "OBJREF" (objref-function context args)
-    "IF"     (if (run* (first args) context)
-               (run* (second args) context)
-               (when-let [else (nth args 2 nil)]
-                 (run* else context)))
-    "MAP"    (mapv (make-fn (first args) context)
-                   (run* (second args) context))
-    "FILTER" (filter (make-fn (second args) context)
-                     (run* (first args) context))
-    "SORT"   (sort-by (make-fn (second args) context)
-                      (run* (first args) context))
-    "UNIQUE" (distinct (run* (first args) context))))
+(def-excel-fn objref
+  {:special-form true}
+  [args context]
+  (objref-function args context))
+
+(def-excel-fn if
+  "Returns one value if a logical expression is TRUE and another if it is FALSE."
+  {:special-form true
+   :args [{:desc "An expression or reference to a context value containing an expression that represents some logical value, i.e. TRUE or FALSE."}
+          {:desc "The value the function returns if arg1 is TRUE."}
+          {:desc "The value the function returns if arg1 is FALSE."
+           :opt true}]}
+  [args context]
+  (if (run* (first args) context)
+    (run* (second args) context)
+    (when-let [else-expr (nth args 2 nil)]
+      (run* else-expr context))))
+
+(def-excel-fn map
+  "Returns a result of applying first argument as a anonumous function for each element in second argument."
+  {:special-form true
+   :args [{:desc "Anonumous function. Any valid formula with a dynamic references (_) as a placeholder for the value."}
+          {:desc "An expression or reference to a context value containing an expression that represents an array."}]}
+  [args context]
+  (mapv (make-fn (first args) context)
+        (run* (second args) context)))
+
+(def-excel-fn filter
+  "Returns a filtered version of the source array."
+  {:special-form true
+   :args [{:desc "The data to be filtered."}
+          {:desc "Anonumous function. Any valid formula with a dynamic references (_) as a placeholder for the examined value."}]}
+  [args context]
+  (filter (make-fn (second args) context)
+          (run* (first args) context)))
+
+(def-excel-fn sort
+  "Sorts the rows of a given array or range by the result of function call."
+  {:special-form true
+   :args [{:desc "The data to be sorted."}
+          {:desc "Anonumous function. Any valid formula with a dynamic references (_) as a placeholder for the examined value."}]}
+  [args context]
+  (sort-by (make-fn (second args) context)
+           (run* (first args) context)))
+
+(def-excel-fn unique
+  "Returns unique values in the provided source range, discarding duplicates. Values are returned in the order in which they first appear in the source range."
+  {:special-form true
+   :args [{:desc "The data to filter by unique entries."}]}
+  [args context]
+  (distinct (run* (first args) context)))
 
 (defn- run-fncall* [f args context]
-  (let [_ (functions/check-arity f args)
-        f-implementation (get-in functions/functions-map [f :impl])]
-    (if (= :special-form f-implementation)
-      (run-special f args context)
-      (->> args
-          (map #(run* % context))
-          (apply f-implementation)))))
+  (if-let [fn-impl (find-impl f)]
+    (try
+      (if (:special-form (meta fn-impl))
+        (fn-impl args context)
+        (let [args (mapv #(run* % context) args)]
+          (if (empty? args)
+            (fn-impl)
+            (apply fn-impl args))))
+      (catch #?(:clj clojure.lang.ExceptionInfo
+                :cljs ExceptionInfo) e
+        (throw e))
+      (catch #?(:clj clojure.lang.ArityException
+                :cljs js/Error) e
+        (let [{:keys [name]} (meta fn-impl)]
+          (throw (error/error "#N/A"
+                              (str "Wrong number of args (" (count args) ") passed to: " name))))))))
 
 (defmulti ->keyword (fn [v] (type v)))
 
@@ -303,6 +356,10 @@ STAR                     ::= '*'?
 
 (defmethod ->string #?(:clj clojure.lang.Keyword
                        :cljs cljs.core/Keyword) [v] (name v))
+
+(defn- excel-error? [maybe-error]
+  (if-let [{error-type :type} (ex-data maybe-error)]
+    (contains? #{"#N/A" "#VALUE!" "#REF!" "#DIV/0!" "#NUM!" "#NAME?" "#NULL!"} error-type)))
 
 (defn- run* [arg context]
   (let [token (if (vector? arg)
@@ -353,7 +410,8 @@ STAR                     ::= '*'?
                              res))
         :PERCENT_EXPR    (let [r (run* (first args) context)]
                            (float (/ r 100)))
-        :OBJREF          (objref-function context args)
+        :OBJREF          (objref-function args context)
+        :DYNAMIC_REF     context
         :VECTOR          (mapv #(run* % context) args)
         :FNCALL          (run-fncall* (first args) (second args) context)
         :STRING          (first args))
@@ -364,7 +422,8 @@ STAR                     ::= '*'?
       (or (string? token)
           (number? token)
           (boolean? token)
-          (keyword? token))
+          (keyword? token)
+          (excel-error? token))
       token)))
 
 (defn compile [formula-str & custom-transforms]
@@ -384,7 +443,6 @@ STAR                     ::= '*'?
        (run* formula-or-error context)
        (catch #?(:clj Throwable
                  :cljs js/Error) e
-         (let [{:keys [type] :as data} (ex-data e)]
-           (if (#{"#N/A" "#VALUE!" "#REF!" "#DIV/0!" "#NUM!" "#NAME?" "#NULL!"} type)
-             data
-             (throw e))))))))
+         (if (excel-error? e)
+           (ex-data e)
+           (throw e)))))))

@@ -9,10 +9,20 @@
 
     (t/are [x] (= 1 (sut/run x {(keyword x) 1}))
       "ꙮ"
-      "foo/bar"
       "fooꙮbar"
-      "foo-bar"
-      "foo+"))
+      "foo-bar"))
+
+  (t/testing "quoted fields with operators inside"
+
+    (t/are [x] (= 1 (sut/run (str "#'" x "'") {(keyword x) 1}))
+      "foo/bar"
+      "foo+"
+      "foo*bar"
+      "foo>bar"
+      "foo > bar"
+      "foo^bar"
+      "foo%bar"
+      "foo&bar"))
 
   (t/testing "fields with special symbols throw an error without quoting"
 

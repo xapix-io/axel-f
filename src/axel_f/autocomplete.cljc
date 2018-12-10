@@ -1,7 +1,7 @@
 (ns axel-f.autocomplete
   (:require [clojure.string :as string]
             [axel-f.core :as axel-f]
-            [axel-f.functions :as functions]
+            [axel-f.macros :refer [functions-store]]
             [clj-fuzzy.metrics :as fuzzy]))
 
 (defn- fuzzy-match? [ex dict]
@@ -47,17 +47,17 @@
   (merge {:type type}
          (case type
            :OBJREF {:value (axel-f/->string item)
-                    :desc "Field in the context"}
-           :FN (merge {:value item}
-                      (select-keys (get functions/functions-map item)
-                                   [:desc :args]))
-           :FNCALL (merge {:value item
+                    :desc  "Field in the context"}
+           :FN     (merge {:value item}
+                          (-> @functions-store
+                              (get item)))
+           :FNCALL (merge {:value       item
                            :current-arg (let [position (dec (count args))]
                                           (if (< position 0)
                                             0
                                             position))}
-                          (select-keys (get functions/functions-map item)
-                                       [:desc :args])))))
+                          (-> @functions-store
+                              (get item))))))
 
 (defn- reconstruct-path [path]
   (string/join "." (map (fn [s]
@@ -86,7 +86,7 @@
                                []))))
 
 (defn- build-suggestions-for-objref [objref context]
-  (concat (->> functions/functions-map
+  (concat (->> @functions-store
               keys
               (fuzzy-match? objref)
               (map #(build-suggestion :FN %)))
@@ -111,14 +111,11 @@
                       (apply merge)
                       keys
                       (map #(build-suggestion :OBJREF %)))
-
-                  :otherwise
+                   :otherwise
                   (build-new-context context known-path maybe-path)))
-
-              (string/ends-with? objref ".")
+               (string/ends-with? objref ".")
               (build-new-context context fields "")
-
-              :otherwise
+               :otherwise
               (->> context
                   keys
                   (map axel-f/->string)
@@ -127,7 +124,7 @@
 
 (defn- build-suggestions-for-fncall [fncall]
   (let [[_ f args] (axel-f/compile (fix-up-fncall fncall))]
-    (->> functions/functions-map
+    (->> @functions-store
         keys
         (filter #(= % f))
         (map #(build-suggestion :FNCALL % args)))))
@@ -145,18 +142,15 @@
              (not (:unbalanced-single-quote terms))
              (not (:unbalanced-double-quote terms)))
         (recur (last chx) (butlast chx) acc terms)
-
-        (and (not= ch "\"")
+         (and (not= ch "\"")
              (not-empty ch)
              (:unbalanced-double-quote terms))
         (recur (last chx) (butlast chx) (cons ch acc) terms)
-
-        (and (not= ch "'")
+         (and (not= ch "'")
              (not-empty ch)
              (:unbalanced-single-quote terms))
         (recur (last chx) (butlast chx) (cons ch acc) terms)
-
-        :otherwise
+         :otherwise
         (if (or (not ch) (:terminate terms))
           (apply str acc)
           (let [terms (cond-> terms
@@ -184,7 +178,7 @@
               (recur (last chx) (butlast chx) (cons ch acc) terms))))))))
 
 (defn- build-suggestions-for-fn []
-  (->> functions/functions-map
+  (->> @functions-store
       (map (fn [[fn-name _]]
              (build-suggestion :FN fn-name)))))
 
