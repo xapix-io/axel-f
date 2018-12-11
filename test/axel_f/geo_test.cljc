@@ -4,6 +4,14 @@
             [axel-f.core :as af]
             [axel-f.geo :as sut]))
 
+(t/deftest to-radians
+  (t/are [deg rad] (= (sut/to-radians deg) rad)
+    0 0.0
+    0.0 0.0
+    90 1.5707963267948966
+    180 3.141592653589793 ;; ~= Pi
+    ))
+
 (t/deftest distance
   (t/testing "Calculate distance for given path"
     (t/are [path dist] (= (af/run "GEO.DISTANCE(_)" path) dist)
