@@ -56,5 +56,6 @@
    Each point must a tuple of two or three float numbers."
   {:args [{:desc "List of points. Each point must be a tuple of latitude and longitude"}]}
   [points]
-  (reduce + 0 (map #(distance (first %) (second %))
-                   (partition 2 1 points))))
+  (->> points
+       (partition 2 1)
+       (reduce #(+ %1 (apply distance %2)) 0)))
