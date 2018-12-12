@@ -2,7 +2,9 @@
   (:require [axel-f.core :as axel-f]
             [axel-f.autocomplete :as autocomplete]
             axel-f.functions
-            axel-f.functions.convert))
+            axel-f.base64
+            axel-f.json
+            axel-f.geo))
 
 (defn- fix-regex-in-exception [exception-data]
   (update exception-data

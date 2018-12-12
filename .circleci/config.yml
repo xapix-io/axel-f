@@ -80,7 +80,7 @@ jobs:
           name: Test clojurescript
           type: shell
           command: |
-            clojure -A:cljs:test:cljs-runner
+            clojure -A:cljs:with-optional-deps:test:cljs-runner
 
       - save_cache:
           paths:
@@ -102,7 +102,7 @@ jobs:
           name: Build JavaScript bundle
           type: shell
           command: |
-            clojure -A:cljs -m cljs.main -co axel_f.min.js.edn --compile
+            clojure -A:with-optional-deps:cljs -m cljs.main -co axel_f.min.js.edn --compile
 
       - run:
           name: Prepare workspace for publishing
