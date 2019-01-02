@@ -24,9 +24,7 @@ CHILD_EXPR = ( <'.'> ( KEYWORD / SYMBOL / STRING ) ) | ( <'.'> ? <'['> ( WILDCAR
 WILDCART = <'*'>
 CONSTANT = STRING | NUMBER | KEYWORD | ARRAY | OBJECT
 BOOLEAN = 'TRUE' | 'True' | 'true' | 'FALSE' | 'False' | 'false'
-STRING = <'\\''> STRING_IN_SINGLE <'\\''> | <'\"'> STRING_IN_DOUBLE <'\"'>
-STRING_IN_SINGLE = #'[^\\']*'
-STRING_IN_DOUBLE = #'[^\"]*'
+STRING = <'\\''> #'[^\\']*' <'\\''> | <'\"'> #'[^\"]*' <'\"'>
 KEYWORD = <':'> ( NAMESPACE <'/'> ) ? SYMBOL ( <'.'> SYMBOL ) *
 NUMBER = #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
 INTEGER = #'[0-9]*'
@@ -151,8 +149,6 @@ OBJECT_ENTRY = CONSTANT <ws> * <':'> EXPR
    :FN_NAME_P        identity
    :FN_NAME          fn-name->token
    :NUMBER           edn/read-string
-   :STRING_IN_SINGLE identity
-   :STRING_IN_DOUBLE identity
    :STRING           identity
    :INTEGER          edn/read-string
    :BOOLEAN          wrap-boolean
