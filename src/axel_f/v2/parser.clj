@@ -22,7 +22,7 @@ REFERENCE_EXPR = ROOT_REFERENCE CHILD_EXPR +
 ROOT_REFERENCE = '$' | '@'
 CHILD_EXPR = ( <'.'> ( KEYWORD / SYMBOL / STRING ) ) | ( <'.'> ? <'['> ( WILDCART | INTEGER ) <']'> )
 WILDCART = <'*'>
-CONSTANT = STRING | NUMBER | KEYWORD | ARRAY | OBJECT
+CONSTANT = STRING | NUMBER | KEYWORD | BOOLEAN | ARRAY | OBJECT
 BOOLEAN = 'TRUE' | 'True' | 'true' | 'FALSE' | 'False' | 'false'
 STRING = <'\\''> #'[^\\']*' <'\\''> | <'\"'> #'[^\"]*' <'\"'>
 KEYWORD = <':'> ( NAMESPACE <'/'> ) ? SYMBOL ( <'.'> SYMBOL ) *
@@ -117,13 +117,8 @@ OBJECT_ENTRY = CONSTANT <ws> * <':'> EXPR
 
 (defn wrap-prefix-expr [operator value]
   (case operator
-
-    :SUB_OP
-    [:MULT_OP -1 value]
-
-    :BANG_OP
-    [:NOT_OP value]
-
+    :SUB_OP  [:MULT_OP -1 value]
+    :BANG_OP [:NOT_OP value]
     value))
 
 (defn wrap-infix-expr [& forms]
@@ -134,11 +129,7 @@ OBJECT_ENTRY = CONSTANT <ws> * <':'> EXPR
   [:MULT_OP 0.01 value])
 
 (defn wrap-reference-expr [& forms]
-  (into [:REF_OP]
-        (if (contains? #{:GLOBAL_ROOT :LOCAL_ROOT}
-                       (first forms))
-          forms
-          (cons :GLOBAL_ROOT forms))))
+  (into [:REF_OP] forms))
 
 (def clear-tx
   {:FORMULA          wrap-formula
