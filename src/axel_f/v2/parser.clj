@@ -89,101 +89,88 @@ OBJECT_ENTRY = CONSTANT <ws> * <':'> EXPR
     "$" :GLOBAL_ROOT
     "@" :LOCAL_ROOT))
 
+(defn wrap-formula [& exps]
+  (into [:FORMULA] exps))
+
+(defn wrap-fn [fn-name & args]
+  (into [fn-name] args))
+
+(defn fn-name->token [& fn-parts]
+  (string/join "." fn-parts))
+
+(defn wrap-boolean [b]
+  (case b
+    "TRUE" true
+    "True" true
+    "true" true
+    "FALSE" false
+    "False" false
+    "false" false))
+
+(defn wrap-namespace [& symbols]
+  (->> symbols
+       (map str)
+       (string/join ".")
+       symbol))
+
+(defn wrap-keyword
+  ([s] (keyword (str s)))
+  ([n s] (keyword (str n) (str s))))
+
+(defn wrap-prefix-expr [operator value]
+  (case operator
+
+    :SUB_OP
+    [:MULT_OP -1 value]
+
+    :BANG_OP
+    [:NOT_OP value]
+
+    value))
+
+(defn wrap-infix-expr [& forms]
+  (infix->prefix forms))
+
+(defn wrap-postfix-expr [value _]
+  ;; Atm only percent operator supported
+  [:MULT_OP 0.01 value])
+
+(defn wrap-reference-expr [& forms]
+  (into [:REF_OP]
+        (if (contains? #{:GLOBAL_ROOT :LOCAL_ROOT}
+                       (first forms))
+          forms
+          (cons :GLOBAL_ROOT forms))))
+
 (def clear-tx
-  {:FORMULA (fn [& exprs]
-              (into [:FORMULA] exprs))
-
-   :CONSTANT identity
-
-   :EXPR identity
-
-   :CHILD_EXPR identity
-
-   :FN_EXPR (fn [fnname & args]
-              (into [fnname]
-                    args))
-
-   :FN_NAME_P identity
-
-   :FN_NAME (fn [& parts]
-              ;; TODO check function
-              (string/join "." parts))
-
-   :NUMBER edn/read-string
-
+  {:FORMULA          wrap-formula
+   :CONSTANT         identity
+   :EXPR             identity
+   :CHILD_EXPR       identity
+   :FN_EXPR          wrap-fn
+   :FN_NAME_P        identity
+   :FN_NAME          fn-name->token
+   :NUMBER           edn/read-string
    :STRING_IN_SINGLE identity
-
    :STRING_IN_DOUBLE identity
-
-   :STRING identity
-
-   :INTEGER edn/read-string
-
-   :BOOLEAN (fn [v]
-              (case v
-                "TRUE" true
-                "True" true
-                "true" true
-                "FALSE" false
-                "False" false
-                "false" false))
-
-   :SYMBOL symbol
-
-   :NAMESPACE (fn [& symbols]
-                (->> symbols
-                     (map str)
-                     (string/join ".")
-                     symbol))
-
-   :KEYWORD (fn
-              ([s] (keyword (str s)))
-              ([n s] (keyword (str n) (str s))))
-
-   :ROOT_REFERENCE operator->token
-
-   :WILDCART (constantly :WILDCART)
-
-   :PREFIX_OP operator->token
-
-   :INFIX_OP operator->token
-
-   :POSTFIX_OP operator->token
-
-   :PREFIX_EXPR (fn [operator value]
-                  (case operator
-
-                    :SUB_OP
-                    [:MULT_OP -1 value]
-
-                    :BANG_OP
-                    [:NOT_OP value]
-
-                    value))
-
-   :INFIX_EXPR (fn [& forms]
-                 (infix->prefix forms))
-
-   :POSTFIX_EXPR (fn [value _]
-                   [:MULT_OP 0.01 value])
-
-   :REFERENCE_EXPR (fn [& forms]
-                     (into [:REF_OP]
-                           (if (contains? #{:GLOBAL_ROOT :LOCAL_ROOT}
-                                          (first forms))
-                             forms
-                             (cons :GLOBAL_ROOT forms))))
-
-   :OBJECT_ENTRY (fn [k v]
-                   [k v])
-
-   :OBJECT (fn [& map-entries]
-             (into [:OBJECT_OP]
-                   map-entries))
-
-   :ARRAY (fn [& elements]
-            (into [:ARRAY_OP]
-                  elements))})
+   :STRING           identity
+   :INTEGER          edn/read-string
+   :BOOLEAN          wrap-boolean
+   :SYMBOL           symbol
+   :NAMESPACE        wrap-namespace
+   :KEYWORD          wrap-keyword
+   :ROOT_REFERENCE   operator->token
+   :WILDCART         (constantly :WILDCART)
+   :PREFIX_OP        operator->token
+   :INFIX_OP         operator->token
+   :POSTFIX_OP       operator->token
+   :PREFIX_EXPR      wrap-prefix-expr
+   :INFIX_EXPR       wrap-infix-expr
+   :POSTFIX_EXPR     wrap-postfix-expr
+   :REFERENCE_EXPR   wrap-reference-expr
+   :OBJECT_ENTRY     vector
+   :OBJECT           (partial into [:OBJECT_OP])
+   :ARRAY            (partial into [:ARRAY_OP])})
 
 (defn parse [formula]
   (let [tokens (insta/parse parser formula)]
