@@ -178,34 +178,3 @@ OBJECT_ENTRY = CONSTANT <ws> * <':'> EXPR
       (throw (ex-info (with-out-str (failure/pprint-failure (insta/get-failure tokens)))
                       fail))
       (insta/transform clear-tx tokens))))
-
-(comment
-
-  (let [x (exec-fn (parse "$.:axel-f.parser/foo.bar.'baz'.[*]"))]
-    (time
-     (x {::foo {'bar {"baz" 1}}})))
-
-  ((exec-fn (parse "'qwe' & $.'foo'")) {"foo" "qwe"})
-
-  (time (not= (> 1 2 0) true))
-
-  (let [x (exec-fn (parse "!!(1 + $.:axel-f.parser/foo.:axel-f.parser/bar)"))]
-    (x {::foo {::bar 1}}))
-
-  (time
-   (+ 1 (get-in {::foo {'bar {"baz" 1}}} [::foo 'bar "baz"])))
-
-  (type (-> (parse "foo") second last))
-
-  (insta/parse parser "$.:foo.:bar")
-  (-> (parse "$.:foo.:bar") second (nth 2) type)
-
-  (let [tf (axel-f.v2.type-system/type-fn (parse "'Hello, ' & $.:user.:name & '. Your password is ' & $.:user.:password"))]
-    (tf {:user {:name ""
-                :password #{String ::secure}}}))
-
-  (let [tf (axel-f.v2.type-system/type-fn (parse "2 + $.:user.:name + 1 + $.:user.:password"))]
-    (tf {:user {:name "qwe"
-                :password #{Number ::secure}}}))
-
-  )
