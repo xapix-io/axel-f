@@ -26,11 +26,10 @@
   MULT_EXPR                ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<mult-op> EXP_EXPR}
   DIV_EXPR                 ::= ( EXP_EXPR | MULTIPLICATIVE_EXPS ) {<div-op> EXP_EXPR}
   EXP_EXPR                 ::= PRIMARY {<exp-op> PRIMARY}
-  PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR | ERROR | DYNAMIC_REF ) <whitespace> *
+  PRIMARY                  ::= <whitespace> * ( <opening-parenthesis> EXPR <closing-parenthesis> | ( CONST / OBJREF ) | FNCALL | SIGN_EXPR | PERCENT_EXPR | ARRAY_EXPR | DYNAMIC_REF ) <whitespace> *
   SIGN_EXPR                ::= ( '+' | '-' ) PRIMARY
   PERCENT_EXPR             ::= PRIMARY <percent-op>
   ARRAY_EXPR               ::= <opening-curly-bracket> ( EXPR {<comma> EXPR} )? <closing-curly-bracket>
-  ERROR                    ::= #'#N/A|#VALUE!|#REF!|#DIV/0!|#NUM!|#NAME?|#NULL!'
   CONST                    ::= NUMBER | STRING | BOOL
   SYMBOL                   ::= #\"[^0-9][a-zA-Z.*+!?_'-]+\"
   NUMBER                   ::= #'[0-9]+\\.?[0-9]*(e[0-9]+)?'
@@ -211,21 +210,16 @@
                             [:PERCENT_EXPR arg]))
    :MORE_OR_EQ_EXPR     (optimize-token :MORE_OR_EQ_EXPR)
    :ARRAY_EXPR          (fn [& args]
-                          (vec (cons :VECTOR args)))
-   :ERROR               error/error})
+                          (vec (cons :VECTOR args)))})
 
 (defn compile* [formula-str & custom-transforms]
   (let [custom-transforms (into {} (map (fn [[k v]]
                                           [k v])
-                                        (partition-all 2 custom-transforms)))
-        res (insta/transform
-             (merge optimize-transforms
-                    custom-transforms)
-             (parser formula-str))]
-    (if (insta/failure? res)
-      (throw (ex-info (str "Formula \"" formula-str "\" can't be parsed.")
-                      (insta/get-failure res)))
-      res)))
+                                        (partition-all 2 custom-transforms)))]
+    (insta/transform
+     (merge optimize-transforms
+            custom-transforms)
+     (parser formula-str))))
 
 (defn- replace-dynamic-ref-with-value
   ([expr value]
