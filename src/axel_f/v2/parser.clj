@@ -12,35 +12,18 @@ EXPR = <ws> * EXPR <ws> * / <'('> EXPR <')'> / FN_EXPR / PREFIX_EXPR / INFIX_EXP
 FN_EXPR = ( FN_NAME <'()'> ) | ( FN_NAME <'('> EXPR ( <','> EXPR ) * ( <','> <ws> * ) ? <')'> )
 FN_NAME = FN_NAME_P ( <'.'> FN_NAME_P ) *
 FN_NAME_P = #'[A-Z][A-Z0-9]+'
-PREFIX_EXPR = ( ADD_OP | SUB_OP ) EXPR
+PREFIX_EXPR = PREFIX_OP EXPR
+PREFIX_OP = '+' | '-' | '!'
 INFIX_EXPR = EXPR INFIX_OP EXPR ( INFIX_OP EXPR ) *
-INFIX_OP = ADD_OP | SUB_OP | MULT_OP | DIV_OP | CONCAT_OP | EXP_OP | MORE_OP | LESS_OP | MORE_OR_EQ_OP | LESS_OR_EQ_OP | NOT_EQ_OP | EQ_OP
-POSTFIX_EXPR = EXPR PERCENT_OP
-PREFIX_EXPR = ( ADD_OP | SUB_OP | BANG_OP ) EXPR
+INFIX_OP = '+' | '-' | '*' | '/' | '&' | '^' | '>' | '<' | '>=' | '<=' | '<>' | '='
+POSTFIX_EXPR = EXPR POSTFIX_OP
+POSTFIX_OP = '%'
 REFERENCE_EXPR = ROOT_REFERENCE CHILD_EXPR +
-ROOT_REFERENCE = GLOBAL_ROOT | LOCAL_ROOT
+ROOT_REFERENCE = '$' | '@'
 CHILD_EXPR = ( <'.'> ( KEYWORD / SYMBOL / STRING ) ) | ( <'.'> ? <'['> ( WILDCART | INTEGER ) <']'> )
-GLOBAL_ROOT = <'$'>
-LOCAL_ROOT = <'@'>
-PERCENT_OP = <'%'>
-ADD_OP = <'+'>
-SUB_OP = <'-'>
-MULT_OP = <'*'>
 WILDCART = <'*'>
-DIV_OP = <'/'>
-CONCAT_OP = <'&'>
-EXP_OP = <'^'>
-BANG_OP = <'!'>
-MORE_OP = <'>'>
-LESS_OP = <'<'>
-MORE_OR_EQ_OP = <'>='>
-LESS_OR_EQ_OP = <'<='>
-NOT_EQ_OP = <'<>'>
-EQ_OP = <'='>
 CONSTANT = STRING | NUMBER | KEYWORD | ARRAY | OBJECT
-BOOLEAN = TRUE | FALSE
-TRUE = <'TRUE'> | <'True'> | <'true'>
-FALSE = <'FALSE'> | <'False'> | <'false'>
+BOOLEAN = 'TRUE' | 'True' | 'true' | 'FALSE' | 'False' | 'false'
 STRING = <'\\''> STRING_IN_SINGLE <'\\''> | <'\"'> STRING_IN_DOUBLE <'\"'>
 STRING_IN_SINGLE = #'[^\\']*'
 STRING_IN_DOUBLE = #'[^\"]*'
@@ -87,6 +70,25 @@ OBJECT_ENTRY = CONSTANT <ws> * <':'> EXPR
                             forms')))))
      (first forms))))
 
+(defn operator->token [op]
+  (case op
+    "+" :ADD_OP
+    "-" :SUB_OP
+    "*" :MULT_OP
+    "/" :DIV_OP
+    "<" :LESS_OP
+    ">" :MORE_OP
+    "<=" :LESS_OR_EQ_OP
+    ">=" :MORE_OR_EQ_OP
+    "<>" :NOT_EQ_OP
+    "=" :EQ_OP
+    "!" :BANG_OP
+    "&" :CONCAT_OP
+    "^" :EXP_OP
+    "%" :PERCENT_OP
+    "$" :GLOBAL_ROOT
+    "@" :LOCAL_ROOT))
+
 (def clear-tx
   {:FORMULA (fn [& exprs]
               (into [:FORMULA] exprs))
@@ -117,7 +119,14 @@ OBJECT_ENTRY = CONSTANT <ws> * <':'> EXPR
 
    :INTEGER edn/read-string
 
-   :BOOLEAN #(-> % first (case :TRUE true :FALSE false))
+   :BOOLEAN (fn [v]
+              (case v
+                "TRUE" true
+                "True" true
+                "true" true
+                "FALSE" false
+                "False" false
+                "false" false))
 
    :SYMBOL symbol
 
@@ -131,14 +140,17 @@ OBJECT_ENTRY = CONSTANT <ws> * <':'> EXPR
               ([s] (keyword (str s)))
               ([n s] (keyword (str n) (str s))))
 
-   :ROOT_REFERENCE first
+   :ROOT_REFERENCE operator->token
 
    :WILDCART (constantly :WILDCART)
 
-   :POSTFIX_EXPR (fn [value _]
-                   [:MULT_OP 0.01 value])
+   :PREFIX_OP operator->token
 
-   :PREFIX_EXPR (fn [[operator] value]
+   :INFIX_OP operator->token
+
+   :POSTFIX_OP operator->token
+
+   :PREFIX_EXPR (fn [operator value]
                   (case operator
 
                     :SUB_OP
@@ -149,10 +161,11 @@ OBJECT_ENTRY = CONSTANT <ws> * <':'> EXPR
 
                     value))
 
-   :INFIX_OP first
-
    :INFIX_EXPR (fn [& forms]
                  (infix->prefix forms))
+
+   :POSTFIX_EXPR (fn [value _]
+                   [:MULT_OP 0.01 value])
 
    :REFERENCE_EXPR (fn [& forms]
                      (into [:REF_OP]
