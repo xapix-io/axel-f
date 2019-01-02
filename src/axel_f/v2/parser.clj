@@ -128,9 +128,6 @@ OBJECT_ENTRY = CONSTANT <ws> * <':'> EXPR
   ;; Atm only percent operator supported
   [:MULT_OP 0.01 value])
 
-(defn wrap-reference-expr [& forms]
-  (into [:REF_OP] forms))
-
 (def clear-tx
   {:FORMULA          wrap-formula
    :CONSTANT         identity
@@ -154,10 +151,10 @@ OBJECT_ENTRY = CONSTANT <ws> * <':'> EXPR
    :PREFIX_EXPR      wrap-prefix-expr
    :INFIX_EXPR       wrap-infix-expr
    :POSTFIX_EXPR     wrap-postfix-expr
-   :REFERENCE_EXPR   wrap-reference-expr
+   :REFERENCE_EXPR   #(into [:REF_OP] %&)
    :OBJECT_ENTRY     vector
-   :OBJECT           (partial into [:OBJECT_OP])
-   :ARRAY            (partial into [:ARRAY_OP])})
+   :OBJECT           #(into [:OBJECT_OP] %&)
+   :ARRAY            #(into [:ARRAY_OP] %&)})
 
 (defn parse [formula]
   (let [tokens (insta/parse parser formula)]
