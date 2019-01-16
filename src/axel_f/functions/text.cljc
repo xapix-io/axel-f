@@ -1,11 +1,12 @@
 (ns axel-f.functions.text
-  (:require #?(:clj [axel-f.macros :refer [def-excel-fn]]
-               :cljs [axel-f.macros :refer-macros [def-excel-fn]])
+  (:require [axel-f.functions.core :refer [def-excel-fn]]
             [axel-f.error :as error]
             [axel-f.functions.coercion :as coercion]
-            axel-f.functions.math
+            [axel-f.functions.math :as math]
             [clojure.string :as string]
             #?(:cljs [goog.string :as gstring])))
+
+(declare textjoin)
 
 (defn- regex-escape [pattern]
   (let [cmap {\. "\\."
@@ -80,7 +81,7 @@
             :opt true
             :repeatable true}]}
   (fn [st1 & stx]
-    (apply (find-impl "TEXTJOIN") "" false st1 stx)))
+    (apply textjoin "" false st1 stx)))
 
 (def dollar
   ^{:desc "Formats a number into the locale-specific currency format."
@@ -91,7 +92,7 @@
     (let [number-of-places (or number-of-places 2)]
       (if-let [number (coercion/excel-number number)]
         (if-let [number-of-places (coercion/excel-number number-of-places)]
-          (let [number (double ((find-impl "ROUND") number number-of-places))
+          (let [number (double (math/round number number-of-places))
                 fmt (if (< number-of-places 0)
                       "%.0f"
                       (str "%." number-of-places "f"))]
@@ -129,7 +130,7 @@
             :repeatable true}]}
   (fn [delimeter arg & args]
     (if (and delimeter arg)
-      (apply (find-impl "TEXTJOIN") delimeter false arg args)
+      (apply textjoin delimeter false arg args)
       (throw (error/error "#N/A" (str "Wrong number of args (" (count (filter identity [delimeter arg]))
                                       ") passed to: JOIN"))))))
 
@@ -229,7 +230,7 @@
                           (error/format-not-a-string-error "REGEXMATCH" 2 regular-expression)))
 
       :otherwise
-      (boolean ((find-impl "REGEXEXTRACT") text regular-expression)))))
+      (boolean (regexextract text regular-expression)))))
 
 (def regexreplace
   ^{:desc "Replaces part of a text string with a different text string using regular expressions."

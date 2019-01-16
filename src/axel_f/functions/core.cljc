@@ -1,19 +1,12 @@
-(ns axel-f.macros
-  (:require [clojure.string :as string]
-            [clojure.set :refer [rename-keys]]))
+(ns axel-f.functions.core
+  (:require [clojure.string :as string]))
 
 (def ^:dynamic *functions-store* (atom {}))
-
-(defmulti find-impl identity)
-
-(defmethod find-impl :default [unknown-function]
-  (throw (ex-info (str "Unknown function " unknown-function) {})))
 
 (defn def-excel-fn* [fn-name fn-impl]
   (swap! *functions-store* assoc fn-name
          (with-meta fn-impl (meta fn-impl)))
   nil)
-
 
 (defn def-excel-fn
   ([fn-name fn-impl]

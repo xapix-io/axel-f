@@ -1,7 +1,7 @@
 (ns axel-f.functions.math
   (:require [axel-f.error :as error]
             [axel-f.functions.coercion :as coercion]
-            [axel-f.macros :refer [def-excel-fn]]))
+            [axel-f.functions.core :refer [def-excel-fn]]))
 
 (def round
   ^{:desc "Rounds a number to a certain number of decimal places according to standard rules."

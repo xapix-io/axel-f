@@ -1,5 +1,5 @@
 (ns axel-f.functions.logic
-  (:require [axel-f.macros :refer [def-excel-fn]]))
+  (:require [axel-f.functions.core :refer [def-excel-fn]]))
 
 (def and*
   ^{:desc "Returns true if all of the provided arguments are logically true, and false if any of the provided arguments are logically false."

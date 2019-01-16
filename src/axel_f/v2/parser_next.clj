@@ -1,7 +1,6 @@
 (ns axel-f.v2.parser-next
   (:require [axel-f.v2.reader :as reader]
             [axel-f.v2.lexer :as lexer]
-            [axel-f.macros :refer [*functions-store*]]
             axel-f.functions
             [clojure.string :as string]
             [clojure.edn :as edn]
@@ -451,7 +450,7 @@
        expr))))
 
 (def resolve-function
-  (merge @*functions-store*
+  (merge @axel-f.functions.core/*functions-store*
          {"+" +'
           "-" -'
           "*" *'
@@ -541,5 +540,5 @@
 
   (str true true)
 
-  ((eval (parse "OR(1,2,3,4)")) {})
+  ((eval (ast "AND(1,2,FALSE,4)")) {})
   )

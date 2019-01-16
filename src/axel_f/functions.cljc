@@ -1,6 +1,6 @@
 (ns axel-f.functions
   (:require [clojure.string :as string]
-            [axel-f.macros :refer [def-excel-fn]]
+            [axel-f.functions.core :refer [def-excel-fn]]
             axel-f.functions.math
             axel-f.functions.text
             axel-f.functions.stat
