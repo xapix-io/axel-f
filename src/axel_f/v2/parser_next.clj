@@ -38,7 +38,7 @@
 
 (defn parse-prefix-function-call [ts]
   (let [f (reader/read-elem ts)]
-    (->function-node f (parse-expression ts))))
+    (->function-node f [(parse-primary ts true)])))
 
 (defn parse-function-call [ts]
   (let [f (reader/read-elem ts)]
@@ -503,6 +503,10 @@
                   args :args}]
   (emit-node* fnname args))
 
+(defn ast [formula]
+  (-> formula lexer/read-formula
+      reader/reader reader/push-back-reader
+      parse-primary))
 
 ;; (parse "1 + 1 * :fo.bo/ba.foo.bar")
 ;; => (fn [ctx]
@@ -514,9 +518,7 @@
 ;;               ctx
 ;;               [:fo.bo/ba "foo" "bar"]))))
 (defn parse [formula]
-  (let [ast (-> formula lexer/read-formula
-                reader/reader reader/push-back-reader
-                parse-primary)]
+  (let [ast (ast formula)]
     (list 'fn '[ctx]
           (walk/postwalk
            (fn [node]
@@ -538,6 +540,9 @@
    (parse "2 + 2 * JSON.DECODE('{\\'x\\':1}')")
    )
 
-  ((eval (parse "MAP(_ + 3, MAP(1 + _1 * _2, [4,2,3], [4,5,6]))")
+  (ast "!_3 + 3")
+
+  ((eval (parse "MAP(!!_, MAP(1 + _1 * _2, [4,2,3], [4,5,6]))")
          ) {})
+
   )
