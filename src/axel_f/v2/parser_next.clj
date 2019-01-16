@@ -462,11 +462,11 @@
    "get-in" #(get-in %1 %2)})
 
 (defn- select-ctx [xs]
-  (if-let [[_ position] (re-matches #"_([1-9][0-9]*)" (first xs))]
+  (if-let [[_ position] (when (string? (first xs)) (re-matches #"_([1-9][0-9]*)" (first xs)))]
     [(list 'nth 'args (dec (Integer/parseInt position)) nil) (rest xs)]
     (if (= "_" (first xs))
       [(list 'nth 'args 0) (rest xs)]
-      [(list 'ctx) xs])))
+      ['ctx xs])))
 
 (defmulti emit-node* (fn [fnname _] fnname))
 
@@ -530,9 +530,11 @@
    (parse "2 + 2 * JSON.DECODE('{\\'x\\':1}')")
    )
 
-  (ast "!_3 + 3")
+  (ast ":axel\\-f.v2.parser\\-next/foo")
 
-  ((eval (parse "MAP(!_, [TRUE, FALSE, TRUE])")
+  ((eval (parse "MAP(:axel\\-f.v2.parser\\-next/foo & !_, [TRUE, FALSE, TRUE])")
          ) {::foo false})
+
+  (str true true)
 
   )
