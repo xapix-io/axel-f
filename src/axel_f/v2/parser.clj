@@ -4,8 +4,7 @@
             axel-f.functions
             [clojure.string :as string]
             [clojure.edn :as edn]
-            [clojure.walk :as walk]
-            :reload-all))
+            [clojure.walk :as walk]))
 
 (def constant?
   (some-fn lexer/number-literal? lexer/text-literal?))
@@ -482,6 +481,11 @@
     (concat (list 'map f')
             cs)))
 
+(defmethod emit-node* "FILTER" [_ [f items]]
+  (let [f' (list 'fn '[& args] f)]
+    (concat (list 'filter f')
+            (list items))))
+
 (defmethod emit-node* "get-in" [_ args]
   (let [[ctx path] (select-ctx args)]
     (concat (list (resolve-function "get-in"))
@@ -497,9 +501,15 @@
   (emit-node* fnname args))
 
 (defn ast [formula]
-  (-> formula lexer/read-formula
-      reader/reader reader/push-back-reader
-      parse-primary))
+  (list 'fn '[& [ctx]]
+        (walk/postwalk
+         (fn [node]
+           (if (and (map? node) (fncall? node))
+             (emit-node node)
+             node))
+         (-> formula lexer/read-formula
+             reader/reader reader/push-back-reader
+             parse-primary))))
 
 ;; (parse "1 + 1 * :fo.bo/ba.foo.bar")
 ;; => (fn [ctx]
@@ -511,14 +521,7 @@
 ;;               ctx
 ;;               [:fo.bo/ba "foo" "bar"]))))
 (defn parse [formula]
-  (let [ast (ast formula)]
-    (list 'fn '[ctx]
-          (walk/postwalk
-           (fn [node]
-             (if (and (map? node) (fncall? node))
-               (emit-node node)
-               node))
-           ast))))
+  (eval (ast formula)))
 
 (comment
 
@@ -535,8 +538,10 @@
 
   (ast ":axel\\-f.v2.parser\\-next/foo")
 
-  ((eval (parse "MAP(:axel\\-f.v2.parser\\-next/foo & !_, [TRUE, FALSE, TRUE])")
-         ) {::foo false})
+  ((parse "MAP(:axel\\-f.v2.parser/foo & !_, [TRUE, FALSE, TRUE])")
+   {::foo false})
+
+  ((parse "FILTER(_, [TRUE, FALSE, TRUE])"))
 
   (str true true)
 
