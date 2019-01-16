@@ -289,6 +289,21 @@
     (when-let [else-expr (nth args 2 nil)]
       (run* else-expr context))))
 
+(def-excel-fn ifs
+  "Returns the value that corresponds to the first logical expression which evaluates to TRUE."
+  {:special-form true
+   :args         [{:desc       "Condition that evaluates to TRUE or FALSE."
+                   :repeatable true}
+                  {:desc       "Result to be returned if logical_test evaluates to TRUE. Can be empty."
+                   :repeatable true}]}
+  [args context]
+  (let [clauses (partition 2 2 args)]
+    (loop [[[test expr] & clauses] clauses]
+      (when (some? test)
+        (if (run* test context)
+          (run* expr context)
+          (recur clauses))))))
+
 (def-excel-fn map
   "Returns a result of applying first argument as a anonumous function for each element in second argument."
   {:special-form true

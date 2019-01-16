@@ -127,6 +127,14 @@
       1 "True, 1"
       nil "False, 1")))
 
+(t/deftest ifs-function-test
+
+  (t/testing "IFS function should work as expected"
+
+    (t/are [x y] (t/is (= x (sut/run (str "IFS(" y ")") {:foo [1 2 3]})))
+      0 "TRUE, 0"
+      1 "FALSE, 0, TRUE, 1")))
+
 (t/deftest average-function-test
 
   (t/testing "AVERAGE function should work as expected"
