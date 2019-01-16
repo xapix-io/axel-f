@@ -199,10 +199,12 @@
       (if (or (lexer/punctuation-literal? n ["."])
               (lexer/bracket-literal? n ["["]))
         (assoc current :kind ::symbol)
-        {:kind ::constant
-         :value (case (:value current)
+        {:kind ::fncall
+         :f {:kind ::fnname
+             :value "const"}
+         :args [(case (:value current)
                   "TRUE" true
-                  "FALSE" false)
+                  "FALSE" false)]
          :begin (:begin current)
          :end (:end current)})
 
@@ -428,18 +430,6 @@
   ([tokens-rdr] (parse-primary tokens-rdr false))
   ([tokens-rdr stop-on-complete-expr?]
    (let [expr (parse-expression tokens-rdr)]
-     ;; (if (reader/peek-elem tokens-rdr)
-     ;;   (if (and (fncall? expr)
-     ;;            stop-on-complete-expr?)
-     ;;     expr
-     ;;     (do (reader/unread-elem tokens-rdr expr)
-     ;;         (parse-primary tokens-rdr stop-on-complete-expr?)))
-     ;;   (if (or (symbol-literal? expr)
-     ;;           (lexer/symbol-literal? expr))
-     ;;     (do (reader/unread-elem tokens-rdr expr)
-     ;;         (parse-primary tokens-rdr stop-on-complete-expr?))
-     ;;     expr))
-
      (cond
        ;; Some tokens left in the reader and parser is not forced to stop after first parsed fncall
        (and (reader/peek-elem tokens-rdr)
@@ -542,7 +532,7 @@
 
   (ast "!_3 + 3")
 
-  ((eval (parse "MAP(!!_, MAP(1 + _1 * _2, [4,2,3], [4,5,6]))")
-         ) {})
+  ((eval (parse "MAP(!_, [TRUE, FALSE, TRUE])")
+         ) {::foo false})
 
   )
