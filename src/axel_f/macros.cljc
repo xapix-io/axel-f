@@ -2,7 +2,7 @@
   (:require [clojure.string :as string]
             [clojure.set :refer [rename-keys]]))
 
-(def ^:dynamic  functions-store (atom {}))
+(def ^:dynamic functions-store (atom {}))
 
 (defmulti find-impl identity)
 
