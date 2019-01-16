@@ -1,4 +1,4 @@
-(ns axel-f.v2.parser-next
+(ns axel-f.v2.parser
   (:require [axel-f.v2.reader :as reader]
             [axel-f.v2.lexer :as lexer]
             axel-f.functions
