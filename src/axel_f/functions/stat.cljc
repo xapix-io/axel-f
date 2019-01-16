@@ -29,7 +29,7 @@
         (/ (apply math/sum-fn items)
            len)))))
 
-(def count
+(def count*
   ^{:desc "Returns a count of the number of numeric values in a dataset."
     :args [{:desc "The first value or range to consider when counting."}
            {:desc "Additional values or ranges to consider when counting."
@@ -39,7 +39,7 @@
     (let [tr-flatten-numbers (flatten-numbers (map coercion/excel-number))]
       (clojure.core/count (sequence tr-flatten-numbers items)))))
 
-(def max
+(def max*
   ^{:desc "Returns the maximum value in a numeric dataset."
     :args [{:desc "The first value or range to consider when calculating the maximum value."}
            {:desc "Additional values or ranges to consider when calculating the maximum value."
@@ -53,7 +53,7 @@
           tr-flatten-numbers (flatten-numbers tr-coercer)]
       (apply clojure.core/max (into [] tr-flatten-numbers items)))))
 
-(def min
+(def min*
   ^{:desc "Returns the minimum value in a numeric dataset."
     :args [{:desc "The first value or range to consider when calculating the minimum value."}
            {:desc "Additional values or ranges to consider when calculating the minimum value."
@@ -68,7 +68,7 @@
       (apply clojure.core/min (into [] tr-flatten-numbers items)))))
 
 (def-excel-fn
-  "MIN" min
-  "MAX" max
-  "COUNT" count
+  "MIN" min*
+  "MAX" max*
+  "COUNT" count*
   "AVERAGE" average)

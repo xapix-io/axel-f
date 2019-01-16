@@ -1,6 +1,6 @@
 (ns axel-f.functions.text
-  (:require #?(:clj [axel-f.macros :refer [def-excel-fn find-impl]]
-               :cljs [axel-f.macros :refer [find-impl] :refer-macros [def-excel-fn]])
+  (:require #?(:clj [axel-f.macros :refer [def-excel-fn]]
+               :cljs [axel-f.macros :refer-macros [def-excel-fn]])
             [axel-f.error :as error]
             [axel-f.functions.coercion :as coercion]
             axel-f.functions.math
@@ -51,7 +51,7 @@
 ;; TODO
 ;; (defn asc-fn [])
 
-(def char
+(def char*
   ^{:desc "Convert a number into a character according to the current Unicode table."
     :args [{:desc "The number of the character to look up from the current Unicode table in decimal format."}]}
   (fn [number]
@@ -108,7 +108,7 @@
     (= (coercion/excel-str str1)
        (coercion/excel-str str2))))
 
-(def find
+(def find*
   ^{:desc "Returns the position at which a string is first found within text where the capitalization of letters matters. Returns #VALUE! if the string is not found."
     :args [{:desc "The string to look for within arg2."}
            {:desc "The text to search for the first occurrence of arg1."}
@@ -253,7 +253,7 @@
       :otherwise
       (string/replace text (re-pattern regular-expression) replacement))))
 
-(def replace
+(def replace*
   ^{:desc "Replaces part of a text string with a different text string."
     :args [{:desc "The text, a part of which will be replaced."}
            {:desc "The position where the replacement will begin (starting from 1)."}
@@ -434,12 +434,12 @@
 
 (def-excel-fn
   "ARABIC" arabic
-  "CHAR" char
+  "CHAR" char*
   "CODE" code
   "CONCATENATE" concatenate
   "DOLLAR" dollar
   "EXACT" exact
-  "FIND" find
+  "FIND" find*
   "JOIN" join
   "LEFT" left
   "LEN" len
@@ -449,7 +449,7 @@
   "REGEXEXTRACT" regexextract
   "REGEXMATCH" regexmatch
   "REGEXREPLACE" regexreplace
-  "REPLACE" replace
+  "REPLACE" replace*
   "REPT" rept
   "RIGHT" right
   "ROMAN" roman
