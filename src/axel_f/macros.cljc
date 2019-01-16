@@ -2,23 +2,26 @@
   (:require [clojure.string :as string]
             [clojure.set :refer [rename-keys]]))
 
-(def ^:dynamic functions-store (atom {}))
+(def ^:dynamic *functions-store* (atom {}))
 
 (defmulti find-impl identity)
 
 (defmethod find-impl :default [unknown-function]
   (throw (ex-info (str "Unknown function " unknown-function) {})))
 
-(defmacro def-excel-fn [& s]
-  (let [fn-sym (gensym)
-        fn-name (-> s first str string/upper-case)]
-    `(do
-       (defn- ~fn-sym ~@(rest s))
-       (swap! functions-store assoc ~fn-name
-              (-> (meta #'~fn-sym)
-                  (select-keys [:doc :args])
-                  (rename-keys {:doc :desc})))
-       (defmethod find-impl ~fn-name [~'_]
-         (with-meta ~fn-sym
-           (merge (meta #'~fn-sym)
-                  {:name ~fn-name}))))))
+(defn def-excel-fn* [fn-name fn-impl]
+  (swap! *functions-store* assoc fn-name
+         (with-meta fn-impl (meta fn-impl)))
+  nil)
+
+
+(defn def-excel-fn
+  ([fn-name fn-impl]
+   (def-excel-fn* fn-name fn-impl))
+  ([fn-name fn-impl & fn-name-impls]
+   (def-excel-fn* fn-name fn-impl)
+   (if fn-name-impls
+     (if (next fn-name-impls)
+       (recur (first fn-name-impls) (second fn-name-impls) (nnext fn-name-impls))
+       (throw (IllegalArgumentException.
+               "def-excel-fn expects even number of arguments after fn-impl, found odd number"))))))

@@ -1,9 +1,13 @@
 (ns axel-f.v2.parser-next
   (:require [axel-f.v2.reader :as reader]
             [axel-f.v2.lexer :as lexer]
+            [axel-f.macros :refer [*functions-store*]]
+            axel-f.functions
             [clojure.string :as string]
+
             [clojure.edn :as edn]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            :reload-all))
 
 (def constant?
   (some-fn lexer/number-literal? lexer/text-literal?))
@@ -448,18 +452,19 @@
        expr))))
 
 (def resolve-function
-  {"+" +'
-   "-" -'
-   "*" *'
-   "/" /
-   "&" str
-   "<" <
-   ">" >
-   "<=" <=
-   ">=" >=
-   "<>" not=
-   "!" not
-   "get-in" #(get-in %1 %2)})
+  (merge @*functions-store*
+         {"+" +'
+          "-" -'
+          "*" *'
+          "/" /
+          "&" str
+          "<" <
+          ">" >
+          "<=" <=
+          ">=" >=
+          "<>" not=
+          "!" not
+          "get-in" #(get-in %1 %2)}))
 
 (defn- select-ctx [xs]
   (if-let [[_ position] (when (string? (first xs)) (re-matches #"_([1-9][0-9]*)" (first xs)))]
@@ -537,4 +542,5 @@
 
   (str true true)
 
+  ((eval (parse "OR(1,2,3,4)")) {})
   )
