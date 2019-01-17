@@ -1,5 +1,6 @@
 (ns axel-f.v2.lexer
-  (:require [clojure.tools.reader.edn :as edn]
+  (:require #?(:cljs [clojure.tools.reader.edn :as edn]
+               :clj [clojure.edn :as edn])
             [clojure.string :as string]
             [axel-f.v2.reader :as reader]))
 
@@ -83,8 +84,6 @@
 
 (defn clean-escaped-string [s]
   (string/replace s #"\\(.)" "$1"))
-
-(def read-token! nil)
 
 (defmulti read-token! (fn [rdr]
                         (let [ch (reader/peek-elem rdr)]

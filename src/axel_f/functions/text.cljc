@@ -1,6 +1,7 @@
 (ns axel-f.functions.text
-  (:require [axel-f.functions.core :refer [def-excel-fn]]
-            [axel-f.error :as error]
+  (:require [axel-f.error :as error]
+            #?(:clj [axel-f.functions.core :refer [def-excel-fn]]
+               :cljs [axel-f.functions.core :refer [def-excel-fn]])
             [axel-f.functions.coercion :as coercion]
             [axel-f.functions.math :as math]
             [clojure.string :as string]

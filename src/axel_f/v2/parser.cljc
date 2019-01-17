@@ -1,10 +1,13 @@
 (ns axel-f.v2.parser
   (:require [axel-f.v2.reader :as reader]
             [axel-f.v2.lexer :as lexer]
+            [axel-f.functions.core :refer [*functions-store*]]
             axel-f.functions
             [clojure.string :as string]
-            [clojure.edn :as edn]
-            [clojure.walk :as walk]))
+            #?(:cljs [cljs.reader :as edn]
+               :clj [clojure.edn :as edn])
+            [clojure.walk :as walk]
+            :reload-all))
 
 (def constant?
   (some-fn lexer/number-literal? lexer/text-literal?))
@@ -449,10 +452,10 @@
        expr))))
 
 (def resolve-function
-  (merge @axel-f.functions.core/*functions-store*
-         {"+" +'
-          "-" -'
-          "*" *'
+  (merge @*functions-store*
+         {"+" +
+          "-" -
+          "*" *
           "/" /
           "&" str
           "<" <
@@ -465,7 +468,8 @@
 
 (defn- select-ctx [xs]
   (if-let [[_ position] (when (string? (first xs)) (re-matches #"_([1-9][0-9]*)" (first xs)))]
-    [(list 'nth 'args (dec (Integer/parseInt position)) nil) (rest xs)]
+    [(list 'nth 'args (dec #?(:clj (Integer/parseInt position)
+                              :cljs (js/parseInt position))) nil) (rest xs)]
     (if (= "_" (first xs))
       [(list 'nth 'args 0) (rest xs)]
       ['ctx xs])))
@@ -480,11 +484,6 @@
   (let [f' (list 'fn '[& args] f)]
     (concat (list 'map f')
             cs)))
-
-(defmethod emit-node* "FILTER" [_ [f items]]
-  (let [f' (list 'fn '[& args] f)]
-    (concat (list 'filter f')
-            (list items))))
 
 (defmethod emit-node* "get-in" [_ args]
   (let [[ctx path] (select-ctx args)]
@@ -501,15 +500,9 @@
   (emit-node* fnname args))
 
 (defn ast [formula]
-  (list 'fn '[& [ctx]]
-        (walk/postwalk
-         (fn [node]
-           (if (and (map? node) (fncall? node))
-             (emit-node node)
-             node))
-         (-> formula lexer/read-formula
-             reader/reader reader/push-back-reader
-             parse-primary))))
+  (-> formula lexer/read-formula
+      reader/reader reader/push-back-reader
+      parse-primary))
 
 ;; (parse "1 + 1 * :fo.bo/ba.foo.bar")
 ;; => (fn [ctx]
@@ -521,7 +514,14 @@
 ;;               ctx
 ;;               [:fo.bo/ba "foo" "bar"]))))
 (defn parse [formula]
-  (eval (ast formula)))
+  (let [ast (ast formula)]
+    (list 'fn '[ctx]
+          (walk/postwalk
+           (fn [node]
+             (if (and (map? node) (fncall? node))
+               (emit-node node)
+               node))
+           ast))))
 
 (comment
 
@@ -538,12 +538,11 @@
 
   (ast ":axel\\-f.v2.parser\\-next/foo")
 
-  ((parse "MAP(:axel\\-f.v2.parser/foo & !_, [TRUE, FALSE, TRUE])")
-   {::foo false})
-
-  ((parse "FILTER(_, [TRUE, FALSE, TRUE])"))
+  ((eval (parse "MAP(:axel\\-f.v2.parser\\-next/foo & !_, [TRUE, FALSE, TRUE])")
+         ) {::foo false})
 
   (str true true)
 
-  ((eval (ast "AND(1,2,FALSE,4)")) {})
+  ((eval (parse "OR(1,2,3,4)")) {})
   )
+(js/alert ((eval (parse "OR(1,2,3,4)")) {}))
