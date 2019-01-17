@@ -500,9 +500,12 @@
   (emit-node* fnname args))
 
 (defn ast [formula]
-  (-> formula lexer/read-formula
-      reader/reader reader/push-back-reader
-      parse-primary))
+  (-> formula
+      lexer/read-formula
+      reader/reader
+      reader/push-back-reader
+      parse-primary
+      ))
 
 ;; (parse "1 + 1 * :fo.bo/ba.foo.bar")
 ;; => (fn [ctx]
@@ -544,5 +547,11 @@
   (str true true)
 
   ((eval (parse "OR(1,2,3,4)")) {})
+
+  #?(:cljs
+     (.log js/console (str " AST "
+                           (ast "OR(1,2,3,4)")))
+
+     ;; => AST  {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "OR", :begin {:line 1, :column 1}, :end {:line 1, :column 2}}, :args [{:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [1], :begin {:line 1, :column 4}, :end {:line 1, :column 4}} {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [2], :begin {:line 1, :column 6}, :end {:line 1, :column 6}} {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [3], :begin {:line 1, :column 8}, :end {:line 1, :column 8}} {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [4], :begin {:line 1, :column 10}, :end {:line 1, :column 10}}]}
+     )
   )
-(js/alert ((eval (parse "OR(1,2,3,4)")) {}))

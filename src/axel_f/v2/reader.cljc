@@ -1,8 +1,5 @@
 (ns axel-f.v2.reader)
 
-(defmacro ^:private update! [what f]
-  (list 'set! what (list f what)))
-
 (defmulti newline? type)
 
 (defmethod newline? Character [c]
@@ -11,6 +8,10 @@
 (defmethod newline? :default [el]
   (throw (ex-info (str "Unknown element type " (type el))
                   {:element el})))
+
+#?(:cljs
+   (defmethod newline? js/String [c]
+     (#{"\n" "\r"} c)))
 
 (defprotocol IReader
   (read-elem [reader])
@@ -26,12 +27,15 @@
   (get-column-number [reader]))
 
 (deftype Reader
-    [col ^long col-len ^:unsynchronized-mutable ^long col-pos]
+    [col ^long col-len ^:mutable ^long col-pos]
   IReader
   (read-elem [reader]
     (let [r (nth col col-pos ::default)]
+      (.log js/console (str "R = " r))
       (when-not (= ::default r)
-        (update! col-pos inc)
+        (.log js/console (str "col-pos = " col-pos))
+        (set! col-pos (inc col-pos))
+        (.log js/console (str "after col-pos = " col-pos))
         r)))
   (peek-elem [reader]
     (let [r (nth col col-pos ::default)]
@@ -47,12 +51,12 @@
             :otherwise (recur (inc pos) (nth col (inc pos) ::default))))))))
 
 (deftype PushbackReader
-    [^Reader rdr ^"[Ljava.lang.Object;" buf ^long buf-len ^:unsynchronized-mutable ^long buf-pos]
+    [^Reader rdr ^"[Ljava.lang.Object;" buf ^long buf-len ^:mutable ^long buf-pos]
   IReader
   (read-elem [reader]
     (if (< buf-pos buf-len)
       (let [r (aget buf buf-pos)]
-        (update! buf-pos inc)
+        (set! buf-pos (inc buf-pos))
         r)
       (read-elem rdr)))
   (peek-elem [reader]
@@ -66,23 +70,27 @@
   (unread-elem [reader elem]
     (when elem
       (if (zero? buf-pos) (throw (RuntimeException. "Pushback buffer is full")))
-      (update! buf-pos dec)
+      (set! buf-pos (dec buf-pos))
       (aset buf buf-pos elem))))
 
 (deftype IndexingPushbackReader
-    [rdr ^:unsynchronized-mutable ^long line ^:unsynchronized-mutable ^long column
-     ^:unsynchronized-mutable line-start?
-     ^:unsynchronized-mutable prev ^:unsynchronized-mutable ^long prev-column]
+    [rdr ^:mutable ^long line ^:mutable ^long column
+     ^:mutable line-start?
+     ^:mutable prev ^:mutable ^long prev-column]
   IReader
   (read-elem [reader]
+
+    (.log js/console (str "Line = " line column))
     (when-let [el (read-elem rdr)]
       (set! prev line-start?)
       (set! line-start? (newline? el))
       (when line-start?
         (set! prev-column column)
         (set! column 0)
-        (update! line inc))
-      (update! column inc)
+        (set! line (inc line)))
+      (set! column (inc column))
+
+
       el))
 
   (peek-elem [reader]
@@ -91,9 +99,9 @@
   IPushbackReader
   (unread-elem [reader ch]
     (if line-start?
-      (do (update! line dec)
+      (do (set! line (dec line))
           (set! column prev-column))
-      (update! column dec))
+      (set! column (dec column)))
     (set! line-start? prev)
     (unread-elem rdr ch))
 
@@ -117,6 +125,18 @@
   (IndexingPushbackReader. rdr 1 1 true nil 0))
 
 (comment
+
+  #?(:cljs
+
+   (let [r (-> "qwe\newq" reader push-back-reader indexing-push-back-reader)]
+     (.log js/console (str "REEADER"))
+     (.log js/console (str (peek-elem r) " - " (get-line-number r) ":" (get-column-number r)))
+     (read-elem r)
+     (.log js/console (str (peek-elem r) " - " (get-line-number r) ":" (get-column-number r)))
+     (read-elem r)
+     (.log js/console (str (peek-elem r) " - " (get-line-number r) ":" (get-column-number r)))
+     ))
+
 
   (let [r (-> "qwe\newq" reader push-back-reader indexing-push-back-reader)]
     (prn (peek-elem r) " - " (get-line-number r) ":" (get-column-number r))

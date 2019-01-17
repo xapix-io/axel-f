@@ -17,11 +17,11 @@
 
   :cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "1.10.439"}}}
 
-  :cljs-watch-repl {:main-opts ["-m" "cljs.main"
-                                "--watch" "src/axel_f/v2"
+  :cljs-compile {:main-opts ["-m" "cljs.main"
+                                ;; "--watch" "src/axel_f/v2"
                                 "-co" "axel_f.dev.js.edn"
                                 "--compile"
-                                "--repl"
+                                ;; "--repl"
                                 ]}
 
   :bench {:extra-deps {criterium          {:mvn/version "0.4.4"}
