@@ -423,9 +423,13 @@
                            :token next-token'}))))
 
       :otherwise
-      (throw (ex-info "Unexpected token"
-                      {:position ((juxt :begin :end) next-token)
-                       :token next-token})))))
+      (let [error-data {:position ((juxt :begin :end) next-token)
+                        :token next-token}]
+        (throw
+         ;; todo crossplatform hepler for cljs/clj
+         (ex-info "Unexpected token"
+                  #?(:clj error-data
+                     :cljs (clj->js error-data))))))))
 
 (defn const? [{:keys [kind]}]
   (= ::constant kind))
@@ -547,11 +551,12 @@
   (str true true)
 
   ((eval (parse "OR(1,2,3,4)")) {})
-
   #?(:cljs
      (.log js/console (str " AST "
-                           (ast "OR(1,2,3,4)")))
+                           (ast "OR(1,2,3,4)")
+                           (ast "MAP(!_, [TRUE, FALSE, TRUE])")))
 
      ;; => AST  {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "OR", :begin {:line 1, :column 1}, :end {:line 1, :column 2}}, :args [{:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [1], :begin {:line 1, :column 4}, :end {:line 1, :column 4}} {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [2], :begin {:line 1, :column 6}, :end {:line 1, :column 6}} {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [3], :begin {:line 1, :column 8}, :end {:line 1, :column 8}} {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [4], :begin {:line 1, :column 10}, :end {:line 1, :column 10}}]}
      )
+
   )
