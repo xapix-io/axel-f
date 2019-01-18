@@ -198,7 +198,7 @@
             (assoc :kind ::symbol)))
 
       (and (lexer/symbol-literal? current)
-           (contains? #{"TRUE" "FALSE"} (:value current)))
+           (re-matches #"TRUE|True|true|FALSE|False|false" (:value current)))
       ;; Return constant
       (if (or (lexer/punctuation-literal? n ["."])
               (lexer/bracket-literal? n ["["]))
@@ -206,9 +206,9 @@
         {:kind ::fncall
          :f {:kind ::fnname
              :value "const"}
-         :args [(case (:value current)
-                  "TRUE" true
-                  "FALSE" false)]
+         :arg (case (string/lower-case (:value current))
+                "true" true
+                "false" false)
          :begin (:begin current)
          :end (:end current)})
 
@@ -406,12 +406,12 @@
           (lexer/operator-literal? next-token' ["%"])
           (parse-postfix (reader/read-elem ts) next-token)
 
-          (lexer/operator-literal? next-token' ["+" "-" "*" "/" "&" "<" ">" "<=" ">=" "<>" "^"])
+          (lexer/operator-literal? next-token' ["+" "-" "*" "/" "&" "<" ">" "<=" ">=" "=" "<>" "^"])
           (loop [acc [next-token (reader/read-elem ts)]]
             (let [expr (parse-primary ts true)
                   next-op (reader/peek-elem ts)]
               (if (not-empty expr)
-                (if (lexer/operator-literal? next-op ["+" "-" "*" "/" "&" "<" ">" "<=" ">=" "<>" "^"])
+                (if (lexer/operator-literal? next-op ["+" "-" "*" "/" "&" "<" ">" "<=" ">=" "=" "<>" "^"])
                   (recur (conj acc expr (reader/read-elem ts)))
                   ;;
                   (infix->fncall (conj acc expr)))
@@ -455,20 +455,25 @@
        :otherwise
        expr))))
 
-(def resolve-function
-  (merge @*functions-store*
-         {"+" +
-          "-" -
-          "*" *
-          "/" /
-          "&" str
-          "<" <
-          ">" >
-          "<=" <=
-          ">=" >=
-          "<>" not=
-          "!" not
-          "get-in" #(get-in %1 %2)}))
+(def default-functions
+  {"*" *
+   "/" /
+   "&" str
+   "=" =
+   "<" <
+   ">" >
+   "<=" <=
+   ">=" >=
+   "<>" not=
+   "!" not
+   "^" #(Math/pow %1 %2)
+   ;; TODO implement *real* get-in
+   "get-in" #(get-in %1 %2)})
+
+(defn resolve-function [f]
+  (get (merge @axel-f.functions.core/*functions-store*
+              default-functions)
+       f))
 
 (defn- select-ctx [xs]
   (if-let [[_ position] (when (string? (first xs)) (re-matches #"_([1-9][0-9]*)" (first xs)))]

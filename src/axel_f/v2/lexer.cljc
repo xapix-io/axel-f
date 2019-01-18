@@ -67,7 +67,7 @@
        (contains? (set val) (str t)))))
 
 (defn operator-literal?
-  ([t] (operator-literal? t [":" "+" "-" "*" "/" "&" "<" ">" "=" "!" "%" "^"]))
+  ([t] (operator-literal? t [":" "+" "-" "*" "/" "&" "<" "<=" ">" ">=" "<>" "=" "!" "%" "^"]))
   ([{:keys [kind value] :as t} val]
    (or (and (= kind ::operator)
             (contains? (set val) value))
@@ -77,7 +77,7 @@
   (operator-literal? el [":" "+" "-" "!"]))
 
 (defn infix-operator? [{:keys [value] :as el}]
-  (operator-literal? el ["+" "-" "*" "/" "&" "<" ">" "<=" ">=" "<>" "^"]))
+  (operator-literal? el ["+" "-" "*" "/" "&" "=" "<" ">" "<=" ">=" "<>" "^"]))
 
 (defn postfix-operator? [{:keys [value] :as el}]
   (operator-literal? el ["%"]))
