@@ -27,7 +27,7 @@
   (get-column-number [reader]))
 
 (deftype Reader
-    [col ^long col-len ^:mutable ^long col-pos]
+    [col ^long col-len ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long col-pos]
   IReader
   (read-elem [reader]
     (let [r (nth col col-pos ::default)]
@@ -48,7 +48,7 @@
             :otherwise (recur (inc pos) (nth col (inc pos) ::default))))))))
 
 (deftype PushbackReader
-    [^Reader rdr ^"[Ljava.lang.Object;" buf ^long buf-len ^:mutable ^long buf-pos]
+    [^Reader rdr ^"[Ljava.lang.Object;" buf ^long buf-len ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long buf-pos]
   IReader
   (read-elem [reader]
     (if (< buf-pos buf-len)
@@ -70,39 +70,40 @@
       (set! buf-pos (dec buf-pos))
       (aset buf buf-pos elem))))
 
+
 (deftype IndexingPushbackReader
-    [rdr ^:mutable ^long line ^:mutable ^long column
-     ^:mutable line-start?
-     ^:mutable prev ^:mutable ^long prev-column]
-  IReader
-  (read-elem [reader]
-    (when-let [el (read-elem rdr)]
-      (set! prev line-start?)
-      (set! line-start? (newline? el))
-      (when line-start?
-        (set! prev-column column)
-        (set! column 0)
-        (set! line (inc line)))
-      (set! column (inc column))
+    [rdr ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long line ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long column
+     ^#?(:clj :unsynchronized-mutable, :cljs :mutable) line-start?
+     ^#?(:clj :unsynchronized-mutable, :cljs :mutable) prev ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long prev-column]
+    IReader
+    (read-elem [reader]
+      (when-let [el (read-elem rdr)]
+        (set! prev line-start?)
+        (set! line-start? (newline? el))
+        (when line-start?
+          (set! prev-column column)
+          (set! column 0)
+          (set! line (inc line)))
+        (set! column (inc column))
 
 
-      el))
+        el))
 
-  (peek-elem [reader]
-    (peek-elem rdr))
+    (peek-elem [reader]
+      (peek-elem rdr))
 
-  IPushbackReader
-  (unread-elem [reader ch]
-    (if line-start?
-      (do (set! line (dec line))
-          (set! column prev-column))
-      (set! column (dec column)))
-    (set! line-start? prev)
-    (unread-elem rdr ch))
+    IPushbackReader
+    (unread-elem [reader ch]
+      (if line-start?
+        (do (set! line (dec line))
+            (set! column prev-column))
+        (set! column (dec column)))
+      (set! line-start? prev)
+      (unread-elem rdr ch))
 
-  IIndexingReader
-  (get-line-number [reader] (int line))
-  (get-column-number [reader] (int column)))
+    IIndexingReader
+    (get-line-number [reader] (int line))
+    (get-column-number [reader] (int column)))
 
 (defn read-until [reader pred]
   (loop [acc [] r (peek-elem reader)]
