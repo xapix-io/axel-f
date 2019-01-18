@@ -31,11 +31,8 @@
   IReader
   (read-elem [reader]
     (let [r (nth col col-pos ::default)]
-      (.log js/console (str "R = " r))
       (when-not (= ::default r)
-        (.log js/console (str "col-pos = " col-pos))
         (set! col-pos (inc col-pos))
-        (.log js/console (str "after col-pos = " col-pos))
         r)))
   (peek-elem [reader]
     (let [r (nth col col-pos ::default)]
@@ -79,8 +76,6 @@
      ^:mutable prev ^:mutable ^long prev-column]
   IReader
   (read-elem [reader]
-
-    (.log js/console (str "Line = " line column))
     (when-let [el (read-elem rdr)]
       (set! prev line-start?)
       (set! line-start? (newline? el))
@@ -125,7 +120,6 @@
   (IndexingPushbackReader. rdr 1 1 true nil 0))
 
 (comment
-
   #?(:cljs
 
    (let [r (-> "qwe\newq" reader push-back-reader indexing-push-back-reader)]
