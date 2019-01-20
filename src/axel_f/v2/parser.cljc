@@ -13,11 +13,11 @@
   (some-fn lexer/number-literal? lexer/text-literal?))
 
 (defn expression? [{:keys [kind]}]
-  (and kind (= (namespace kind) (str *ns*))))
+  (= kind ::fncall))
 
 (defn ->function-node [{:keys [value begin] :as f} args]
   {:kind ::fncall
-   :f f
+   :f value
    :args args
    :begin begin
    :end (-> args last :end)})
@@ -27,37 +27,21 @@
 
 (declare parse-primary parse-expression)
 
-(defn parse-arguments [ts]
-  (let [{:keys [depth] :as args-begin} (reader/read-elem ts)]
-    (loop [args []]
-      (let [arg-ts (reader/read-until ts #(and (or (lexer/punctuation-literal? % ",")
-                                                   (lexer/bracket-literal? % ")"))
-                                               (= depth (:depth %))))
-            arg-end (reader/read-elem ts)
-            ts (into-reader arg-ts)
-            args' (conj args (parse-primary ts))]
-        (if (lexer/bracket-literal? arg-end ")")
-          args'
-          (recur args'))))))
-
 (defn parse-prefix-function-call [ts]
   (let [f (reader/read-elem ts)]
     (->function-node f [(parse-primary ts true)])))
-
-(defn parse-function-call [ts]
-  (let [f (reader/read-elem ts)]
-    (->function-node f (parse-arguments ts))))
 
 (defn parse-keyword [ts]
   (loop [acc [(reader/read-elem ts)] next (reader/peek-elem ts)]
     (cond
       (and (lexer/operator-literal? (last acc) ["/"])
            ((some-fn lexer/symbol-literal? lexer/text-literal?) next))
-      {:kind ::lexer/symbol
-       :value (keyword (string/join "." (->> acc rest butlast
-                                             (remove #(lexer/punctuation-literal? % ["."]))
-                                             (map :value)))
-                       (:value (reader/read-elem ts)))
+      {:kind ::fncall
+       :f ::keyword
+       :arg (keyword (string/join "." (->> acc rest butlast
+                                           (remove #(lexer/punctuation-literal? % ["."]))
+                                           (map :value)))
+                     (:value (reader/read-elem ts)))
        :begin (-> acc first :begin)
        :end (:end next)}
 
@@ -77,171 +61,33 @@
   (let [{:keys [value] :as c} (reader/read-elem ts)]
     (assoc c :kind ::constant)))
 
-(defn combine [fel {:keys [value end] :as sel}]
-  (-> fel
-      (update :value #(conj % (if (expression? sel)
-                                sel
-                                value)))
-      (assoc :end end)))
-
-(defn parse-symbol-expression [rdr]
-  (let [current (reader/read-elem rdr)
-        {:keys [value] :as next-el} (reader/peek-elem rdr)]
-    (if (and (contains? #{"true" "True" "TRUE" "false" "False" "FALSE"} (:value current))
-             (not (lexer/punctuation-literal? next-el ["."])))
-      {:kind ::constant
-       :value (-> current :value string/lower-case edn/read-string)
-       :begin (:begin current)
-       :end (:end current)}
-      (let [current (if (expression? current)
-                      current
-                      {:kind ::symbol
-                       :value [(:value current)]
-                       :begin (:begin current)
-                       :end (:end current)})]
-        (cond
-          ;; Skip dots
-          (lexer/punctuation-literal? next-el ["."])
-          (do (reader/read-elem rdr)
-              (let [{:keys [value begin end] :as next-el} (reader/peek-elem rdr)]
-                (when-not
-                    (or (lexer/symbol-literal? next-el)
-                        (lexer/text-literal? next-el)
-                        (lexer/bracket-literal? next-el ["["]))
-                  (throw (ex-info (str "array reference, string or symbol are expected after dot in reference, got `" value "`")
-                                  {:position [begin end]
-                                   :token next-el}))))
-              (reader/unread-elem rdr current)
-              (parse-symbol-expression rdr))
-
-          ;; Reparse as function call
-          (lexer/bracket-literal? next-el ["("])
-          (do (reader/unread-elem rdr current)
-              (parse-function-call rdr))
-
-          (lexer/bracket-literal? next-el ["["])
-          (let [{:keys [depth]} (reader/read-elem rdr)
-                tokens (reader/read-until rdr #(and (lexer/bracket-literal? % ["]"])
-                                                    (= depth (:depth %))))
-                {:keys [end]} (reader/read-elem rdr)]
-            (if (and (= 1 (count tokens))
-                     (= "*" (:value (first tokens))))
-              (do (reader/unread-elem rdr (combine current (first tokens)))
-                  (parse-symbol-expression rdr))
-              (let [rdr' (-> tokens reader/reader reader/push-back-reader)
-                    idx (parse-primary rdr')]
-                (if (reader/peek-elem rdr')
-                  (throw (ex-info "Array reference must have exactly one element"
-                                  {:position [(:begin (reader/peek-elem rdr'))
-                                              end]}))
-                  (do (reader/unread-elem rdr (combine current idx))
-                      (parse-symbol-expression rdr))))))
-
-          (or (lexer/symbol-literal? next-el)
-              (lexer/text-literal? next-el))
-          (do (reader/unread-elem rdr (combine current (reader/read-elem rdr)))
-              (parse-symbol-expression rdr))
-
-          ;; Stop parsing symbolyc expression
-          :otherwise
-          current)))))
-
-(defn symbol-literal? [{:keys [kind]}]
-  (= kind ::symbol))
-
-(defn keyword-literal? [{:keys [kind]}]
-  (= kind ::keyword))
-
-(defn build-function-name [{:keys [value begin end] :as t}]
-  (if (every? string? value)
-    (string/join "." value)
-    (throw (ex-info "Unknown function"
-                    {:position [begin end]
-                     :token t}))))
-
-(defn build-reference-args [{:keys [value] :as t}]
-  value)
-
 (defn parse-symbol-expression [ts]
   (let [current (reader/read-elem ts)
-        n (reader/peek-elem ts)]
+        next (reader/peek-elem ts)
+        in-reference? (or (lexer/punctuation-literal? next ["."])
+                          (lexer/bracket-literal? next ["["]))]
     (cond
-      (and (symbol-literal? current)
-           (lexer/punctuation-literal? n ["."]))
-      ;; Read next token and throw if it is not array index or symbol or text
-      (let [_ (reader/read-elem ts)
-            n (reader/peek-elem ts)]
-        (if (or (lexer/symbol-literal? n)
-                (lexer/bracket-literal? n ["["]))
-          (assoc current :after-dot true)
-          (throw (ex-info "Unexpected token in reference expression"
-                          {:position ((juxt :begin :end) n)
-                           :token n}))))
-
-      (and (symbol-literal? current)
-           (lexer/bracket-literal? n ["["]))
-      ;; Read array index expression
-      (let [{:keys [begin depth] :as ob} (reader/read-elem ts)
-            tokens (reader/read-until ts #(and (lexer/bracket-literal? % ["]"])
-                                               (= depth (:depth %))))
-            {:keys [end] :as cb} (reader/read-elem ts)]
-        (-> current
-            (update :value #(conj (if (vector? %) % [%])
-                                  {:kind ::array-reference
-                                   :value (if (and (= 1 (count tokens))
-                                                   (lexer/operator-literal? (first tokens) ["*"]))
-                                            "*"
-                                            (parse-primary (into-reader tokens)))
-                                   :begin begin
-                                   :end end}))
-            (assoc :end end)
-            (assoc :kind ::symbol)))
-
-      (and (lexer/symbol-literal? current)
-           (re-matches #"TRUE|True|true|FALSE|False|false" (:value current)))
-      ;; Return constant
-      (if (or (lexer/punctuation-literal? n ["."])
-              (lexer/bracket-literal? n ["["]))
-        (assoc current :kind ::symbol)
-        {:kind ::fncall
-         :f {:kind ::fnname
-             :value "const"}
-         :arg (case (string/lower-case (:value current))
-                "true" true
-                "false" false)
-         :begin (:begin current)
-         :end (:end current)})
-
-      (and (symbol-literal? current)
-           (:after-dot current)
-           (lexer/symbol-literal? n))
-      (let [{:keys [value end]} (reader/read-elem ts)]
-        (-> current
-            (update :value conj value)
-            (assoc :end end)
-            (assoc :after-dot false)))
-
-      (lexer/symbol-literal? current)
-      (-> current
-          (update :value vector)
-          (assoc :kind ::symbol))
-
-      (lexer/bracket-literal? n ["("])
-      {:kind ::fnname
-       :value (build-function-name current)
+      (and (re-matches #"NULL|TRUE|True|true|FALSE|False|false" (:value current))
+           (not in-reference?))
+      {:kind ::fncall
+       :f ::const
+       :arg (case (string/lower-case (:value current))
+              "true" true
+              "false" false
+              "null" nil)
        :begin (:begin current)
        :end (:end current)}
 
       :otherwise
       {:kind ::fncall
-       :f {:kind ::fnname
-           :value "get-in"}
-       :args (build-reference-args current)
+       :f ::reference
+       :args [{:kind ::fncall
+               :f ::symbol
+               :arg (:value current)
+               :begin (:begin current)
+               :end (:end current)}]
        :begin (:begin current)
        :end (:end current)})))
-
-(defn function-name? [{:keys [kind]}]
-  (= ::fnname kind))
 
 (defn parse-many [ts pred]
   (loop [acc [] tokens (reader/read-until ts pred)]
@@ -251,9 +97,8 @@
                  (reader/read-until ts pred)))
       acc)))
 
-(defn parse-function-call [ts]
-  (let [f (reader/read-elem ts)
-        {:keys [begin depth] :as ob} (reader/read-elem ts)
+(defn parse-function-call [ts f]
+  (let [{:keys [begin depth] :as ob} (reader/read-elem ts)
         tokens (reader/read-until ts #(and (lexer/bracket-literal? % [")"])
                                            (= depth (:depth %))))
         {:keys [end] :as cb} (reader/read-elem ts)
@@ -262,7 +107,7 @@
                            (= (inc depth) (:depth %)))
                       (nil? %))]
     {:kind ::fncall
-     :f f
+     :f (assoc f :f ::fnname)
      :args (parse-many ts' div-pred)}))
 
 (defn begin-array? [t]
@@ -278,8 +123,7 @@
                            (= (inc depth) (:depth %)))
                       (nil? %))]
     {:kind ::fncall
-     :f {:kind ::fnname
-         :value "vec"}
+     :f ::vector
      :args (parse-many ts' div-pred)}))
 
 (defn begin-group? [t]
@@ -295,7 +139,7 @@
 
 (defn parse-postfix [operator arg]
   {:kind ::fncall
-   :f (assoc operator :kind ::fnname)
+   :f (:value operator)
    :args [arg]
    :begin (:begin arg)
    :end (:end operator)})
@@ -305,9 +149,8 @@
 
 (defn const->fncall [{:keys [value begin end]}]
   {:kind ::fncall
-   :f {:kind ::fnname
-       :value "const"}
-   :args [value]
+   :f ::const
+   :arg value
    :begin begin
    :end end})
 
@@ -365,10 +208,51 @@
            (first infix-args'))
          (let [f (-> infix-args' second first)]
            {:kind ::fncall
-            :f (assoc f :kind ::fnname)
+            :f (:value f)
             :args (map #(infix->fncall (first %) (next-op-pred op-pred))
                        (partition 1 2 infix-args'))})))
      (first infix-args))))
+
+(defn parse-reference [ts reference]
+  (let [div (reader/read-elem ts)]
+    (cond
+      (= ::keyword (:f reference))
+      {:kind ::fncall
+       :f ::reference
+       :args [reference]
+       :begin (:begin reference)
+       :end (:end reference)}
+
+      (lexer/punctuation-literal? div ["."])
+      (if (lexer/bracket-literal? (reader/peek-elem ts) ["["])
+        reference
+        (let [n (parse-expression ts)]
+          (update reference :args conj n)))
+
+      (lexer/bracket-literal? div ["["])
+      (update reference :args conj
+              (let [{:keys [begin depth]} div
+                    tokens (reader/read-until ts #(and (lexer/bracket-literal? % ["]"])
+                                                       (= depth (:depth %))))
+                    {:keys [end]} (reader/read-elem ts)]
+                (cond
+                  (and (= 1 (count tokens))
+                       (lexer/operator-literal? (first tokens) ["*"]))
+                  {:kind ::fncall
+                   :f ::nth
+                   :arg {:kind ::fncall
+                         :f ::ALL
+                         :arg nil}
+                   :begin begin
+                   :end end}
+
+                  :otherwise
+                  (let [expr (parse-primary (into-reader tokens))]
+                    {:kind ::fncall
+                     :f ::nth
+                     :arg expr
+                     :begin begin
+                     :end end})))))))
 
 (defn parse-expression [ts]
   (let [{:keys [value] :as next-token} (reader/peek-elem ts)]
@@ -386,23 +270,26 @@
       (lexer/operator-literal? next-token [":"])
       (parse-keyword ts)
 
-      (function-name? next-token)
-      (parse-function-call ts)
-
       (begin-group? next-token)
       (parse-group ts)
 
       (begin-array? next-token)
       (parse-array ts)
 
-      (or (lexer/symbol-literal? next-token)
-          (symbol-literal? next-token))
+      (lexer/symbol-literal? next-token)
       (parse-symbol-expression ts)
 
       (expression? next-token)
       (let [next-token (reader/read-elem ts)
             next-token' (reader/peek-elem ts)]
         (cond
+          (or (lexer/punctuation-literal? next-token' ["."])
+              (lexer/bracket-literal? next-token' ["["]))
+          (parse-reference ts next-token)
+
+          (lexer/bracket-literal? next-token' ["("])
+          (parse-function-call ts next-token)
+
           (lexer/operator-literal? next-token' ["%"])
           (parse-postfix (reader/read-elem ts) next-token)
 
@@ -413,7 +300,6 @@
               (if (not-empty expr)
                 (if (lexer/operator-literal? next-op ["+" "-" "*" "/" "&" "<" ">" "<=" ">=" "=" "<>" "^"])
                   (recur (conj acc expr (reader/read-elem ts)))
-                  ;;
                   (infix->fncall (conj acc expr)))
                 (infix->fncall acc))))
 
@@ -447,7 +333,7 @@
 
        ;; Continue parsing when no tokens to parse but expression not in form of fncall
        (and (empty? (reader/peek-elem tokens-rdr))
-            (or (symbol-literal? expr)
+            (or (= ::symbol (:kind expr))
                 (lexer/symbol-literal? expr)))
        (do (reader/unread-elem tokens-rdr expr)
            (parse-primary tokens-rdr stop-on-complete-expr?))
@@ -455,58 +341,62 @@
        :otherwise
        expr))))
 
-(def default-functions
-  {"*" *
-   "/" /
-   "&" str
-   "=" =
-   "<" <
-   ">" >
-   "<=" <=
-   ">=" >=
-   "<>" not=
-   "!" not
-   "^" #(Math/pow %1 %2)
-   ;; TODO implement *real* get-in
-   "get-in" #(get-in %1 %2)})
+;; (def default-functions
+;;   {"*" *
+;;    "/" /
+;;    "&" str
+;;    "=" =
+;;    "<" <
+;;    ">" >
+;;    "<=" <=
+;;    ">=" >=
+;;    "<>" not=
+;;    "!" not
+;;    "^" #(Math/pow %1 %2)
+;;    ;; TODO implement *real* get-in
+;;    "get-in" #(get-in %1 %2)})
 
-(defn resolve-function [f]
-  (get (merge @axel-f.functions.core/*functions-store*
-              default-functions)
-       f))
+;; (defn resolve-function [f]
+;;   (get (merge @axel-f.functions.core/*functions-store*
+;;               default-functions)
+;;        f))
 
-(defn- select-ctx [xs]
-  (if-let [[_ position] (when (string? (first xs)) (re-matches #"_([1-9][0-9]*)" (first xs)))]
-    [(list 'nth 'args (dec #?(:clj (Integer/parseInt position)
-                              :cljs (js/parseInt position))) nil) (rest xs)]
-    (if (= "_" (first xs))
-      [(list 'nth 'args 0) (rest xs)]
-      ['ctx xs])))
+;; (defn- select-ctx [xs]
+;;   (if-let [[_ position] (when (string? (first xs)) (re-matches #"_([1-9][0-9]*)" (first xs)))]
+;;     [(list 'nth 'args (dec (Integer/parseInt position)) nil) (rest xs)]
+;;     (if (= "_" (first xs))
+;;       [(list 'nth 'args 0) (rest xs)]
+;;       ['ctx xs])))
 
-(defmulti emit-node* (fn [fnname _] fnname))
+;; (defmulti emit-node* (fn [fnname _] fnname))
 
-(defmethod emit-node* "const" [_ [c]] c)
+;; (defmethod emit-node* "const" [_ [c]] c)
 
-(defmethod emit-node* "vec" [_ args] args)
+;; (defmethod emit-node* "vec" [_ args] args)
 
-(defmethod emit-node* "MAP" [_ [f & cs]]
-  (let [f' (list 'fn '[& args] f)]
-    (concat (list 'map f')
-            cs)))
+;; (defmethod emit-node* "MAP" [_ [f & cs]]
+;;   (let [f' (list 'fn '[& args] f)]
+;;     (concat (list 'map f')
+;;             cs)))
 
-(defmethod emit-node* "get-in" [_ args]
-  (let [[ctx path] (select-ctx args)]
-    (concat (list (resolve-function "get-in"))
-            (list ctx)
-            (list path))))
+;; (defmethod emit-node* "FILTER" [_ [f items]]
+;;   (let [f' (list 'fn '[& args] f)]
+;;     (concat (list 'filter f')
+;;             (list items))))
 
-(defmethod emit-node* :default [fnname args]
-  (let [f (resolve-function fnname)]
-    (cons f args)))
+;; (defmethod emit-node* "get-in" [_ args]
+;;   (let [[ctx path] (select-ctx args)]
+;;     (concat (list (resolve-function "get-in"))
+;;             (list ctx)
+;;             (list path))))
 
-(defn emit-node [{{fnname :value} :f
-                  args :args}]
-  (emit-node* fnname args))
+;; (defmethod emit-node* :default [fnname args]
+;;   (let [f (resolve-function fnname)]
+;;     (cons f args)))
+
+;; (defn emit-node [{{fnname :value} :f
+;;                   args :args}]
+;;   (emit-node* fnname args))
 
 (defn ast [formula]
   (-> formula
