@@ -1,13 +1,7 @@
 (ns axel-f.v2.parser
   (:require [axel-f.v2.reader :as reader]
             [axel-f.v2.lexer :as lexer]
-            [axel-f.functions.core :refer [*functions-store*]]
-            axel-f.functions
-            [clojure.string :as string]
-            #?(:cljs [cljs.reader :as edn]
-               :clj [clojure.edn :as edn])
-            [clojure.walk :as walk]
-            :reload-all))
+            [clojure.string :as string]))
 
 (def constant?
   (some-fn lexer/number-literal? lexer/text-literal?))
@@ -341,89 +335,15 @@
        :otherwise
        expr))))
 
-;; (def default-functions
-;;   {"*" *
-;;    "/" /
-;;    "&" str
-;;    "=" =
-;;    "<" <
-;;    ">" >
-;;    "<=" <=
-;;    ">=" >=
-;;    "<>" not=
-;;    "!" not
-;;    "^" #(Math/pow %1 %2)
-;;    ;; TODO implement *real* get-in
-;;    "get-in" #(get-in %1 %2)})
-
-;; (defn resolve-function [f]
-;;   (get (merge @axel-f.functions.core/*functions-store*
-;;               default-functions)
-;;        f))
-
-;; (defn- select-ctx [xs]
-;;   (if-let [[_ position] (when (string? (first xs)) (re-matches #"_([1-9][0-9]*)" (first xs)))]
-;;     [(list 'nth 'args (dec (Integer/parseInt position)) nil) (rest xs)]
-;;     (if (= "_" (first xs))
-;;       [(list 'nth 'args 0) (rest xs)]
-;;       ['ctx xs])))
-
-;; (defmulti emit-node* (fn [fnname _] fnname))
-
-;; (defmethod emit-node* "const" [_ [c]] c)
-
-;; (defmethod emit-node* "vec" [_ args] args)
-
-;; (defmethod emit-node* "MAP" [_ [f & cs]]
-;;   (let [f' (list 'fn '[& args] f)]
-;;     (concat (list 'map f')
-;;             cs)))
-
-;; (defmethod emit-node* "FILTER" [_ [f items]]
-;;   (let [f' (list 'fn '[& args] f)]
-;;     (concat (list 'filter f')
-;;             (list items))))
-
-;; (defmethod emit-node* "get-in" [_ args]
-;;   (let [[ctx path] (select-ctx args)]
-;;     (concat (list (resolve-function "get-in"))
-;;             (list ctx)
-;;             (list path))))
-
-;; (defmethod emit-node* :default [fnname args]
-;;   (let [f (resolve-function fnname)]
-;;     (cons f args)))
-
-;; (defn emit-node [{{fnname :value} :f
-;;                   args :args}]
-;;   (emit-node* fnname args))
-
 (defn ast [formula]
   (-> formula
       lexer/read-formula
       reader/reader
       reader/push-back-reader
-      parse-primary
-      ))
+      parse-primary))
 
-;; (parse "1 + 1 * :fo.bo/ba.foo.bar")
-;; => (fn [ctx]
-;;      (axel-f.functions/+
-;;         1
-;;         (axel-f.functions/*
-;;            1
-;;            (axel-f.functions/get-in*
-;;               ctx
-;;               [:fo.bo/ba "foo" "bar"]))))
 (defn parse [formula]
-  (let [ast (ast formula)]
-    (list 'fn '[ctx]
-          (walk/postwalk
-           (fn [node]
-             (if (and (map? node) (fncall? node))
-               (emit-node node)
-               node))
-           ast))))
+  (ast formula))
 
 (comment
 

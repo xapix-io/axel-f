@@ -2,16 +2,16 @@
 
 (defmulti newline? type)
 
-(defmethod newline? Character [c]
-  (contains? #{\return \newline} c))
+#?(:clj
+   (defmethod newline? Character [c]
+     (contains? #{\return \newline} c))
+   :cljs
+   (defmethod newline? js/String [c]
+     (contains? #{"\n" "\r"} c)))
 
 (defmethod newline? :default [el]
   (throw (ex-info (str "Unknown element type " (type el))
                   {:element el})))
-
-#?(:cljs
-   (defmethod newline? js/String [c]
-     (#{"\n" "\r"} c)))
 
 (defprotocol IReader
   (read-elem [reader])
@@ -27,7 +27,9 @@
   (get-column-number [reader]))
 
 (deftype Reader
-    [col ^long col-len ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long col-pos]
+    [col
+     ^long col-len
+     ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long col-pos]
   IReader
   (read-elem [reader]
     (let [r (nth col col-pos ::default)]
@@ -48,7 +50,10 @@
             :otherwise (recur (inc pos) (nth col (inc pos) ::default))))))))
 
 (deftype PushbackReader
-    [^Reader rdr ^"[Ljava.lang.Object;" buf ^long buf-len ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long buf-pos]
+    [^Reader rdr
+     #?(:clj ^"[Ljava.lang.Object;") buf
+     ^long buf-len
+     ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long buf-pos]
   IReader
   (read-elem [reader]
     (if (< buf-pos buf-len)
@@ -70,11 +75,13 @@
       (set! buf-pos (dec buf-pos))
       (aset buf buf-pos elem))))
 
-
 (deftype IndexingPushbackReader
-    [rdr ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long line ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long column
+    [rdr
+     ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long line
+     ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long column
      ^#?(:clj :unsynchronized-mutable, :cljs :mutable) line-start?
-     ^#?(:clj :unsynchronized-mutable, :cljs :mutable) prev ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long prev-column]
+     ^#?(:clj :unsynchronized-mutable, :cljs :mutable) prev
+     ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long prev-column]
     IReader
     (read-elem [reader]
       (when-let [el (read-elem rdr)]
@@ -85,8 +92,6 @@
           (set! column 0)
           (set! line (inc line)))
         (set! column (inc column))
-
-
         el))
 
     (peek-elem [reader]
@@ -114,7 +119,7 @@
 (defn reader [s-or-coll]
   (Reader. s-or-coll (count s-or-coll) 0))
 
-(defn push-back-reader [rdr]
+(defn push-back-reader [^Reader rdr]
   (PushbackReader. rdr (object-array 1000) 1000 1000))
 
 (defn indexing-push-back-reader [^PushbackReader rdr]
