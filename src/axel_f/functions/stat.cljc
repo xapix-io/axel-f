@@ -15,19 +15,19 @@
         tr-coercer
         (filter number?)))
 
-(def average
+(defn average
   ^{:desc "Returns the numerical average value in a dataset, ignoring text."
     :args [{:desc "The first value or range to consider when calculating the average value."}
            {:desc "Additional values or ranges to consider when calculating the average value."
             :opt true
             :repeatable true}]}
-  (fn [& items]
-    (let [tr-flatten-numbers (flatten-numbers (map coercion/excel-number))
-          items (sequence tr-flatten-numbers items)
-          len (count items)]
-      (when-not (zero? len)
-        (/ (apply math/sum-fn items)
-           len)))))
+  [& items]
+  (let [tr-flatten-numbers (flatten-numbers (map coercion/excel-number))
+        items (sequence tr-flatten-numbers items)
+        len (count items)]
+    (when-not (zero? len)
+      (/ (apply math/sum-fn items)
+         len))))
 
 (defn count*
   ^{:desc "Returns a count of the number of numeric values in a dataset."

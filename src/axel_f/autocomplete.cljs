@@ -24,8 +24,7 @@
   (try
     (let [ref (axel-f/compile (fix-up-objref ref))]
       (and (seqable? ref) (= (first ref) :OBJREF)))
-    (catch #?(:clj clojure.lang.ExceptionInfo
-              :cljs ExceptionInfo) _
+    (catch ExceptionInfo _
       false)))
 
 (defn- fix-up-fncall [fncall]
@@ -39,8 +38,7 @@
   (try
     (let [fncall (axel-f/compile (fix-up-fncall fncall))]
       (and (seqable? fncall) (= (first fncall) :FNCALL)))
-    (catch #?(:clj clojure.lang.ExceptionInfo
-              :cljs js/Error) _
+    (catch js/Error _
       false)))
 
 (defn- build-suggestion [type item & [args]]
