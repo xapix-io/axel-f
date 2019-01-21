@@ -1,8 +1,7 @@
 (ns axel-f.functions.stat
   (:require [axel-f.functions.core :refer [def-excel-fn]]
             [axel-f.functions.math :as math]
-            [axel-f.functions.coercion :as coercion]
-            [axel-f.error :as error]))
+            [axel-f.functions.coercion :as coercion]))
 
 (defn- flatten-numbers [tr-coercer]
   (comp (mapcat #(cond
