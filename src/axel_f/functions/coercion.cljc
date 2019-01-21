@@ -1,4 +1,5 @@
-(ns axel-f.functions.coercion)
+(ns axel-f.functions.coercion
+  (:require [clojure.edn :as edn]))
 
 (defn excel-number [maybe-number]
   (cond
@@ -7,18 +8,23 @@
 
     (string? maybe-number)
     (try
-      (let [n (#?(:clj read-string
+      (let [n (#?(:clj edn/read-string
                   :cljs js/parseFloat) maybe-number)]
-        (when (and (number? n) #?(:cljs (not (js/isNaN n))))
-          n))
+        (if (and (number? n) #?(:cljs (not (js/isNaN n))))
+          n
+          (throw (ex-info (str "Fail to coerce `" maybe-number "` to number.")
+                          {:type :argument-type}))))
       (catch #?(:clj Throwable
                 :cljs js/Error) e
-        nil))
+        (throw (ex-info (str "Fail to coerce `" maybe-number "` to number.")
+                        {:type :argument-type}))))
 
     (boolean? maybe-number)
     (if maybe-number 1 0)
 
-    :otherwise nil))
+    :otherwise
+    (throw (ex-info (str "Fail to coerce `" maybe-number "` to number.")
+                    {:type :argument-type}))))
 
 (defn excel-str [item]
   (case item

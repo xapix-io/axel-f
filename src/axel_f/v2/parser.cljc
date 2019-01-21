@@ -239,8 +239,9 @@
                                                        (= depth (:depth %))))
                     {:keys [end]} (reader/read-elem ts)]
                 (cond
-                  (and (= 1 (count tokens))
-                       (lexer/operator-literal? (first tokens) ["*"]))
+                  (or (= 0 (count tokens))
+                      (and (= 1 (count tokens))
+                           (lexer/operator-literal? (first tokens) ["*"])))
                   {:kind ::fncall
                    :f ::nth
                    :arg {:kind ::fncall
@@ -277,6 +278,14 @@
 
       (lexer/symbol-literal? next-token)
       (parse-symbol-expression ts)
+
+      (= ::keyword (:f next-token))
+      (let [{:keys [end begin] :as next-token} (reader/read-elem ts)]
+        {:kind ::fncall
+         :f ::reference
+         :args [next-token]
+         :begin begin
+         :end end})
 
       (expression? next-token)
       (let [next-token (reader/read-elem ts)
@@ -329,14 +338,14 @@
        ;; Some tokens left in the reader and parser is not forced to stop after first parsed fncall
        (and (reader/peek-elem tokens-rdr)
             (not (and stop-on-complete-expr?
-                      (fncall? expr tokens-rdr)
-                      )))
+                      (fncall? expr tokens-rdr))))
        (do (reader/unread-elem tokens-rdr expr)
            (parse-primary tokens-rdr stop-on-complete-expr?))
 
        ;; Continue parsing when no tokens to parse but expression not in form of fncall
        (and (empty? (reader/peek-elem tokens-rdr))
             (or (= ::symbol (:kind expr))
+                (= ::keyword (:f expr))
                 (lexer/symbol-literal? expr)))
        (do (reader/unread-elem tokens-rdr expr)
            (parse-primary tokens-rdr stop-on-complete-expr?))

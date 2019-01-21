@@ -128,6 +128,9 @@
   ([[p & path] acc gc lc]
    (if p
      (cond
+       (= ::parser/keyword (:f p))
+       (recur path (conj acc (:arg p)) gc lc)
+
        (= ::parser/symbol (:f p))
        (recur path (conj acc (:arg p)) gc lc)
 
@@ -182,8 +185,15 @@
         (recur clauses)))))
 
 (defmethod eval-node :default [{:keys [f args]} global-context local-context]
-  (let [f (impl/find-impl f)]
-    (apply f (map #(eval-node % global-context local-context) args))))
+  (let [f' (impl/find-impl f)]
+    (try
+      (apply f' (map #(eval-node % global-context local-context) args))
+      (catch Throwable e
+        (let [data (ex-data e)]
+          (case (:type data)
+            :argument-type
+            (throw (ex-info (str "Invalid argument type passed to the function `" f "`")
+                            {:position [(-> args first :begin) (-> args last :end)]}))))))))
 
 (defn eval [ast]
   (fn [& [ctx local-ctx]]

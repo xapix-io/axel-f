@@ -5,7 +5,7 @@
              [axel-f.core :as sut]
              axel-f.functions))
 
-(t/deftest compile-tests
+#_(t/deftest compile-tests
 
   (t/testing "can parse normal formulas"
 

@@ -6,4 +6,4 @@
              axel-f.base64))
 
 (t/deftest complex-example
-  (t/is (= 1 (af/run "JSON.DECODE(BASE64.DECODE(_)).foo" "eyJmb28iOjF9"))))
+  (t/is (= {"foo" 1} (af/run "JSON.DECODE(BASE64.DECODE(_))" "eyJmb28iOjF9"))))

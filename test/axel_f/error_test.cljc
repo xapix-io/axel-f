@@ -4,7 +4,7 @@
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])))
 
-(t/deftest error-test
+#_(t/deftest error-test
 
   (t/testing "error function returns error instance with additional information"
 

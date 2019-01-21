@@ -17,8 +17,7 @@
     (t/are [x y] (= x (sut/excel-number y))
       1 "1"
       1.2 "1.2"
-      1.e3 "1.e3"
-      nil "foo"))
+      1.e3 "1.e3"))
 
   (t/testing "booleans coerced correctly"
 
