@@ -54,10 +54,6 @@
       (recur (conj acc (reader/read-elem ts))
              (reader/peek-elem ts)))))
 
-(defn parse-constant [ts]
-  (let [{:keys [value] :as c} (reader/read-elem ts)]
-    (assoc c :kind ::constant)))
-
 (defn parse-symbol-expression [ts]
   (let [current (reader/read-elem ts)
         next (reader/peek-elem ts)
@@ -219,13 +215,6 @@
 (defn parse-reference [ts reference]
   (let [div (reader/read-elem ts)]
     (cond
-      (= ::keyword (:f reference))
-      {:kind ::fncall
-       :f ::reference
-       :args [reference]
-       :begin (:begin reference)
-       :end (:end reference)}
-
       (lexer/punctuation-literal? div ["."])
       (if (lexer/bracket-literal? (reader/peek-elem ts) ["["])
         reference
