@@ -312,4 +312,19 @@
                   :arg 3,
                   :begin {:line 1, :column 15},
                   :end {:line 1, :column 15}}]}]}
-             (sut/parse "MAP(_, [1, 2, 3])")))))
+             (sut/parse "MAP(_, [1, 2, 3])")))
+
+    (t/is (= {:kind ::fncall,
+              :f "GEO.DISTANCE",
+              :args
+              [{:kind ::fncall,
+                :f ::const,
+                :arg 1,
+                :begin {:line 1, :column 14},
+                :end {:line 1, :column 14}}
+               {:kind ::fncall,
+                :f ::const,
+                :arg 2,
+                :begin {:line 1, :column 16},
+                :end {:line 1, :column 16}}]}
+             (sut/parse "GEO.DISTANCE(1,2)")))))

@@ -7,7 +7,10 @@
   (some-fn lexer/number-literal? lexer/text-literal?))
 
 (defn expression? [{:keys [kind]}]
-  (= kind ::fncall))
+  (= ::fncall kind))
+
+(defn reference-expression? [{:keys [f]}]
+  (= ::reference f))
 
 (defn ->function-node [{:keys [value begin] :as f} args]
   {:kind ::fncall
@@ -92,7 +95,8 @@
       acc)))
 
 (defn ->function-name [{:keys [args]}]
-  (string/join "." (map :arg args)))
+  (string/join "." (cons (:arg (first args))
+                         (map #(-> % :args first :arg) (rest args)))))
 
 (defn parse-function-call [ts f]
   (let [{:keys [begin depth] :as ob} (reader/read-elem ts)
@@ -108,11 +112,11 @@
      :args (parse-many ts' div-pred)}))
 
 (defn begin-array? [t]
-  (lexer/bracket-literal? t ["["]))
+  (lexer/bracket-literal? t ["{"]))
 
 (defn parse-array [ts]
   (let [{:keys [begin depth] :as ob} (reader/read-elem ts)
-        tokens (reader/read-until ts #(and (lexer/bracket-literal? % ["]"])
+        tokens (reader/read-until ts #(and (lexer/bracket-literal? % ["}"])
                                            (= depth (:depth %))))
         {:keys [end] :as cb} (reader/read-elem ts)
         ts' (into-reader tokens)
@@ -141,8 +145,10 @@
    :begin (:begin arg)
    :end (:end operator)})
 
-(defn fncall? [{:keys [kind]}]
-  (= ::fncall kind))
+(defn fncall? [{:keys [kind]} rdr]
+  (and (= ::fncall kind)
+       (not (or (lexer/bracket-literal? (reader/peek-elem rdr) ["(" "["])
+                (lexer/punctuation-literal? (reader/peek-elem rdr) ["."])))))
 
 (defn const->fncall [{:keys [value begin end]}]
   {:kind ::fncall
@@ -276,11 +282,13 @@
       (let [next-token (reader/read-elem ts)
             next-token' (reader/peek-elem ts)]
         (cond
-          (or (lexer/punctuation-literal? next-token' ["."])
-              (lexer/bracket-literal? next-token' ["["]))
+          (and (reference-expression? next-token)
+               (or (lexer/punctuation-literal? next-token' ["."])
+                   (lexer/bracket-literal? next-token' ["["])))
           (parse-reference ts next-token)
 
-          (lexer/bracket-literal? next-token' ["("])
+          (and (reference-expression? next-token)
+               (lexer/bracket-literal? next-token' ["("]))
           (parse-function-call ts next-token)
 
           (lexer/operator-literal? next-token' ["%"])
@@ -295,6 +303,9 @@
                   (recur (conj acc expr (reader/read-elem ts)))
                   (infix->fncall (conj acc expr)))
                 (infix->fncall acc))))
+
+          (empty? next-token')
+          next-token
 
           :otherwise
           (throw (ex-info (str "Expression must be followed by postfix or infix operator, got `" (:value next-token') "` instead.")
@@ -317,7 +328,9 @@
      (cond
        ;; Some tokens left in the reader and parser is not forced to stop after first parsed fncall
        (and (reader/peek-elem tokens-rdr)
-            (not (and stop-on-complete-expr? (fncall? expr))))
+            (not (and stop-on-complete-expr?
+                      (fncall? expr tokens-rdr)
+                      )))
        (do (reader/unread-elem tokens-rdr expr)
            (parse-primary tokens-rdr stop-on-complete-expr?))
 
@@ -337,36 +350,3 @@
       reader/reader
       reader/push-back-reader
       parse-primary))
-
-(comment
-
-  (lexer/read-formula "FOO(1,2,3)")
-
-  (walk/postwalk
-   (fn [x] (if (and (map? x)
-                    (fncall? x))
-             (do (prn x)
-                 x)
-             x))
-   (parse "2 + 2 * JSON.DECODE('{\\'x\\':1}')")
-   )
-
-  (ast ":axel\\-f.v2.parser\\-next/foo")
-
-  ((eval (parse "MAP(:axel\\-f.v2.parser\\-next/foo & !_, [TRUE, FALSE, TRUE])")
-         ) {::foo false})
-
-  (str true true)
-
-  (ast "10%")
-
-  ((eval (parse "OR(1,2,3,4)")) {})
-  #?(:cljs
-     (.log js/console (str " AST "
-                           (ast "OR(1,2,3,4)")
-                           (ast "MAP(!_, [TRUE, FALSE, TRUE])")))
-
-     ;; => AST  {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "OR", :begin {:line 1, :column 1}, :end {:line 1, :column 2}}, :args [{:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [1], :begin {:line 1, :column 4}, :end {:line 1, :column 4}} {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [2], :begin {:line 1, :column 6}, :end {:line 1, :column 6}} {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [3], :begin {:line 1, :column 8}, :end {:line 1, :column 8}} {:kind :axel-f.v2.parser/fncall, :f {:kind :axel-f.v2.parser/fnname, :value "const"}, :args [4], :begin {:line 1, :column 10}, :end {:line 1, :column 10}}]}
-     )
-
-  )

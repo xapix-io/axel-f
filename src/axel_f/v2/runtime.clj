@@ -1,5 +1,6 @@
 (ns axel-f.v2.runtime
-  (:require [axel-f.v2.parser :as parser])
+  (:require [axel-f.v2.parser :as parser]
+            [axel-f.functions :as impl])
   (:refer-clojure :exclude [eval]))
 
 (declare eval)
@@ -19,30 +20,48 @@
 
 ;; Operators
 
+(defn- boolean?->number [x]
+  (case x
+    true 1
+    false 0
+    x))
+
 (defmethod eval-node "+" [{:keys [args]} global-context local-context]
   (reduce (fn [acc i]
-            (+ acc (eval-node i global-context local-context)))
+            (let [arg (eval-node i global-context local-context)]
+              (if ((some-fn boolean? number?) arg)
+                (+ acc (boolean?->number arg))
+                (throw (ex-info (str "Argument for `+` operator can be number or boolean, got `" arg "`")
+                                {:position [(:begin i) (:end i)]})))))
           0
           args))
 
 (defmethod eval-node "-" [{:keys [args]} global-context local-context]
-  (if (= 1 (count args))
-    (* -1 (eval-node (first args) global-context local-context))
-    (reduce (fn [acc i]
-              (- acc (eval-node i global-context local-context)))
-            (eval-node (first args) global-context local-context)
-            (rest args))))
+  (let [farg (eval-node (first args) global-context local-context)]
+    (if ((some-fn boolean? number?) farg)
+      (if (= 1 (count args))
+        (* -1 (boolean?->number farg))
+        (reduce (fn [acc i]
+                  (let [arg (eval-node i global-context local-context)]
+                    (if ((some-fn number? boolean?) arg)
+                      (- acc (boolean?->number (eval-node i global-context local-context)))
+                      (throw (ex-info (str "Argument for `-` operator can be number or boolean, got `" arg "`")
+                                      {:position [(:begin i) (:end i)]})))))
+                (boolean?->number farg)
+                (rest args)))
+      (throw (ex-info (str "Argument for `-` operator can be number or boolean, got `" farg "`")
+                      {:position [(:begin (first args)) (:end (first args))]})))))
 
 (defmethod eval-node "*" [{:keys [args]} global-context local-context]
   (reduce (fn [acc i]
-            (* acc (eval-node i global-context local-context)))
+            (* acc (boolean?->number (eval-node i global-context local-context))))
           1
           args))
 
 (defmethod eval-node "/" [{:keys [args]} global-context local-context]
   (reduce (fn [acc i]
-            (/ acc (eval-node i global-context local-context)))
-          (eval-node (first args) global-context local-context)
+            (/ acc (boolean?->number (eval-node i global-context local-context))))
+          (boolean?->number (eval-node (first args) global-context local-context))
           (rest args)))
 
 (defmethod eval-node "!" [{:keys [args]} global-context local-context]
@@ -119,13 +138,16 @@
        (recur path (conj acc (if (= ::parser/ALL (-> p :arg :f))
                                [::ALL]
                                [::NTH (eval-node (:arg p) gc lc)]))
-              gc lc))
+              gc lc)
+
+       (= ::parser/const (:f p))
+       (recur path (conj acc (:arg p)) gc lc))
      acc)))
 
 (defmethod eval-node ::parser/reference [{:keys [args]} global-context local-context]
   (let [local-context? (= "_" (-> args first :arg))
         context (if local-context?
-                  local-context
+                  (or local-context global-context)
                   (get* global-context (-> args first :arg)))]
     (let [path (build-reference-path (rest args) global-context local-context)]
       (get-in* context path))))
@@ -160,34 +182,9 @@
         (recur clauses)))))
 
 (defmethod eval-node :default [{:keys [f args]} global-context local-context]
-  )
+  (let [f (impl/find-impl f)]
+    (apply f (map #(eval-node % global-context local-context) args))))
 
 (defn eval [ast]
   (fn [& [ctx local-ctx]]
     (eval-node ast ctx local-ctx)))
-
-(comment
-
-  (
-   (eval {:kind ::fncall
-          :f {:value "vec"}
-          :args [{:f {:value "const"}
-                  :args [1]}
-                 {:f {:value "vec"}
-                  :args [{:f {:value "vec"}
-                          :args []}]}]})
-   {})
-
-  (
-   (eval
-    (parser/ast "MAP(_ & 'foo', ['baz1','baz2','baz3'])"))
-   {"foo" {"bar" {"baz" 1}}})
-
-  (
-   (eval (parser/ast "MAP(_, foo.bar.[*])"))
-   {:foo {:bar [1 2 3]}}
-   {:foo {:bar 2}})
-
-  ((eval (parser/ast ":foo.bar/baz")))
-
-  )

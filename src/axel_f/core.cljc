@@ -1,19 +1,20 @@
 (ns axel-f.core
-  (:require [axel-f.v2.parser :as parser])
+  (:require [axel-f.v2.parser :as parser]
+            [axel-f.v2.runtime :as runtime])
   (:refer-clojure :exclude [compile]))
 
-(defn compile [formula & custom-transforms]
+(defn compile [formula & _]
   (parser/parse formula))
 
 (defn run [formula & [context]]
-  (let [formula-fn (cond
-                     (string? formula)
-                     (compile formula)
+  (let [ast (cond
+              (string? formula)
+              (compile formula)
 
-                     (fn? formula)
-                     formula
+              (map? formula)
+              formula
 
-                     :otherwise
-                     (throw (ex-info (str "`formula` must be a string or precompiled string, got `" (type formula) "` instead.")
-                                     {:formula formula})))]
-    (formula-fn context)))
+              :otherwise
+              (throw (ex-info (str "`formula` must be a string or precompiled string, got `" (type formula) "` instead.")
+                              {:formula formula})))]
+    ((runtime/eval ast) context)))

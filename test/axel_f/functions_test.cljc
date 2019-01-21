@@ -12,24 +12,36 @@
 (t/deftest vector-args-test
   (t/testing "vectors can be passed as arguments"
 
-    (t/is (= [:FNCALL "SUM" [[:VECTOR 1 2 3] 4]]
+    (t/is (= {:kind :axel-f.v2.parser/fncall,
+              :f "SUM",
+              :args
+              [{:kind :axel-f.v2.parser/fncall,
+                :f :axel-f.v2.parser/vector,
+                :args
+                [{:kind :axel-f.v2.parser/fncall,
+                  :f :axel-f.v2.parser/const,
+                  :arg 1,
+                  :begin {:line 1, :column 6},
+                  :end {:line 1, :column 6}}
+                 {:kind :axel-f.v2.parser/fncall,
+                  :f :axel-f.v2.parser/const,
+                  :arg 2,
+                  :begin {:line 1, :column 8},
+                  :end {:line 1, :column 8}}
+                 {:kind :axel-f.v2.parser/fncall,
+                  :f :axel-f.v2.parser/const,
+                  :arg 3,
+                  :begin {:line 1, :column 10},
+                  :end {:line 1, :column 10}}]}
+               {:kind :axel-f.v2.parser/fncall,
+                :f :axel-f.v2.parser/const,
+                :arg 4,
+                :begin {:line 1, :column 14},
+                :end {:line 1, :column 14}}]}
              (sut/compile "SUM({1,2,3}, 4)")))
 
     (t/is (= 10 (sut/run "SUM({1,2,3},4)"))
           (= 15 (sut/run "SUM({1,2,3}, {4,5})")))))
-
-(t/deftest function-arguments-test
-
-  (t/testing "function arguments parsed as vector"
-
-    (t/is (vector? (last (sut/compile "SUM()"))))
-    (t/is (empty? (last (sut/compile "SUM()"))))
-
-    (t/is (= [1 2 3]
-             (last (sut/compile "SUM(1,2,3)"))
-             (last (sut/compile "SUM(1, 2, 3)"))
-             (last (sut/compile "SUM( 1, 2,3 )")))))
-  )
 
 (t/deftest round-function-test
 
@@ -74,7 +86,14 @@
       1 "{1}"
       1 "foo")
 
-    (t/is (= {:type "#VALUE!"
+    (try
+      (sut/run "MIN(\"foo\")")
+      (catch Throwable e
+        (let [msg (.getMessage e)
+              data (ex-data e)]
+          (t/is (= "Function MIN parameter expects number values. But 'foo' is a text and cannot be coerced to a number."
+                   msg)))))
+    #_(t/is (= {:type "#VALUE!"
               :reason "Function MIN parameter expects number values. But 'foo' is a text and cannot be coerced to a number."}
              (sut/run "MIN(\"foo\")")))))
 
