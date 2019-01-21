@@ -1,6 +1,5 @@
 (ns axel-f.api
   (:require [axel-f.core :as axel-f]
-            [axel-f.autocomplete :as autocomplete]
             axel-f.functions
             axel-f.base64
             axel-f.json

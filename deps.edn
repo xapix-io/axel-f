@@ -1,6 +1,4 @@
-{:deps {org.clojure/clojure {:mvn/version "1.9.0"}
-        instaparse          {:mvn/version "1.4.10"}
-        clj-fuzzy           {:mvn/version "0.4.1"}}
+{:deps {org.clojure/clojure {:mvn/version "1.9.0"}}
 
  :paths ["src"]
 

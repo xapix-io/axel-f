@@ -11,16 +11,6 @@
             <artifactId>clojure</artifactId>
             <version>1.9.0</version>
         </dependency>
-        <dependency>
-            <groupId>instaparse</groupId>
-            <artifactId>instaparse</artifactId>
-            <version>1.4.9</version>
-        </dependency>
-        <dependency>
-            <groupId>clj-fuzzy</groupId>
-            <artifactId>clj-fuzzy</artifactId>
-            <version>0.4.1</version>
-        </dependency>
     </dependencies>
     <build>
         <sourceDirectory>src</sourceDirectory>
