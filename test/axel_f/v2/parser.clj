@@ -2,7 +2,7 @@
   (:require [axel-f.v2.parser :as sut]
             [clojure.test :as t]))
 
-(t/deftest parse
+(t/deftest parse-tests
 
   (t/testing "parsing keywords"
 
@@ -11,7 +11,7 @@
               :arg :foo.bar/baz,
               :begin {:line 1, :column 1},
               :end {:line 1, :column 12}}
-             (sut/ast ":foo.bar/baz"))))
+             (sut/parse ":foo.bar/baz"))))
 
   (t/testing "parsing constants"
 
@@ -22,7 +22,7 @@
                 :arg 1
                 :begin {:line 1 :column 1}
                 :end {:line 1 :column 1}}
-               (sut/ast "1"))))
+               (sut/parse "1"))))
 
     (t/testing "as a string"
 
@@ -31,14 +31,46 @@
                 :arg "string"
                 :begin {:line 1 :column 1}
                 :end {:line 1 :column 8}}
-               (sut/ast "'string'")))
+               (sut/parse "'string'")))
 
       (t/is (= {:kind ::fncall
                 :f ::const
                 :arg "string"
                 :begin {:line 1 :column 1}
                 :end {:line 1 :column 8}}
-               (sut/ast "\"string\"")))))
+               (sut/parse "\"string\"")))))
+
+  (t/testing "parsing vector of constants"
+
+    (t/is (= {:kind ::fncall,
+              :f ::vector,
+              :args
+              [{:kind ::fncall,
+                :f ::const,
+                :arg 1,
+                :begin {:line 1, :column 2},
+                :end {:line 1, :column 2}}
+               {:kind ::fncall,
+                :f ::const,
+                :arg 2,
+                :begin {:line 1, :column 5},
+                :end {:line 1, :column 5}}]}
+             (sut/parse "[1, 2]")))
+
+    (t/is (= {:kind ::fncall,
+              :f ::vector,
+              :args
+              [{:kind ::fncall,
+                :f ::const,
+                :arg 1,
+                :begin {:line 1, :column 2},
+                :end {:line 1, :column 2}}
+               {:kind ::fncall,
+                :f ::const,
+                :arg "foo",
+                :begin {:line 1, :column 5},
+                :end {:line 1, :column 9}}]}
+             (sut/parse "[1, \"foo\"]"))))
 
   (t/testing "parsing simple arythmetic expressions"
 
@@ -52,7 +84,7 @@
                 :end {:line 1, :column 2}}],
               :begin {:line 1, :column 1},
               :end {:line 1, :column 2}}
-             (sut/ast "-1")))
+             (sut/parse "-1")))
 
     (t/is (= {:kind ::fncall,
               :f "+",
@@ -67,7 +99,31 @@
                 :arg 1,
                 :begin {:line 1, :column 5},
                 :end {:line 1, :column 5}}]}
-             (sut/ast "1 + 1"))))
+             (sut/parse "1 + 1")))
+
+    (t/is (= {:kind ::fncall,
+              :f "!",
+              :args
+              [{:kind ::fncall,
+                :f ::const,
+                :arg 1,
+                :begin {:line 1, :column 2},
+                :end {:line 1, :column 2}}],
+              :begin {:line 1, :column 1},
+              :end {:line 1, :column 2}}
+             (sut/parse "!1")))
+
+    (t/is (= {:kind ::fncall,
+              :f "%",
+              :args
+              [{:kind ::fncall,
+                :f ::const,
+                :arg 10,
+                :begin {:line 1, :column 1},
+                :end {:line 1, :column 2}}],
+              :begin {:line 1, :column 1},
+              :end {:line 1, :column 3}}
+             (sut/parse "10%"))))
 
   (t/testing "parsing reference expression"
 
@@ -101,7 +157,7 @@
                 :end {:line 1, :column 11}}],
               :begin {:line 1, :column 1},
               :end {:line 1, :column 3}}
-             (sut/ast "foo.bar.baz")))
+             (sut/parse "foo.bar.baz")))
 
     (t/is (= {:kind ::fncall,
               :f ::reference,
@@ -123,7 +179,7 @@
                 :end {:line 1, :column 6}}],
               :begin {:line 1, :column 1},
               :end {:line 1, :column 3}}
-             (sut/ast "foo[1]")))
+             (sut/parse "foo[1]")))
 
     (t/is (= {:kind ::fncall,
               :f ::reference,
@@ -153,20 +209,80 @@
                 :end {:line 1, :column 9}}],
               :begin {:line 1, :column 1},
               :end {:line 1, :column 3}}
-             (sut/ast "foo.[1+1]")))
+             (sut/parse "foo.[1+1]")))
 
     (t/is (= {:kind ::fncall,
-              :f
-              {:kind ::fncall,
-               :f ::fnname,
-               :args
-               [{:kind ::fncall,
-                 :f ::symbol,
-                 :arg "MAP",
-                 :begin {:line 1, :column 1},
-                 :end {:line 1, :column 3}}],
-               :begin {:line 1, :column 1},
-               :end {:line 1, :column 3}},
+              :f ::reference,
+              :args
+              [{:kind ::fncall,
+                :f ::symbol,
+                :arg "foo",
+                :begin {:line 1, :column 1},
+                :end {:line 1, :column 3}}
+               {:kind ::fncall,
+                :f ::reference,
+                :args
+                [{:kind ::fncall,
+                  :f ::symbol,
+                  :arg "bar",
+                  :begin {:line 1, :column 5},
+                  :end {:line 1, :column 7}}],
+                :begin {:line 1, :column 5},
+                :end {:line 1, :column 7}}
+               {:kind ::fncall,
+                :f ::nth,
+                :arg
+                {:kind ::fncall,
+                 :f ::ALL,
+                 :arg nil},
+                :begin {:line 1, :column 8},
+                :end {:line 1, :column 10}}],
+              :begin {:line 1, :column 1},
+              :end {:line 1, :column 3}}
+             (sut/parse "foo.bar[*]")))
+
+    (t/is (= {:kind ::fncall,
+              :f ::reference,
+              :args
+              [{:kind ::fncall,
+                :f ::symbol,
+                :arg "foo",
+                :begin {:line 1, :column 1},
+                :end {:line 1, :column 3}}
+               {:kind ::fncall,
+                :f ::reference,
+                :args
+                [{:kind ::fncall,
+                  :f ::symbol,
+                  :arg "bar",
+                  :begin {:line 1, :column 5},
+                  :end {:line 1, :column 7}}],
+                :begin {:line 1, :column 5},
+                :end {:line 1, :column 7}}
+               {:kind ::fncall,
+                :f ::nth,
+                :arg
+                {:kind ::fncall,
+                 :f ::ALL,
+                 :arg nil},
+                :begin {:line 1, :column 9},
+                :end {:line 1, :column 11}}
+               {:kind ::fncall,
+                :f ::reference,
+                :args
+                [{:kind ::fncall,
+                  :f ::symbol,
+                  :arg "baz",
+                  :begin {:line 1, :column 13},
+                  :end {:line 1, :column 15}}],
+                :begin {:line 1, :column 13},
+                :end {:line 1, :column 15}}],
+              :begin {:line 1, :column 1},
+              :end {:line 1, :column 3}}
+             (sut/parse "foo.bar.[*].baz")))
+
+    (t/is (= {:kind ::fncall,
+              :f "MAP"
               :args
               [{:kind ::fncall,
                 :f ::reference,
@@ -196,4 +312,4 @@
                   :arg 3,
                   :begin {:line 1, :column 15},
                   :end {:line 1, :column 15}}]}]}
-             (sut/ast "MAP(_, [1, 2, 3])")))))
+             (sut/parse "MAP(_, [1, 2, 3])")))))

@@ -51,7 +51,7 @@
 
 (deftype PushbackReader
     [^Reader rdr
-     #?(:clj ^"[Ljava.lang.Object;") buf
+     ^#?(:clj "[Ljava.lang.Object;") buf
      ^long buf-len
      ^#?(:clj :unsynchronized-mutable, :cljs :mutable) ^long buf-pos]
   IReader

@@ -91,6 +91,9 @@
                  (reader/read-until ts pred)))
       acc)))
 
+(defn ->function-name [{:keys [args]}]
+  (string/join "." (map :arg args)))
+
 (defn parse-function-call [ts f]
   (let [{:keys [begin depth] :as ob} (reader/read-elem ts)
         tokens (reader/read-until ts #(and (lexer/bracket-literal? % [")"])
@@ -101,7 +104,7 @@
                            (= (inc depth) (:depth %)))
                       (nil? %))]
     {:kind ::fncall
-     :f (assoc f :f ::fnname)
+     :f (->function-name f)
      :args (parse-many ts' div-pred)}))
 
 (defn begin-array? [t]
@@ -252,11 +255,7 @@
   (let [{:keys [value] :as next-token} (reader/peek-elem ts)]
     (cond
       (constant? next-token)
-      (let [c (parse-constant ts)
-            n (reader/peek-elem ts)]
-        (if (lexer/operator-literal? n ["%"])
-          c
-          (const->fncall c)))
+      (const->fncall (reader/read-elem ts))
 
       (lexer/operator-literal? next-token ["+" "-" "!"])
       (parse-prefix-function-call ts)
@@ -311,9 +310,6 @@
                   #?(:clj error-data
                      :cljs (clj->js error-data))))))))
 
-(defn const? [{:keys [kind]}]
-  (= ::constant kind))
-
 (defn parse-primary
   ([tokens-rdr] (parse-primary tokens-rdr false))
   ([tokens-rdr stop-on-complete-expr?]
@@ -335,15 +331,12 @@
        :otherwise
        expr))))
 
-(defn ast [formula]
+(defn parse [formula]
   (-> formula
       lexer/read-formula
       reader/reader
       reader/push-back-reader
       parse-primary))
-
-(defn parse [formula]
-  (ast formula))
 
 (comment
 
@@ -364,6 +357,8 @@
          ) {::foo false})
 
   (str true true)
+
+  (ast "10%")
 
   ((eval (parse "OR(1,2,3,4)")) {})
   #?(:cljs
