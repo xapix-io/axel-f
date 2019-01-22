@@ -38,7 +38,8 @@
   (let [tr-flatten-numbers (flatten-numbers (map (fn [x]
                                                    (try
                                                      (coercion/excel-number x)
-                                                     (catch Throwable e
+                                                     (catch #?(:clj Throwable
+                                                               :cljs js/Error) e
                                                        nil)))))]
     (clojure.core/count (sequence tr-flatten-numbers items))))
 

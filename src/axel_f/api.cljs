@@ -34,13 +34,3 @@
        (catch ExceptionInfo e
          (throw (js/Error. (js/JSON.stringify (clj->js (fix-regex-in-exception
                                                         (ex-data e)))))))))))
-
-(defn ^:export autocomplete
-  ([incomplete-formula] (autocomplete incomplete-formula {}))
-  ([incomplete-formula context]
-   (let [context (js->clj context)]
-     (clj->js
-      (try
-        (autocomplete/autocomplete incomplete-formula context)
-        (catch ExceptionInfo e
-          []))))))

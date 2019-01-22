@@ -16,5 +16,4 @@
    (if fn-name-impls
      (if (next fn-name-impls)
        (recur (first fn-name-impls) (second fn-name-impls) (nnext fn-name-impls))
-       (throw (IllegalArgumentException.
-               "def-excel-fn expects even number of arguments after fn-impl, found odd number"))))))
+       (throw (ex-info "def-excel-fn expects even number of arguments after fn-impl, found odd number" {}))))))

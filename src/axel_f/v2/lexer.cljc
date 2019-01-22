@@ -1,6 +1,5 @@
 (ns axel-f.v2.lexer
-  (:require #?(:cljs [clojure.tools.reader.edn :as edn]
-               :clj [clojure.edn :as edn])
+  (:require #?(:clj [clojure.edn :as edn])
             [clojure.string :as string]
             [axel-f.v2.reader :as reader]))
 
@@ -167,7 +166,8 @@
                                (or ((get-method read-token! ::signed-integer) rdr)
                                    (throw (ex-info "Invalid number format"
                                                    {:position (get-position rdr)})))))]
-    {:value (edn/read-string
+    {:value (#?(:clj edn/read-string
+                :cljs js/parseFloat)
              (str int-part
                   (when float-part (str "." float-part))
                   (when exp-part (str "e" exp-part))))

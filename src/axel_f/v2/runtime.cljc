@@ -188,7 +188,8 @@
   (let [f' (impl/find-impl f)]
     (try
       (apply f' (map #(eval-node % global-context local-context) args))
-      (catch Throwable e
+      (catch #?(:clj Throwable
+                :cljs js/Error) e
         (let [data (ex-data e)]
           (case (:type data)
             :argument-type
