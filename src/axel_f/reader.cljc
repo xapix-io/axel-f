@@ -1,4 +1,4 @@
-(ns axel-f.v2.reader)
+(ns axel-f.reader)
 
 (defmulti newline? type)
 
@@ -10,7 +10,7 @@
      (contains? #{"\n" "\r"} c)))
 
 (defmethod newline? :default [el]
-  (throw (ex-info (str "Unknown element type " (type el))
+  (throw (ex-info (str "Unknown element " (type el))
                   {:element el})))
 
 (defprotocol IReader
@@ -107,12 +107,6 @@
   IIndexingReader
   (get-line-number [reader] (int line))
   (get-column-number [reader] (int column)))
-
-(defn read-until [reader pred]
-  (loop [acc [] r (peek-elem reader)]
-    (if (pred r)
-      acc
-      (recur (conj acc (read-elem reader)) (peek-elem reader)))))
 
 (defn reader [s-or-coll]
   (Reader. s-or-coll (count s-or-coll) 0))

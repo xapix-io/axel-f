@@ -1,4 +1,5 @@
-{:deps {org.clojure/clojure {:mvn/version "1.9.0"}}
+{:deps {org.clojure/clojure {:mvn/version "1.9.0"}
+        cheshire {:mvn/version "5.8.1"}}
 
  :paths ["src"]
 
@@ -9,18 +10,12 @@
  :aliases
  {:master {:override-deps {org.clojure/clojure {:mvn/version "1.10.0-master-SNAPSHOT"}}}
 
-  :with-optional-deps {:extra-deps {io.xapix/axel-f.base64 {:local/root "./base64"}
-                                    io.xapix/axel-f.json {:local/root "./json"}
-                                    io.xapix/axel-f.geo {:local/root "./geo"}}}
-
   :cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "1.10.439"}}}
 
   :cljs-compile {:main-opts ["-m" "cljs.main"
-                                "--watch" "src/axel_f/v2"
-                                "-co" "axel_f.dev.js.edn"
-                                "--compile"
-                                ;; "--repl"
-                                ]}
+                             "--watch" "src/axel_f/v2"
+                             "-co" "axel_f.dev.js.edn"
+                             "--compile"]}
 
   :bench {:extra-deps {criterium          {:mvn/version "0.4.4"}
                        com.taoensso/tufte {:mvn/version "2.0.1"}}}
@@ -34,7 +29,7 @@
                           "--test-ns-path" "test"
                           "--codecov"]}
 
-  :cljs-runner {:extra-deps {olical/cljs-test-runner {:mvn/version "2.1.0"}}
+  :cljs-runner {:extra-deps {olical/cljs-test-runner {:mvn/version "3.4.0"}}
                 :main-opts  ["-m" "cljs-test-runner.main"]}
 
   :clj-runner {:extra-deps {com.cognitect/test-runner

@@ -1,9 +1,5 @@
 (ns axel-f.api
-  (:require [axel-f.core :as axel-f]
-            axel-f.functions
-            axel-f.base64
-            axel-f.json
-            axel-f.geo))
+  (:require [axel-f.core :as axel-f]))
 
 (defn- fix-regex-in-exception [exception-data]
   (update exception-data

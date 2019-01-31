@@ -1,8 +1,15 @@
 (ns axel-f.base64-test
-  (:require #?(:clj [clojure.test :as t]
-               :cljs [cljs.test :as t :include-macros true])
-            [axel-f.core :as af]
-            [axel-f.base64 :as sut]))
+  #?@
+   (:clj
+    [(:require
+      [axel-f.core :as af]
+      [axel-f.functions.base64 :as sut]
+      [clojure.test :as t])]
+    :cljs
+    [(:require
+      [axel-f.core :as af]
+      [axel-f.functions.base64 :as sut]
+      [cljs.test :as t :include-macros true])]))
 
 (t/deftest base64
   (t/testing "Encode string"
@@ -12,7 +19,9 @@
     (t/is (= "qwe" (sut/base64-decode "cXdl")))))
 
 (t/deftest BASE64ENCODE
-  (t/is (= "cXdl" (af/run "BASE64.ENCODE('qwe')"))))
+  (let [f (af/compile "BASE64.ENCODE('qwe')")]
+    (t/is (= "cXdl" (f)))))
 
 (t/deftest BASE64DECODE
-  (t/is (= "qwe" (af/run "BASE64.DECODE('cXdl')"))))
+  (let [f (af/compile "BASE64.DECODE('cXdl')")]
+    (t/is (= "qwe" (f)))))

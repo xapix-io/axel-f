@@ -29,7 +29,7 @@ jobs:
           name: Test with clojure 1.9
           type: shell
           command: |
-            clojure -A:with-optional-deps:test:coverage
+            clojure -A:test:coverage
             bash <(curl -s https://codecov.io/bash)
 
       - save_cache:
@@ -51,7 +51,7 @@ jobs:
           name: Test with clojure 1.10-master
           type: shell
           command: |
-            clojure -A:with-optional-deps:master:test:clj-runner
+            clojure -A:master:test:clj-runner
 
       - save_cache:
           paths:
@@ -80,7 +80,7 @@ jobs:
           name: Test clojurescript
           type: shell
           command: |
-            clojure -A:cljs:with-optional-deps:test:cljs-runner
+            clojure -A:cljs:test:cljs-runner
 
       - save_cache:
           paths:
@@ -102,7 +102,7 @@ jobs:
           name: Build JavaScript bundle
           type: shell
           command: |
-            clojure -A:with-optional-deps:cljs -m cljs.main -co axel_f.min.js.edn --compile
+            clojure -A:cljs -m cljs.main -co axel_f.min.js.edn --compile
 
       - run:
           name: Prepare workspace for publishing

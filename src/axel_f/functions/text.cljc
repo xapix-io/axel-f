@@ -2,8 +2,7 @@
   (:require [axel-f.functions.core :refer [def-excel-fn]]
             [axel-f.functions.coercion :as coercion]
             [axel-f.functions.math :as math]
-            [clojure.string :as string]
-            #?(:cljs [goog.string :as gstring])))
+            [clojure.string :as string]))
 
 (declare textjoin)
 
@@ -77,6 +76,18 @@
   [st1 & stx]
   (apply textjoin "" false st1 stx))
 
+(defn format-money [number number-of-places]
+  (let [number (double (math/round number number-of-places))
+        number-of-places (if (< number-of-places 0)
+                           0 number-of-places)]
+    (str "$"
+         #?(:clj
+            (format (str "%." number-of-places "f") number)
+            :cljs
+            (string/replace (.toFixed number number-of-places)
+                            (re-pattern "\\d(?=(\\d{3})+\\.)")
+                            "$&,")))))
+
 (defn dollar
   ^{:desc "Formats a number into the locale-specific currency format."
     :args [{:desc "The value to be formatted."}
@@ -86,12 +97,7 @@
   (let [number-of-places (or number-of-places 2)
         number (coercion/excel-number number)
         number-of-places (coercion/excel-number number-of-places)]
-    (let [number (double (math/round number number-of-places))
-          fmt (if (< number-of-places 0)
-                "%.0f"
-                (str "%." number-of-places "f"))]
-      (str "$" #?(:clj (format fmt number)
-                  :cljs (gstring/format fmt number))))))
+    (format-money number number-of-places)))
 
 (defn exact
   ^{:desc "Tests whether two strings are identical."
@@ -181,35 +187,19 @@
     :args [{:desc "The input text."}
            {:desc "The first part of arg1 that matches this expression will be returned."}]}
   [text regular-expression]
-  (cond
-    (not (string? text))
-    (throw (ex-info "First argument for `REGEXEXTRACT` must be a string" {}))
-
-    (not (string? regular-expression))
-    (throw (ex-info "Second argument for `REGEXEXTRACT` must be a string" {}))
-
-    :otherwise
-    (let [res (re-find (re-pattern regular-expression)
-                       text)]
-      (cond
-        (string? res) res
-        (vector? res) (second res)
-        :otherwise res))))
+  (let [res (re-find (re-pattern regular-expression)
+                     text)]
+    (cond
+      (string? res) res
+      (vector? res) (second res)
+      :otherwise res)))
 
 (defn regexmatch
   ^{:desc "Whether a piece of text matches a regular expression."
     :args [{:desc "The text to be tested against the regular expression."}
            {:desc "The regular expression to test the text against."}]}
   [text regular-expression]
-  (cond
-    (not (string? text))
-    (throw (ex-info "First argument for `REGEXMATCH` must be a string" {}))
-
-    (not (string? regular-expression))
-    (throw (ex-info "Second argument for `REGEXMATCH` must be a string" {}))
-
-    :otherwise
-    (boolean (regexextract text regular-expression))))
+  (boolean (regexextract text regular-expression)))
 
 (defn regexreplace
   ^{:desc "Replaces part of a text string with a different text string using regular expressions."
@@ -217,18 +207,7 @@
            {:desc "The regular expression. All matching instances in text will be replaced."}
            {:desc "The text which will be inserted into the original text."}]}
   [text regular-expression replacement]
-  (cond
-    (not (string? text))
-    (throw (ex-info "First argument for `REGEXREPLACE` must be a string" {}))
-
-    (not (string? regular-expression))
-    (throw (ex-info "Second argument for `REGEXREPLACE` must be a string" {}))
-
-    (not (string? replacement))
-    (throw (ex-info "Third argument for `REGEXREPLACE` must be a string" {}))
-
-    :otherwise
-    (string/replace text (re-pattern regular-expression) replacement)))
+  (string/replace text (re-pattern regular-expression) replacement))
 
 (defn replace*
   ^{:desc "Replaces part of a text string with a different text string."
@@ -371,13 +350,16 @@
   ^{:desc "Converts a string in any of the recognizeable date, time or number formats into a number."
     :args [{:desc "The string containing the value to be converted."}]}
   [s]
-  (or
-   (when (and (seqable? s)
-              (empty? s))
-     0)
-   (when-not (boolean? s)
-     (coercion/excel-number s))
-   (throw (ex-info (str "Cannot coerce string `" s "` into number") {}))))
+  (cond
+    (and (seqable? s)
+         (empty? s))
+    0
+
+    (not (boolean? s))
+    (coercion/excel-number s)
+
+    :otherwise
+    (throw (ex-info (str "Cannot coerce string `" s "` into number") {}))))
 
 (defn textjoin
   ^{:desc "Combines the text from multiple strings and/or arrays, with a specifiable delimiter separating the different texts."
@@ -396,11 +378,18 @@
                  identity))
        (string/join delimeter)))
 
+(defn clean
+  ^{:desc "Returns the text with the non-printable ASCII characters removed."
+    :args [{:desc "The text whose non-printable characters are to be removed."}]}
+  [text]
+  (string/replace text #"[\x00-\x1F]" ""))
+
 (def-excel-fn
   "ARABIC" arabic
   "CHAR" char*
   "CODE" code
   "CONCATENATE" concatenate
+  "CLEAN" clean
   "DOLLAR" dollar
   "EXACT" exact
   "FIND" find*
