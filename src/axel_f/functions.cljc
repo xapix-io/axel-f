@@ -9,4 +9,7 @@
             axel-f.functions.base64))
 
 (defn find-impl [fname]
-  (get @*functions-store* fname))
+  (:impl (get @*functions-store* fname)))
+
+(defn find-meta [fname]
+  (:meta (get @*functions-store* fname)))

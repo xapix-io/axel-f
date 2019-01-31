@@ -4,17 +4,16 @@
 
 (defonce ^:dynamic *functions-store* (atom {}))
 
-(defn def-excel-fn* [fn-name fn-impl]
-  (let [f (gensym)]
-    (swap! *functions-store* assoc fn-name
-           (with-meta fn-impl (meta fn-impl))))
-  nil)
+(defn def-excel-fn* [fn-name fn-impl fn-meta]
+  (swap! *functions-store* assoc fn-name
+         {:meta fn-meta
+          :impl fn-impl}))
 
-(defn def-excel-fn [fn-name fn-impl & fn-name-impls]
-  (def-excel-fn* fn-name fn-impl)
-  (if fn-name-impls
-    (when (next fn-name-impls)
-      (recur (first fn-name-impls) (second fn-name-impls) (nnext fn-name-impls)))))
+(defn def-excel-fn [& fn-name-impls]
+  (loop [[fn-name fn-impl fn-meta & fn-name-impls] fn-name-impls]
+    (def-excel-fn* fn-name fn-impl fn-meta)
+    (when (not-empty fn-name-impls)
+      (recur fn-name-impls))))
 
 (defn add
   ([x] (coerce/excel-number x))
@@ -87,19 +86,19 @@
     (flexy-get m i)))
 
 (def-excel-fn
-  "+" add
-  "-" sub
-  "*" mult
-  "/" div
-  "<" less
-  ">" more
-  "<=" less-or-eq
-  ">=" more-or-eq
-  "<>" not-eq
-  "=" eq
-  "&" concatenate
-  "^" pow
-  "!" negate
-  "%" percent
-  "flexy-get" flexy-get
-  "flexy-nth" flexy-nth)
+  "+" add nil
+  "-" sub nil
+  "*" mult nil
+  "/" div nil
+  "<" less nil
+  ">" more nil
+  "<=" less-or-eq nil
+  ">=" more-or-eq nil
+  "<>" not-eq nil
+  "=" eq nil
+  "&" concatenate nil
+  "^" pow nil
+  "!" negate nil
+  "%" percent nil
+  "flexy-get" flexy-get nil
+  "flexy-nth" flexy-nth nil)

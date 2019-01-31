@@ -20,26 +20,41 @@
      (defn btoa [s]
        (.toString (js/Buffer.from s "binary") "base64"))))
 
-(def base64-encode
-  ^{:args [{:desc "String to encode"}]
-    :desc "Creates a base-64 encoded ASCII string from a String"}
-  (fn [to-encode]
-    #?(:clj
-       (.encodeToString (Base64/getEncoder) (.getBytes to-encode))
-       :cljs
-       (btoa to-encode))))
+(defn base64-encode
+  [to-encode]
+  #?(:clj
+     (.encodeToString (Base64/getEncoder) (.getBytes to-encode))
+     :cljs
+     (btoa to-encode)))
 
-(def base64-decode
-  ^{:args [{:desc "String to decode"}]
-    :desc "Decodes a string of data which has been encoded using base-64 encoding"}
-  (fn [to-decode]
-    #?(:clj
-       (String. (.decode (Base64/getDecoder) to-decode))
-       :cljs
-       (atob to-decode))))
+(def base64-encode-meta
+  {:args [{:desc "String to encode"}]
+   :desc "Creates a base-64 encoded ASCII string from a String"})
+
+(defn base64-decode
+  [to-decode]
+  #?(:clj
+     (String. (.decode (Base64/getDecoder) to-decode))
+     :cljs
+     (atob to-decode)))
+
+(def base64-decode-meta
+  {:args [{:desc "String to decode"}]
+   :desc "Decodes a string of data which has been encoded using base-64 encoding"})
 
 (def-excel-fn
-  "BASE64ENCODE" base64-encode
-  "BASE64.ENCODE" base64-encode
-  "BASE64DECODE" base64-decode
-  "BASE64.DECODE" base64-decode)
+  "BASE64ENCODE"
+  base64-encode
+  base64-encode-meta
+
+  "BASE64.ENCODE"
+  base64-encode
+  base64-encode-meta
+
+  "BASE64DECODE"
+  base64-decode
+  base64-decode-meta
+
+  "BASE64.DECODE"
+  base64-decode
+  base64-decode-meta)

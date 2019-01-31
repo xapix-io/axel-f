@@ -22,3 +22,9 @@
             :otherwise
             (throw (ex-info "Formula must be a string or precompiled expression." {})))]
     (f context)))
+
+(comment
+
+  ((compile "(1+1)^SUM(1,2)"))
+
+  )

@@ -47,12 +47,16 @@
     (* earth-radius 2 (asin (sqrt a)))))
 
 (defn geo-distance
-  ^{:args [{:desc "List of points. Each point must be a tuple of latitude and longitude"}]
-    :desc "Calculate the distance for the path described as a list of geo points. Each point must a tuple of two or three float numbers."}
   [points]
   (->> points
        (partition 2 1)
        (reduce #(+ %1 (apply distance %2)) 0)))
 
+(def geo-distance-meta
+  {:args [{:desc "List of points. Each point must be a tuple of latitude and longitude"}]
+   :desc "Calculate the distance for the path described as a list of geo points. Each point must a tuple of two or three float numbers."})
+
 (def-excel-fn
-  "GEO.DISTANCE" geo-distance)
+  "GEO.DISTANCE"
+  geo-distance
+  geo-distance-meta)

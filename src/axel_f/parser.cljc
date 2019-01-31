@@ -45,9 +45,9 @@
         [expr _] (parse-expression tokens')]
     (cons expr (drop (inc (count tokens')) tokens))))
 
-(defn parse-array [[token & tokens]]
+(defn parse-array [[token & tokens] close-symbol]
   (let [tokens' (take-while (fn [t]
-                              (not (and (lexer/bracket-literal? t ["}"])
+                              (not (and (lexer/bracket-literal? t [close-symbol])
                                         (= (::lexer/depth t)
                                            (::lexer/depth token)))))
                             tokens)
@@ -60,7 +60,9 @@
                                             (not (and (= 1 (count t))
                                                       (lexer/punctuation-literal? (first t) [","])))))
                                   (map parse-expression)
-                                  (map first)))
+                                  (map first))
+                             token
+                             (first (drop (count tokens') tokens)))
           (drop (inc (count tokens')) tokens))))
 
 (defn parse-symbol [[token & tokens]]
@@ -112,11 +114,17 @@
             tokens'' (trim-whitespaces tokens')]
         (if (and (lexer/operator-literal? (first tokens'') ["*"])
                  (= 1 (count tokens'')))
-          (parse-reference* (runtime/index-expr root-expr (runtime/operator-expr (first tokens'')))
+          (parse-reference* (runtime/index-expr root-expr
+                                                (runtime/operator-expr (first tokens''))
+                                                token
+                                                (first (drop (count tokens') tokens)))
                             (drop (inc (count tokens')) tokens))
           (let [[expr rest-tokens] (parse-expression tokens')]
             ;; TODO rest-tokens must be `empty`
-            (parse-reference* (runtime/index-expr root-expr expr)
+            (parse-reference* (runtime/index-expr root-expr
+                                                  expr
+                                                  token
+                                                  (first (drop (count tokens') tokens)))
                               (drop (inc (count tokens')) tokens))))))
     root-expr))
 
@@ -133,21 +141,10 @@
         (recur (conj acc token) tokens')))))
 
 (defn parse-function-call [ref-expr tokens]
-  (let [d (::lexer/depth (first tokens))
-        tokens' (take-while #(not (and (lexer/bracket-literal? % [")"])
-                                       (= d (::lexer/depth %))))
-                            (rest tokens))]
-    (cons (runtime/application-expr (runtime/function-name ref-expr)
-                                    (->> tokens'
-                                         (partition-by (fn [t]
-                                                         (and (lexer/punctuation-literal? t [","])
-                                                              (= (inc d) (::lexer/depth t)))))
-                                         (filter (fn [t]
-                                                   (not (and (= 1 (count t))
-                                                             (lexer/punctuation-literal? (first t) [","])))))
-                                         (map parse-expression)
-                                         (map first)))
-          (drop (inc (count tokens')) (rest tokens)))))
+  (let [[args & tokens'] (parse-array tokens ")")]
+    (cons (runtime/application-expr ref-expr
+                                    args)
+          tokens')))
 
 (defn parse-primary [tokens]
   (let [tokens (triml-whitespaces tokens)
@@ -163,7 +160,7 @@
         (cons (runtime/unary-expr op expr') tokens''))
 
       (lexer/bracket-literal? token ["{"])
-      (parse-array tokens)
+      (parse-array tokens "}")
 
       (lexer/bracket-literal? token ["("])
       (parse-group tokens)

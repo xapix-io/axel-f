@@ -27,8 +27,6 @@
    "CM" 900})
 
 (defn arabic
-  ^{:desc "Computes the value of a Roman numeral."
-    :args [{:desc "The Roman numeral to format, whose value must be between 1 and 3999, inclusive."}]}
   [s]
   (let [sign (if (string/starts-with? s "-")
                -1 1)
@@ -47,34 +45,44 @@
               (recur (+ acc value) (first new-other) (rest new-other)))))
         (* sign acc)))))
 
+(def arabic-meta
+  {:desc "Computes the value of a Roman numeral."
+   :args [{:desc "The Roman numeral to format, whose value must be between 1 and 3999, inclusive."}]})
+
 ;; TODO
 ;; (defn asc-fn [])
 
 (defn char*
-  ^{:desc "Convert a number into a character according to the current Unicode table."
-    :args [{:desc "The number of the character to look up from the current Unicode table in decimal format."}]}
   [number]
   (let [number (some-> number coercion/excel-number int)]
     #?(:clj (-> number char str)
        :cljs (js/String.fromCharCode number))))
 
+(def char*-meta
+  {:desc "Convert a number into a character according to the current Unicode table."
+   :args [{:desc "The number of the character to look up from the current Unicode table in decimal format."}]})
+
 (defn code
-  ^{:desc "Returns the numeric Unicode map value of the first character in the string provided."
-    :args [{:desc "The string whose first character's Unicode map value will be returned."}]}
   [text]
   (let [text (coercion/excel-str text)]
     #?(:clj (some-> text first int)
        :cljs (let [res (.charCodeAt text 0)]
                (when-not (js/isNaN res) res)))))
 
+(def code-meta
+  {:desc "Returns the numeric Unicode map value of the first character in the string provided."
+   :args [{:desc "The string whose first character's Unicode map value will be returned."}]})
+
 (defn concatenate
-  ^{:desc "Appends strings to one another."
-    :args [{:desc "The initial string."}
-           {:desc "More strings to append in sequence."
-            :opt true
-            :repeatable true}]}
   [st1 & stx]
   (apply textjoin "" false st1 stx))
+
+(def concatenate-meta
+  {:desc "Appends strings to one another."
+   :args [{:desc "The initial string."}
+          {:desc "More strings to append in sequence."
+           :opt true
+           :repeatable true}]})
 
 (defn format-money [number number-of-places]
   (let [number (double (math/round number number-of-places))
@@ -89,78 +97,88 @@
                             "$&,")))))
 
 (defn dollar
-  ^{:desc "Formats a number into the locale-specific currency format."
-    :args [{:desc "The value to be formatted."}
-           {:desc "The number of decimal places to display."
-            :opt true}]}
   [number & [number-of-places]]
   (let [number-of-places (or number-of-places 2)
         number (coercion/excel-number number)
         number-of-places (coercion/excel-number number-of-places)]
     (format-money number number-of-places)))
 
+(def dollar-meta
+  {:desc "Formats a number into the locale-specific currency format."
+   :args [{:desc "The value to be formatted."}
+          {:desc "The number of decimal places to display."
+           :opt true}]})
+
 (defn exact
-  ^{:desc "Tests whether two strings are identical."
-    :args [{:desc "The first string to compare"}
-           {:desc "The second string to compare"}]}
   [str1 str2]
   (= (coercion/excel-str str1)
      (coercion/excel-str str2)))
 
+(def exact-meta
+  {:desc "Tests whether two strings are identical."
+   :args [{:desc "The first string to compare"}
+          {:desc "The second string to compare"}]})
+
 (defn find*
-  ^{:desc "Returns the position at which a string is first found within text where the capitalization of letters matters. Returns #VALUE! if the string is not found."
-    :args [{:desc "The string to look for within arg2."}
-           {:desc "The text to search for the first occurrence of arg1."}
-           {:desc "The character within arg2 at which to start the search."
-            :opt true}]}
   [substr str & [from-index]]
   (let [from-index (or from-index 0)]
     (some-> str (string/index-of substr from-index) inc)))
 
+(def find*-meta
+  {:desc "Returns the position at which a string is first found within text where the capitalization of letters matters. Returns #VALUE! if the string is not found."
+   :args [{:desc "The string to look for within arg2."}
+          {:desc "The text to search for the first occurrence of arg1."}
+          {:desc "The character within arg2 at which to start the search."
+           :opt true}]})
+
 (defn join
-  ^{:desc "Concatenates the elements of one or more one-dimensional arrays using a specified delimiter."
-    :args [{:desc "The character or string to place between each concatenated value."}
-           {:desc "The value or values to be appended using arg1."}
-           {:desc "Additional value or array to be appended using arg1."
-            :opt true
-            :repeatable true}]}
   [delimeter arg & args]
   (apply textjoin delimeter false arg args))
+
+(def join-meta
+  {:desc "Concatenates the elements of one or more one-dimensional arrays using a specified delimiter."
+   :args [{:desc "The character or string to place between each concatenated value."}
+          {:desc "The value or values to be appended using arg1."}
+          {:desc "Additional value or array to be appended using arg1."
+           :opt true
+           :repeatable true}]})
 
 ;; TODO
 ;; (defn fixed-fn [])
 
 (defn left
-  ^{:desc "Returns a substring from the beginning of a specified string."
-    :args [{:desc "The string from which the left portion will be returned."}
-           {:desc "The number of characters to return from the left side of arg1."
-            :opt true}]}
   [text & [number]]
   (let [number (or number 1)]
     (if (> number (count text))
       text
       (subs text 0 number))))
 
+(def left-meta
+  {:desc "Returns a substring from the beginning of a specified string."
+   :args [{:desc "The string from which the left portion will be returned."}
+          {:desc "The number of characters to return from the left side of arg1."
+           :opt true}]})
+
 (defn len
-  ^{:desc "Returns the length of a string."
-    :args [{:desc "The string whose length will be returned."}]}
   [text]
   (let [text (cond
                (string? text) text
                (seqable? text) (first text))]
     (count (coercion/excel-str text))))
 
+(def len-meta
+  {:desc "Returns the length of a string."
+   :args [{:desc "The string whose length will be returned."}]})
+
 (defn lower
-  ^{:desc "Converts a specified string to lowercase."
-    :args [{:desc "The string to convert to lowercase."}]}
   [text]
   (string/lower-case (coercion/excel-str text)))
 
+(def lower-meta
+  {:desc "Converts a specified string to lowercase."
+   :args [{:desc "The string to convert to lowercase."}]})
+
 (defn mid
-  ^{:desc "Returns a segment of a string."
-    :args [{:desc "The string to extract a segment from."}
-           {:desc "The index from the left of arg1 from which to begin extracting. The first character in arg1 has the index 1."}
-           {:desc "The length of the segment to extract."}]}
   [text start number]
   (let [start (coercion/excel-number start)
         number (coercion/excel-number number)
@@ -176,16 +194,21 @@
               params-end)]
     (subs text start end)))
 
+(def mid-meta
+  {:desc "Returns a segment of a string."
+   :args [{:desc "The string to extract a segment from."}
+          {:desc "The index from the left of arg1 from which to begin extracting. The first character in arg1 has the index 1."}
+          {:desc "The length of the segment to extract."}]})
+
 (defn proper
-  ^{:desc "Capitalizes each word in a specified string."
-    :args [{:desc "The text which will be returned with the first letter of each word in uppercase and all other letters in lowercase."}]}
   [text]
   (string/replace (coercion/excel-str text) #"\w*" string/capitalize))
 
+(def proper-meta
+  {:desc "Capitalizes each word in a specified string."
+   :args [{:desc "The text which will be returned with the first letter of each word in uppercase and all other letters in lowercase."}]})
+
 (defn regexextract
-  ^{:desc "Extracts matching substrings according to a regular expression."
-    :args [{:desc "The input text."}
-           {:desc "The first part of arg1 that matches this expression will be returned."}]}
   [text regular-expression]
   (let [res (re-find (re-pattern regular-expression)
                      text)]
@@ -194,27 +217,31 @@
       (vector? res) (second res)
       :otherwise res)))
 
+(def regexextract-meta
+  {:desc "Extracts matching substrings according to a regular expression."
+   :args [{:desc "The input text."}
+          {:desc "The first part of arg1 that matches this expression will be returned."}]})
+
 (defn regexmatch
-  ^{:desc "Whether a piece of text matches a regular expression."
-    :args [{:desc "The text to be tested against the regular expression."}
-           {:desc "The regular expression to test the text against."}]}
   [text regular-expression]
   (boolean (regexextract text regular-expression)))
 
+(def regexmatch-meta
+  {:desc "Whether a piece of text matches a regular expression."
+   :args [{:desc "The text to be tested against the regular expression."}
+          {:desc "The regular expression to test the text against."}]})
+
 (defn regexreplace
-  ^{:desc "Replaces part of a text string with a different text string using regular expressions."
-    :args [{:desc "The text, a part of which will be replaced."}
-           {:desc "The regular expression. All matching instances in text will be replaced."}
-           {:desc "The text which will be inserted into the original text."}]}
   [text regular-expression replacement]
   (string/replace text (re-pattern regular-expression) replacement))
 
+(def regexreplace-meta
+  {:desc "Replaces part of a text string with a different text string using regular expressions."
+   :args [{:desc "The text, a part of which will be replaced."}
+          {:desc "The regular expression. All matching instances in text will be replaced."}
+          {:desc "The text which will be inserted into the original text."}]})
+
 (defn replace*
-  ^{:desc "Replaces part of a text string with a different text string."
-    :args [{:desc "The text, a part of which will be replaced."}
-           {:desc "The position where the replacement will begin (starting from 1)."}
-           {:desc "The number of characters in the text to be replaced."}
-           {:desc "The text which will be inserted into the original text."}]}
   [text position length new-text]
   (let [position (coercion/excel-number position)
         length (coercion/excel-number length)]
@@ -222,21 +249,26 @@
          (coercion/excel-str new-text)
          (subs text (+ (dec position) length)))))
 
+(def replace*-meta
+  {:desc "Replaces part of a text string with a different text string."
+   :args [{:desc "The text, a part of which will be replaced."}
+          {:desc "The position where the replacement will begin (starting from 1)."}
+          {:desc "The number of characters in the text to be replaced."}
+          {:desc "The text which will be inserted into the original text."}]})
+
 (defn rept
-  ^{:desc "Returns specified text repeated a number of times."
-    :args [{:desc "The character or string to repeat."}
-           {:desc "The number of times arg1 should appear in the value returned."}]}
   [text number]
   (let [number (coercion/excel-number number)]
     (->> (constantly text)
          (repeatedly number)
          (apply str))))
 
+(def rept-meta
+  {:desc "Returns specified text repeated a number of times."
+   :args [{:desc "The character or string to repeat."}
+          {:desc "The number of times arg1 should appear in the value returned."}]})
+
 (defn right
-  ^{:desc "Returns a substring from the end of a specified string."
-    :args [{:desc "The string from which the right portion will be returned."}
-           {:desc "The number of characters to return from the right side of arg1."
-            :opt true}]}
   [text & [number]]
   (let [number (or number 1)]
     (if (<= (count text) number)
@@ -244,9 +276,13 @@
       (subs text (- (count text)
                     number)))))
 
+(def right-meta
+  {:desc "Returns a substring from the end of a specified string."
+   :args [{:desc "The string from which the right portion will be returned."}
+          {:desc "The number of characters to return from the right side of arg1."
+           :opt true}]})
+
 (defn roman
-  ^{:desc "Formats a number in Roman numerals."
-    :args [{:desc "The number to format, between 1 and 3999, inclusive."}]}
   [n]
   (let [n (int (coercion/excel-number n))
         alphabet (sort-by val > roman-numerals)]
@@ -255,12 +291,11 @@
           (let [[rom arab] (some #(when (<= (val %) n) %) alphabet)]
             (recur (str res rom) (- n arab)))))))
 
+(def roman-meta
+  {:desc "Formats a number in Roman numerals."
+   :args [{:desc "The number to format, between 1 and 3999, inclusive."}]})
+
 (defn search
-  ^{:desc "Returns the position at which a string is first found within text and ignores capitalization of letters. Returns #VALUE! if the string is not found."
-    :args [{:desc "The string to look for within arg2."}
-           {:desc "The text to search for the first occurrence of arg1."}
-           {:desc "The character within arg2 at which to start the search."
-            :opt true}]}
   [find-text within-text & [position]]
   (let [position (or position 0)]
     (inc
@@ -268,14 +303,14 @@
                       (string/lower-case find-text)
                       position))))
 
+(def search-meta
+  {:desc "Returns the position at which a string is first found within text and ignores capitalization of letters. Returns #VALUE! if the string is not found."
+   :args [{:desc "The string to look for within arg2."}
+          {:desc "The text to search for the first occurrence of arg1."}
+          {:desc "The character within arg2 at which to start the search."
+           :opt true}]})
+
 (defn split
-  ^{:desc "Divides text around a specified character or string, and puts each fragment into an array."
-    :args [{:desc "The text to divide."}
-           {:desc "The character or characters to use to split arg1."}
-           {:desc "Whether or not to divide arg1 around each character contained in arg2."
-            :opt true}
-           {:desc "Whether or not to remove empty text messages from the split results. The default behavior is to treat consecutive delimiters as one (if TRUE). If FALSE, null values are added between consecutive delimiters."
-            :opt true}]}
   [text delimeter & [split-by-each & [remove-empty-text]]]
   (keep
    (if (or (nil? remove-empty-text)
@@ -288,6 +323,15 @@
                                                      (vec (coercion/excel-str delimeter))))
                                (regex-escape (coercion/excel-str delimeter))))
                  -1)))
+
+(def split-meta
+  {:desc "Divides text around a specified character or string, and puts each fragment into an array."
+   :args [{:desc "The text to divide."}
+          {:desc "The character or characters to use to split arg1."}
+          {:desc "Whether or not to divide arg1 around each character contained in arg2."
+           :opt true}
+          {:desc "Whether or not to remove empty text messages from the split results. The default behavior is to treat consecutive delimiters as one (if TRUE). If FALSE, null values are added between consecutive delimiters."
+           :opt true}]})
 
 (defn- substitute-fn* [text old-text new-text occurrence]
   (if (empty? old-text)
@@ -305,12 +349,6 @@
             text))))))
 
 (defn substitute
-  ^{:desc "Replaces existing text with new text in a string."
-    :args [{:desc "The text within which to search and replace."}
-           {:desc "The string to search for within text_to_search."}
-           {:desc "The string that will replace search_for."}
-           {:desc "The instance of arg2 within arg1 to replace with arg3. By default, all occurrences of arg2 are replaced; however, if arg4 is specified, only the indicated instance of arg2 is replaced."
-            :opt true}]}
   [text old-text new-text & [occurrence]]
   (let [occurrence (cond
                      (nil? occurrence) :all
@@ -320,35 +358,47 @@
                     (coercion/excel-str new-text)
                     occurrence)))
 
+(def substitute-meta
+  {:desc "Replaces existing text with new text in a string."
+   :args [{:desc "The text within which to search and replace."}
+          {:desc "The string to search for within text_to_search."}
+          {:desc "The string that will replace search_for."}
+          {:desc "The instance of arg2 within arg1 to replace with arg3. By default, all occurrences of arg2 are replaced; however, if arg4 is specified, only the indicated instance of arg2 is replaced."
+           :opt true}]})
+
 (defn t
-  ^{:desc "Returns string arguments as text."
-    :args [{:desc "The argument to be converted to text."}]}
   [value]
   (when (string? value)
     value))
+
+(def t-meta
+  {:desc "Returns string arguments as text."
+   :args [{:desc "The argument to be converted to text."}]})
 
 ;; TODO
 ;; (defn text-fn [])
 
 (defn trim
-  ^{:desc "Removes leading, trailing, and repeated spaces in text."
-    :args [{:desc "The text or reference to a cell containing text to be trimmed."}]}
   [& args]
   (string/trim
    (string/replace (-> args first coercion/excel-str) #"\ +" " ")))
 
+(def trim-meta
+  {:desc "Removes leading, trailing, and repeated spaces in text."
+   :args [{:desc "The text or reference to a cell containing text to be trimmed."}]})
+
 (defn upper
-  ^{:desc "Converts a specified string to uppercase."
-    :args [{:desc "The string to convert to uppercase."}]}
   [& args]
   (-> args
       first
       coercion/excel-str
       string/upper-case))
 
+(def upper-meta
+  {:desc "Converts a specified string to uppercase."
+   :args [{:desc "The string to convert to uppercase."}]})
+
 (defn value
-  ^{:desc "Converts a string in any of the recognizeable date, time or number formats into a number."
-    :args [{:desc "The string containing the value to be converted."}]}
   [s]
   (cond
     (and (seqable? s)
@@ -361,14 +411,11 @@
     :otherwise
     (throw (ex-info (str "Cannot coerce string `" s "` into number") {}))))
 
+(def value-meta
+  {:desc "Converts a string in any of the recognizeable date, time or number formats into a number."
+   :args [{:desc "The string containing the value to be converted."}]})
+
 (defn textjoin
-  ^{:desc "Combines the text from multiple strings and/or arrays, with a specifiable delimiter separating the different texts."
-    :args [{:desc "A string, possibly empty, or a reference to a valid string. If empty, text will be simply concatenated."}
-           {:desc "A boolean; if TRUE, empty strings selected in the text arguments won't be included in the result."}
-           {:desc "Any text item. This could be a string, or an array of strings in a range."}
-           {:desc "Additional text item(s)."
-            :opt true
-            :repeatable true}]}
   [delimeter ignore-empty & items]
   (->> items
        flatten
@@ -378,39 +425,136 @@
                  identity))
        (string/join delimeter)))
 
+(def textjoin-meta
+  {:desc "Combines the text from multiple strings and/or arrays, with a specifiable delimiter separating the different texts."
+   :args [{:desc "A string, possibly empty, or a reference to a valid string. If empty, text will be simply concatenated."}
+          {:desc "A boolean; if TRUE, empty strings selected in the text arguments won't be included in the result."}
+          {:desc "Any text item. This could be a string, or an array of strings in a range."}
+          {:desc "Additional text item(s)."
+           :opt true
+           :repeatable true}]})
+
 (defn clean
-  ^{:desc "Returns the text with the non-printable ASCII characters removed."
-    :args [{:desc "The text whose non-printable characters are to be removed."}]}
   [text]
   (string/replace text #"[\x00-\x1F]" ""))
 
+(def clean-meta
+  {:desc "Returns the text with the non-printable ASCII characters removed."
+   :args [{:desc "The text whose non-printable characters are to be removed."}]})
+
 (def-excel-fn
-  "ARABIC" arabic
-  "CHAR" char*
-  "CODE" code
-  "CONCATENATE" concatenate
-  "CLEAN" clean
-  "DOLLAR" dollar
-  "EXACT" exact
-  "FIND" find*
-  "JOIN" join
-  "LEFT" left
-  "LEN" len
-  "LOWER" lower
-  "MID" mid
-  "PROPER" proper
-  "REGEXEXTRACT" regexextract
-  "REGEXMATCH" regexmatch
-  "REGEXREPLACE" regexreplace
-  "REPLACE" replace*
-  "REPT" rept
-  "RIGHT" right
-  "ROMAN" roman
-  "SEARCH" search
-  "SPLIT" split
-  "SUBSTITUTE" substitute
-  "T" t
-  "TRIM" trim
-  "UPPER" upper
-  "VALUE" value
-  "TEXTJOIN" textjoin)
+  "ARABIC"
+  arabic
+  arabic-meta
+
+  "CHAR"
+  char*
+  char*-meta
+
+  "CODE"
+  code
+  code-meta
+
+  "CONCATENATE"
+  concatenate
+  concatenate-meta
+
+  "CLEAN"
+  clean
+  clean-meta
+
+  "DOLLAR"
+  dollar
+  dollar-meta
+
+  "EXACT"
+  exact
+  exact-meta
+
+  "FIND"
+  find*
+  find*-meta
+
+  "JOIN"
+  join
+  join-meta
+
+  "LEFT"
+  left
+  left-meta
+
+  "LEN"
+  len
+  len-meta
+
+  "LOWER"
+  lower
+  lower-meta
+
+  "MID"
+  mid
+  mid-meta
+
+  "PROPER"
+  proper
+  proper-meta
+
+  "REGEXEXTRACT"
+  regexextract
+  regexextract-meta
+
+  "REGEXMATCH"
+  regexmatch
+  regexmatch-meta
+
+  "REGEXREPLACE"
+  regexreplace
+  regexreplace-meta
+
+  "REPLACE"
+  replace*
+  replace*-meta
+
+  "REPT"
+  rept
+  rept-meta
+
+  "RIGHT"
+  right
+  right-meta
+
+  "ROMAN"
+  roman
+  roman-meta
+
+  "SEARCH"
+  search
+  search-meta
+
+  "SPLIT"
+  split
+  split-meta
+
+  "SUBSTITUTE"
+  substitute
+  substitute-meta
+
+  "T"
+  t
+  t-meta
+
+  "TRIM"
+  trim
+  trim-meta
+
+  "UPPER"
+  upper
+  upper-meta
+
+  "VALUE"
+  value
+  value-meta
+
+  "TEXTJOIN"
+  textjoin
+  textjoin-meta)

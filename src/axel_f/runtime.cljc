@@ -51,28 +51,61 @@
 (defmethod function-name ::reference-expr [{::keys [ctx-expr field-expr]}]
   (str (function-name ctx-expr) "." (eval field-expr nil nil)))
 
+(defmulti position (fn [{::keys [type]} & _] type))
+
 (defmulti eval (fn [{::keys [type]} & _] type))
+
+(defmethod position ::constant-expr [{::keys [token]}]
+  {:begin (::lexer/begin token)
+   :end (::lexer/end token)})
 
 (defmethod eval ::constant-expr [{::keys [value]} & _] value)
 
+(defmethod position ::operator [{::keys [token]}]
+  {:begin (::lexer/begin token)
+   :end (::lexer/end token)})
+
 (defmethod eval ::operator [{::keys [operator]} & _] operator)
+
+(defmethod position ::unary-expr [{::keys [operator expr]}]
+  (if (lexer/prefix-operator? (::token operator))
+    {:begin (:begin (position operator))
+     :end (:end (position expr))}
+    {:end (:end (position operator))
+     :begin (:begin (position expr))}))
 
 (defmethod eval ::unary-expr [{::keys [operator expr]} & [g l]]
   ((eval operator g l) (eval expr g l)))
+
+(defmethod position ::binary-expr [{::keys [left-expr right-expr]}]
+  {:begin (:begin (position left-expr))
+   :end (:end (position right-expr))})
 
 (defmethod eval ::binary-expr [{::keys [operator left-expr right-expr]} & [g l]]
   ((eval operator g l)
    (eval left-expr g l)
    (eval right-expr g l)))
 
+(defmethod position ::list-expr [{::keys [open-token close-token]}]
+  {:begin (::lexer/begin open-token)
+   :end (::lexer/end close-token)})
+
 (defmethod eval ::list-expr [{::keys [exprs]} & [g l]]
   (map #(eval % g l) exprs))
+
+(defmethod position ::root-reference-expr [{::keys [field-expr]}]
+  {:begin (:begin (position field-expr))
+   :end (:end (position field-expr))})
 
 (defmethod eval ::root-reference-expr [{::keys [field-expr]} & [g l]]
   (let [f (eval field-expr g l)]
     (if (= "_" f)
       (if (= ::no-ctx l) g l)
       ((core/find-impl "flexy-get") g f))))
+
+(defmethod position ::reference-expr [{::keys [ctx-expr field-expr]}]
+  (merge (position ctx-expr)
+         {:end (:end (position field-expr))}))
 
 (defmethod eval ::reference-expr [{::keys [ctx-expr field-expr]} & [g l]]
   (let [m (eval ctx-expr g l)
@@ -84,6 +117,12 @@
       (sequential? m)
       (map #((core/find-impl "flexy-get") % f) m))))
 
+(defmethod position ::index-expr [{::keys [ctx-expr open-token close-token]}]
+  {:begin (if ctx-expr
+            (:begin (position ctx-expr))
+            (::lexer/begin open-token))
+   :end (::lexer/end close-token)})
+
 (defmethod eval ::index-expr [{::keys [ctx-expr ref-expr]} & [g l]]
   (let [m (if ctx-expr (eval ctx-expr g l) g)]
     (if (operator? ref-expr)
@@ -91,34 +130,85 @@
       (let [i (eval ref-expr g l)]
         ((core/find-impl "flexy-nth") m i)))))
 
-(defmethod eval ::application-expr [{::keys [fs arg-exprs]} & [g l]]
-  (case fs
-        "MAP" (map (fn [*ctx*]
+(defmethod position ::application-expr [{::keys [ref-expr arg-list]}]
+  {:begin (:begin (position ref-expr))
+   :end (:end (position arg-list))})
+
+(defn- min-args [{:keys [args]}]
+  (count (filter #(not (:opt %)) args)))
+
+(defn- max-args [{:keys [args]}]
+  (if (:repeatable (last args))
+    ##Inf
+    (count args)))
+
+(defn- check-arguments [f meta arg-list]
+  (let [args-count (count (::exprs arg-list))
+        min (min-args meta)
+        max (max-args meta)]
+    (when-not (<= min args-count max)
+      (prn "DBG=" min args-count max)
+      (prn "DBG1=" meta)
+      (throw (ex-info (str "Wrong amount of arguments passed to `" f "` function.")
+                      {:position (position arg-list)})))))
+
+(defmethod eval ::application-expr [{::keys [fs arg-list ref-expr]} & [g l]]
+  (let [arg-exprs (::exprs arg-list)]
+    (case fs
+      "MAP" (do
+              (when-not (= (count arg-exprs) 2)
+                (throw (ex-info "Wrong amount of arguments passed to `MAP` function."
+                                {:position (position arg-list)})))
+              (map (fn [*ctx*]
                      (eval (first arg-exprs) g *ctx*))
-                   (eval (second arg-exprs) g l))
+                   (eval (second arg-exprs) g l)))
 
-        "FILTER" (filter (fn [*ctx*]
+      "FILTER" (do
+                 (when-not (= (count arg-exprs) 2)
+                   (throw (ex-info "Wrong amount of arguments passed to `FILTER` function."
+                                   {:position (position arg-list)})))
+                 (filter (fn [*ctx*]
                            (eval (first arg-exprs) g *ctx*))
-                         (eval (second arg-exprs) g l))
+                         (eval (second arg-exprs) g l)))
 
-        "SORT" (sort-by (fn [*ctx*]
+      "SORT" (do
+               (when-not (= (count arg-exprs) 2)
+                 (throw (ex-info "Wrong amount of arguments passed to `SORT` function."
+                                 {:position (position arg-list)})))
+               (sort-by (fn [*ctx*]
                           (eval (first arg-exprs) g *ctx*))
-                        (eval (second arg-exprs) g l))
+                        (eval (second arg-exprs) g l)))
 
-        "IF" (if (eval (first arg-exprs) g l)
+      "IF" (do
+             (when-not (<= 2 (count arg-exprs) 3)
+               (throw (ex-info "Wrong amount of arguments passed to `IF` function."
+                               {:position (position arg-list)})))
+             (if (eval (first arg-exprs) g l)
                (eval (second arg-exprs) g l)
                (when-let [arg-expr (nth arg-exprs 2 nil)]
-                 (eval arg-expr g l)))
+                 (eval arg-expr g l))))
 
-        "IFS" (loop [[[if-expr then-expr] & clauses] (partition 2 2 arg-exprs)]
+      "IFS" (do
+              (when-not (even? (count arg-exprs))
+                (throw (ex-info "Function `IFS` expecting even number of arguments"
+                                {:position (position arg-list)})))
+              (loop [[[if-expr then-expr] & clauses] (partition 2 2 arg-exprs)]
                 (when (some? if-expr)
                   (if (eval if-expr g l)
                     (eval then-expr g l)
-                    (recur clauses))))
+                    (recur clauses)))))
 
-        (apply (core/find-impl fs)
-               (map #(eval % g l)
-                    arg-exprs))))
+      (if-let [f-impl (core/find-impl fs)]
+        (do
+          (check-arguments fs (core/find-meta fs) arg-list)
+          (apply f-impl
+                 (map #(eval % g l)
+                      arg-exprs)))
+        (throw (ex-info (str "Unknown function `" fs "`")
+                        (position ref-expr)))))))
+
+(defmethod position ::formula [{::keys [expr]}]
+  (position expr))
 
 (defmethod eval ::formula [{::keys [expr]}]
   (let [f (gensym)]
@@ -140,7 +230,8 @@
         op (core/find-impl value)]
     {::type ::operator
      ::operator op
-     ::precedence p}))
+     ::precedence p
+     ::token token}))
 
 (defn unary-expr
   "Construct unary expression from operator and another expression as operand"
@@ -159,9 +250,11 @@
 
 (defn list-expr
   "Build an expression to be a list of `exps`"
-  [exprs]
+  [exprs open-token close-token]
   {::type ::list-expr
-   ::exprs exprs})
+   ::exprs exprs
+   ::open-token open-token
+   ::close-token close-token})
 
 (defn root-reference-expr
   "Build root reference expression"
@@ -180,17 +273,20 @@
 (defn index-expr
   "Additional type of `field-expr` for [[root-reference-expr]] or [[reference-expr]]
   Semantic - 'get from array by index'"
-  [ctx-expr ref-expr]
+  [ctx-expr ref-expr open-token close-token]
   {::type ::index-expr
    ::ctx-expr ctx-expr
-   ::ref-expr ref-expr})
+   ::ref-expr ref-expr
+   ::open-token open-token
+   ::close-token close-token})
 
 (defn application-expr
   "Function call expression"
-  [fs arg-exprs]
+  [ref-expr arg-list]
   {::type ::application-expr
-   ::fs fs
-   ::arg-exprs arg-exprs})
+   ::fs (function-name ref-expr)
+   ::ref-expr ref-expr
+   ::arg-list arg-list})
 
 (defn formula-expr [expr]
   {::type ::formula
