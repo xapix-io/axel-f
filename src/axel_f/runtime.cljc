@@ -41,7 +41,7 @@
 (defn binary? [{::keys [type]}]
   (= type ::binary-expr))
 
-(declare ^{:arglists '([x & [y z]])} eval)
+(declare eval)
 
 (defmulti function-name (fn [{::keys [type]}] type))
 
@@ -53,19 +53,19 @@
 
 (defmulti position (fn [{::keys [type]} & _] type))
 
-(defmulti eval (fn [{::keys [type]} & _] type))
+(defmulti eval (fn [{::keys [type]} & [_ _]] type))
 
 (defmethod position ::constant-expr [{::keys [token]}]
   {:begin (::lexer/begin token)
    :end (::lexer/end token)})
 
-(defmethod eval ::constant-expr [{::keys [value]} & _] value)
+(defmethod eval ::constant-expr [{::keys [value]} & [_ _]] value)
 
 (defmethod position ::operator [{::keys [token]}]
   {:begin (::lexer/begin token)
    :end (::lexer/end token)})
 
-(defmethod eval ::operator [{::keys [operator]} & _] operator)
+(defmethod eval ::operator [{::keys [operator]} & [_ _]] operator)
 
 (defmethod position ::unary-expr [{::keys [operator expr]}]
   (if (lexer/prefix-operator? (::token operator))
@@ -149,7 +149,7 @@
     (when-not (<= min args-count max)
       (prn "DBG=" min args-count max)
       (prn "DBG1=" meta)
-      (throw (ex-info (str "Wrong amount of arguments passed to `" f "` function.")
+      (throw (ex-info (str "Wrong number of arguments passed to `" f "` function.")
                       {:position (position arg-list)})))))
 
 (defmethod eval ::application-expr [{::keys [fs arg-list ref-expr]} & [g l]]
@@ -157,7 +157,7 @@
     (case fs
       "MAP" (do
               (when-not (= (count arg-exprs) 2)
-                (throw (ex-info "Wrong amount of arguments passed to `MAP` function."
+                (throw (ex-info "Wrong number of arguments passed to `MAP` function."
                                 {:position (position arg-list)})))
               (map (fn [*ctx*]
                      (eval (first arg-exprs) g *ctx*))
@@ -165,7 +165,7 @@
 
       "FILTER" (do
                  (when-not (= (count arg-exprs) 2)
-                   (throw (ex-info "Wrong amount of arguments passed to `FILTER` function."
+                   (throw (ex-info "Wrong number of arguments passed to `FILTER` function."
                                    {:position (position arg-list)})))
                  (filter (fn [*ctx*]
                            (eval (first arg-exprs) g *ctx*))
@@ -173,7 +173,7 @@
 
       "SORT" (do
                (when-not (= (count arg-exprs) 2)
-                 (throw (ex-info "Wrong amount of arguments passed to `SORT` function."
+                 (throw (ex-info "Wrong number of arguments passed to `SORT` function."
                                  {:position (position arg-list)})))
                (sort-by (fn [*ctx*]
                           (eval (first arg-exprs) g *ctx*))
@@ -181,7 +181,7 @@
 
       "IF" (do
              (when-not (<= 2 (count arg-exprs) 3)
-               (throw (ex-info "Wrong amount of arguments passed to `IF` function."
+               (throw (ex-info "Wrong number of arguments passed to `IF` function."
                                {:position (position arg-list)})))
              (if (eval (first arg-exprs) g l)
                (eval (second arg-exprs) g l)
