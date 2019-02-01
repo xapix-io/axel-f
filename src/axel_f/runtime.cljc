@@ -1,7 +1,8 @@
 (ns axel-f.runtime
   (:refer-clojure :exclude [eval type])
   (:require [axel-f.functions :as core]
-            [axel-f.lexer :as lexer]))
+            [axel-f.lexer :as lexer])
+  #?(:clj (:import clojure.lang.ExceptionInfo)))
 
 (defn- operator-precedence [value]
   (cond
@@ -74,17 +75,28 @@
     {:end (:end (position operator))
      :begin (:begin (position expr))}))
 
-(defmethod eval ::unary-expr [{::keys [operator expr]} & [g l]]
-  ((eval operator g l) (eval expr g l)))
+(defmethod eval ::unary-expr [{::keys [operator expr] :as ue} & [g l]]
+  (let [op (eval operator g l)
+        arg (eval expr g l)]
+    (try
+      (op arg)
+      (catch ExceptionInfo e
+        (throw (ex-info "Formula error"
+                        {:position (position ue)}))))))
 
 (defmethod position ::binary-expr [{::keys [left-expr right-expr]}]
   {:begin (:begin (position left-expr))
    :end (:end (position right-expr))})
 
-(defmethod eval ::binary-expr [{::keys [operator left-expr right-expr]} & [g l]]
-  ((eval operator g l)
-   (eval left-expr g l)
-   (eval right-expr g l)))
+(defmethod eval ::binary-expr [{::keys [operator left-expr right-expr] :as be} & [g l]]
+  (let [op (eval operator g l)
+        arg1 (eval left-expr g l)
+        arg2 (eval right-expr g l)]
+    (try
+      (op arg1 arg2)
+      (catch ExceptionInfo e
+        (throw (ex-info "Formula error"
+                        {:position (position be)}))))))
 
 (defmethod position ::list-expr [{::keys [open-token close-token]}]
   {:begin (::lexer/begin open-token)
@@ -156,7 +168,8 @@
       "MAP" (do
               (when-not (= (count arg-exprs) 2)
                 (throw (ex-info "Wrong number of arguments passed to `MAP` function."
-                                {:position (position arg-list)})))
+                                {:position {:begin (:begin (position ref-expr))
+                                            :end (:end (position arg-list))}})))
               (map (fn [*ctx*]
                      (eval (first arg-exprs) g *ctx*))
                    (eval (second arg-exprs) g l)))
@@ -164,7 +177,8 @@
       "FILTER" (do
                  (when-not (= (count arg-exprs) 2)
                    (throw (ex-info "Wrong number of arguments passed to `FILTER` function."
-                                   {:position (position arg-list)})))
+                                   {:position {:begin (:begin (position ref-expr))
+                                               :end (:end (position arg-list))}})))
                  (filter (fn [*ctx*]
                            (eval (first arg-exprs) g *ctx*))
                          (eval (second arg-exprs) g l)))
@@ -172,7 +186,8 @@
       "SORT" (do
                (when-not (= (count arg-exprs) 2)
                  (throw (ex-info "Wrong number of arguments passed to `SORT` function."
-                                 {:position (position arg-list)})))
+                                 {:position {:begin (:begin (position ref-expr))
+                                             :end (:end (position arg-list))}})))
                (sort-by (fn [*ctx*]
                           (eval (first arg-exprs) g *ctx*))
                         (eval (second arg-exprs) g l)))
@@ -180,7 +195,8 @@
       "IF" (do
              (when-not (<= 2 (count arg-exprs) 3)
                (throw (ex-info "Wrong number of arguments passed to `IF` function."
-                               {:position (position arg-list)})))
+                               {:position {:begin (:begin (position ref-expr))
+                                           :end (:end (position arg-list))}})))
              (if (eval (first arg-exprs) g l)
                (eval (second arg-exprs) g l)
                (when-let [arg-expr (nth arg-exprs 2 nil)]
@@ -189,7 +205,8 @@
       "IFS" (do
               (when-not (even? (count arg-exprs))
                 (throw (ex-info "Function `IFS` expecting even number of arguments"
-                                {:position (position arg-list)})))
+                                {:position {:begin (:begin (position ref-expr))
+                                            :end (:end (position arg-list))}})))
               (loop [[[if-expr then-expr] & clauses] (partition 2 2 arg-exprs)]
                 (when (some? if-expr)
                   (if (eval if-expr g l)
@@ -199,11 +216,20 @@
       (if-let [f-impl (core/find-impl fs)]
         (do
           (check-arguments fs (core/find-meta fs) arg-list)
-          (apply f-impl
-                 (map #(eval % g l)
-                      arg-exprs)))
+          (let [args (map #(eval % g l)
+                          arg-exprs)]
+            (try
+              (apply f-impl args)
+              (catch ExceptionInfo e
+                (if (:position (ex-data e))
+                  (throw e)
+                  (throw (ex-info (str "Error in function `" fs "`")
+                                  {:position {:begin (:begin (position ref-expr))
+                                              :end (:end (position arg-list))}
+                                   :arguments args
+                                   :cause (:cause (ex-data e))})))))))
         (throw (ex-info (str "Unknown function `" fs "`")
-                        (position ref-expr)))))))
+                        {:position (position ref-expr)}))))))
 
 (defmethod position ::formula [{::keys [expr]}]
   (position expr))

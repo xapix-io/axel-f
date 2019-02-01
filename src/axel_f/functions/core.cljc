@@ -1,6 +1,7 @@
 (ns axel-f.functions.core
   (:require [axel-f.functions.coercion :as coerce]
-            [clojure.string :as string]))
+            [clojure.string :as string])
+  #?(:clj (:import clojure.lang.ExceptionInfo)))
 
 (defonce ^:dynamic *functions-store* (atom {}))
 
@@ -17,13 +18,15 @@
 
 (defn add
   ([x] (coerce/excel-number x))
-  ([x y] (+ (coerce/excel-number x)
-            (coerce/excel-number y))))
+  ([x y]
+   (+ (coerce/excel-number x)
+      (coerce/excel-number y))))
 
 (defn sub
   ([x] (* -1 (coerce/excel-number x)))
-  ([x y] (- (coerce/excel-number x)
-            (coerce/excel-number y))))
+  ([x y]
+   (- (coerce/excel-number x)
+      (coerce/excel-number y))))
 
 (defn mult [x y]
   (* (coerce/excel-number x)

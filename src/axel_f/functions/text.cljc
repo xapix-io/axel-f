@@ -406,10 +406,7 @@
     0
 
     (not (boolean? s))
-    (coercion/excel-number s)
-
-    :otherwise
-    (throw (ex-info (str "Cannot coerce string `" s "` into number") {}))))
+    (coercion/excel-number s)))
 
 (def value-meta
   {:desc "Converts a string in any of the recognizeable date, time or number formats into a number."

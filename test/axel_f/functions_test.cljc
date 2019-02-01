@@ -68,7 +68,7 @@
 
   (t/is (thrown-with-msg?
          ExceptionInfo
-         #"Fail to coerce .*"
+         #"Formula error"
          (eval* "--'foo'"))))
 
 (t/deftest references

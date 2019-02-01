@@ -6,10 +6,18 @@
             axel-f.functions.logic
             axel-f.functions.geo
             axel-f.functions.json
-            axel-f.functions.base64))
+            axel-f.functions.base64)
+  #?(:clj (:import clojure.lang.ExceptionInfo)))
 
 (defn find-impl [fname]
-  (:impl (get @*functions-store* fname)))
+  (when-let [f (:impl (get @*functions-store* fname))]
+    (fn [& args]
+      (try
+        (apply f args)
+        (catch ExceptionInfo e
+          (throw (ex-info "Error in function call"
+                          {:cause {:msg (.getMessage e)
+                                   :data (ex-data e)}})))))))
 
 (defn find-meta [fname]
   (:meta (get @*functions-store* fname)))
