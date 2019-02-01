@@ -16,7 +16,8 @@
         (apply f args)
         (catch ExceptionInfo e
           (throw (ex-info "Error in function call"
-                          {:cause {:msg (.getMessage e)
+                          {:cause {:msg (#?(:clj .getMessage
+                                            :cljs .-message) e)
                                    :data (ex-data e)}})))))))
 
 (defn find-meta [fname]

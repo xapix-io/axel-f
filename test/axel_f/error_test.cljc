@@ -70,7 +70,8 @@
                  :end #:axel-f.lexer{:line 1, :column 6}}}
                (ex-data e)))
       (t/is (= "Wrong number of arguments passed to `MAP` function."
-               (.getMessage e))))))
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
 
 (t/deftest filter-function
 
@@ -85,7 +86,8 @@
                  :end #:axel-f.lexer{:line 1, :column 9}}}
                (ex-data e)))
       (t/is (= "Wrong number of arguments passed to `FILTER` function."
-               (.getMessage e))))))
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
 
 (t/deftest sort-function
 
@@ -100,7 +102,8 @@
                  :end #:axel-f.lexer{:line 1, :column 7}}}
                (ex-data e)))
       (t/is (= "Wrong number of arguments passed to `SORT` function."
-               (.getMessage e))))))
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
 
 (t/deftest if-function
 
@@ -115,7 +118,8 @@
                  :end #:axel-f.lexer{:line 1, :column 8}}}
                (ex-data e)))
       (t/is (= "Wrong number of arguments passed to `IF` function."
-               (.getMessage e))))))
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
 
 (t/deftest ifs-function
 
@@ -130,7 +134,8 @@
                  :end #:axel-f.lexer{:line 1, :column 29}}}
                (ex-data e)))
       (t/is (= "Function `IFS` expecting even number of arguments"
-               (.getMessage e))))))
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
 
 (t/deftest unknown-function
 
@@ -160,7 +165,8 @@
                 {:msg "Fail to coerce `qwe` to number.", :data {:type :argument-type}}}
                (ex-data e)))
       (t/is (= "Error in function `VALUE`"
-               (.getMessage e))))))
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
 
 (t/deftest args-count-check
 
@@ -172,4 +178,5 @@
                  :end #:axel-f.lexer{:line 1, :column 11}}}
                (ex-data e)))
       (t/is (= "Wrong number of arguments passed to `VALUE` function."
-               (.getMessage e))))))
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
