@@ -162,7 +162,7 @@
                  :end #:axel-f.lexer{:line 1, :column 12}},
                 :arguments ["qwe"],
                 :cause
-                {:msg "Fail to coerce `qwe` to number.", :data {:type :argument-type}}}
+                {:message "Fail to coerce `qwe` to number.", :data {:type :argument-type}}}
                (ex-data e)))
       (t/is (= "Error in function `VALUE`"
                (#?(:clj .getMessage

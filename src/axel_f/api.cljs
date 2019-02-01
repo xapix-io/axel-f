@@ -5,6 +5,13 @@
   (try
     (let [f (axel-f/compile formula-str)]
       (fn [ctx]
-        (clj->js (f (js->clj ctx)))))
+        (try
+          (clj->js (f (js->clj ctx)))
+          (catch ExceptionInfo e
+            (throw (js/Error. (js/JSON.stringify (clj->js
+                                                  {:message (.-message e)
+                                                   :data (ex-data e)}))))))))
     (catch ExceptionInfo e
-      (throw (js/Error. (js/JSON.stringify (clj->js (ex-data e))))))))
+      (throw (js/Error. (js/JSON.stringify (clj->js
+                                            {:message (.-message e)
+                                             :data (ex-data e)})))))))
