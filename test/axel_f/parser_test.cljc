@@ -144,7 +144,9 @@
       (parse* "foo\\")
       (catch ExceptionInfo e
         (let [data (ex-data e)]
-          (t/is (= {:position #::l{:line 1, :column 4}}
+          (t/is (= {:position
+                    {:begin #::l{:line 1, :column 4}
+                     :end #::l{:line 1, :column 4}}}
                    data)))))
 
     (t/is (thrown-with-msg?

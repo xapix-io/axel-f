@@ -79,7 +79,8 @@
         (conj brackets bracket)))
     (if (bracket-literal? value [")" "}" "]"])
       (throw (ex-info "Unexpected closing bracket"
-                      {:position begin}))
+                      {:position {:begin begin
+                                  :end begin}}))
       (conj brackets bracket))))
 
 (defn clean-escaped-string [s]
@@ -138,7 +139,8 @@
                 fc (reader/peek-elem rdr)]
             (if (end-of-input? fc)
               (throw (ex-info "Unexpected end of string"
-                              {:position (get-position rdr)}))
+                              {:position {:begin (get-position rdr)
+                                          :end (get-position rdr)}}))
               (recur (conj acc (reader/read-elem rdr)))))
 
           (= text-literal fc)
@@ -150,13 +152,12 @@
 
           (end-of-input? fc)
           (throw (ex-info "Unexpected end of string"
-                          {:position (get-position rdr)}))
+                          {:position {:begin (get-position rdr)
+                                      :end (get-position rdr)}}))
 
           :otherwise
           (recur (conj acc (reader/read-elem rdr))))))))
 
-;; TODO bug during reading "2+"
-;; plus sign should not be consumed
 (defmethod read-token! ::number [rdr]
   (let [begin (get-position rdr)]
     (loop [acc [] end begin number-pattern #"[0-9]+"]
@@ -188,7 +189,8 @@
                ::begin begin
                ::end end}
               (throw (ex-info "Wrong number format"
-                              {:position [begin end]})))))))))
+                              {:position {:begin begin
+                                          :end end}})))))))))
 
 (defmethod read-token! ::punctuation [rdr]
   (let [begin (get-position rdr)]
@@ -222,7 +224,8 @@
         (cond
           (and escaped? (end-of-input? ch))
           (throw (ex-info "Unexpected end of token"
-                          {:position end}))
+                          {:position {:begin end
+                                      :end end}}))
 
           (and (not escaped?)
                (or (nil? ch)
@@ -259,8 +262,8 @@
       (if (empty? brackets-heap)
         (conj tokens token)
         (throw (ex-info "Unbalanced brackets"
-                        {:position [(::begin (last brackets-heap))
-                                    (get-position rdr)]})))
+                        {:position {:begin (::begin (last brackets-heap))
+                                    :end (get-position rdr)}})))
       (recur rdr (conj tokens (assoc token ::depth depth)) brackets-heap'))))
 
 (defn read-formula [s]

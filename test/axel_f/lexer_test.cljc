@@ -399,8 +399,8 @@
     (catch ExceptionInfo e
       (let [data (ex-data e)]
         (t/is (= {:position
-                  [#::sut{:line 1 :column 1}
-                   #::sut{:line 1 :column 7}]}
+                  {:begin #::sut{:line 1 :column 1}
+                   :end #::sut{:line 1 :column 7}}}
                  data)))))
 
   (t/is (thrown-with-msg?
@@ -412,7 +412,9 @@
     (sut/read-formula "1 + 2)")
     (catch ExceptionInfo e
       (let [data (ex-data e)]
-        (t/is (= {:position #::sut{:line 1, :column 6}}
+        (t/is (= {:position
+                  {:begin #::sut{:line 1, :column 6}
+                   :end #::sut{:line 1, :column 6}}}
                  data)))))
 
   (t/is (thrown-with-msg?
@@ -425,6 +427,6 @@
     (catch ExceptionInfo e
       (let [data (ex-data e)]
         (t/is (= {:position
-                  [#::sut{:line 1, :column 7}
-                   #::sut{:line 1, :column 8}]}
+                  {:begin #::sut{:line 1, :column 7}
+                   :end #::sut{:line 1, :column 8}}}
                  data))))))

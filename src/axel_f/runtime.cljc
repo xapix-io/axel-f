@@ -147,8 +147,6 @@
         min (min-args meta)
         max (max-args meta)]
     (when-not (<= min args-count max)
-      (prn "DBG=" min args-count max)
-      (prn "DBG1=" meta)
       (throw (ex-info (str "Wrong number of arguments passed to `" f "` function.")
                       {:position (position arg-list)})))))
 
