@@ -234,6 +234,8 @@
 (defmethod position ::formula [{::keys [expr]}]
   (position expr))
 
+(defmethod eval nil [_ _ _] nil)
+
 (defmethod eval ::formula [{::keys [expr]}]
   (let [f (gensym)]
     (fn f

@@ -214,5 +214,5 @@
   (let [[expr [token & _]] (parse-expression tokens)]
     (if (not (lexer/end-of-input? token))
       (throw (ex-info "Unexpected token"
-                      {:token token}))
+                      {:position (select-keys token [::lexer/begin ::lexer/end])}))
       (runtime/formula-expr expr))))

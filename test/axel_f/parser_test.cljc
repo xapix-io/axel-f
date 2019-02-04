@@ -278,10 +278,7 @@
     (parse* "1 + 1 1")
     (catch ExceptionInfo e
       (let [data (ex-data e)]
-        (t/is (= {:token
-                  #::l{:value 1,
-                       :type ::l/number,
-                       :begin #::l{:line 1, :column 7},
-                       :end #::l{:line 1, :column 7},
-                       :depth 0}}
+        (t/is (= {:position
+                  #::l{:begin #::l{:line 1, :column 7},
+                       :end #::l{:line 1, :column 7}}}
                  data))))))
