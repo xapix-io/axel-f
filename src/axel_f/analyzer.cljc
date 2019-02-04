@@ -52,4 +52,4 @@
 
 (defn report [ast]
   (let [{:keys [refs]} (analyze ast)]
-    {:used-references refs}))
+    {:used-references (distinct refs)}))
