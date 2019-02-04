@@ -18,7 +18,7 @@
     (= "^" value) 4
     :otherwise -1))
 
-(defn type [{::keys [type]}]
+(defn type [{::keys [type]} & _]
   type)
 
 (defn precedence [{::keys [precedence]}]
@@ -44,7 +44,7 @@
 
 (declare eval)
 
-(defmulti function-name (fn [{::keys [type]}] type))
+(defmulti function-name type)
 
 (defmethod function-name ::root-reference-expr [{::keys [field-expr]}]
   (eval field-expr nil nil))
@@ -52,9 +52,9 @@
 (defmethod function-name ::reference-expr [{::keys [ctx-expr field-expr]}]
   (str (function-name ctx-expr) "." (eval field-expr nil nil)))
 
-(defmulti position (fn [{::keys [type]} & _] type))
+(defmulti position type)
 
-(defmulti eval (fn [{::keys [type]} & [_ _]] type))
+(defmulti eval type)
 
 (defmethod position ::constant-expr [{::keys [token]}]
   {:begin (::lexer/begin token)

@@ -3,13 +3,21 @@
   (:require [axel-f.lexer :as lexer]
             [axel-f.parser :as parser]
             [axel-f.runtime :as runtime]
+            [axel-f.analyzer :as analyzer]
             [axel-f.functions :as core]))
 
-(defn compile [formula & _]
+(defn- str->ast [formula]
   (-> formula
       lexer/read-formula
-      parser/parse
-      runtime/eval))
+      parser/parse))
+
+(defn compile [formula & _]
+  (let [ast (str->ast formula)]
+    (runtime/eval ast)))
+
+(defn analyze [formula]
+  (let [ast (str->ast formula)]
+    (analyzer/report ast)))
 
 (defn ^:deprecated run [formula & [context]]
   (let [f (cond
