@@ -1,5 +1,4 @@
 (ns axel-f.analyzer
-  #?(:clj (:import clojure.lang.ExceptionInfo))
   (:require [axel-f.runtime :as runtime]))
 
 (defmulti analyze runtime/type)

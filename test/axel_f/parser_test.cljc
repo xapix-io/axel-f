@@ -154,6 +154,15 @@
            #"Unexpected end of reference expression"
            (parse* "foo.bar.")))
 
+    (try
+      (parse* "foo.bar.")
+      (catch ExceptionInfo e
+        (let [data (ex-data e)]
+          (t/is (= {:position
+                    {:begin #::l{:line 1, :column 1},
+                     :end #::l{:line 1, :column 8}}}
+                   data)))))
+
     (t/is (= 1
              (parse* "foo.bar" {:foo {:bar 1}})))
 

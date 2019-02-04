@@ -90,23 +90,24 @@
   (if token
     (cond
       (lexer/punctuation-literal? token ["."])
-      (let [token (first tokens)]
+      (let [token' (first tokens)]
         (cond
-          (or (lexer/symbol-literal? token)
-              (lexer/text-literal? token)
-              (lexer/number-literal? token))
+          (or (lexer/symbol-literal? token')
+              (lexer/text-literal? token')
+              (lexer/number-literal? token'))
           (parse-reference*
            (runtime/reference-expr root-expr
-                                   (runtime/constant-expr token))
+                                   (runtime/constant-expr token'))
            (rest tokens))
 
-          (lexer/bracket-literal? token ["["])
+          (lexer/bracket-literal? token' ["["])
           (parse-reference* root-expr
                             tokens)
 
-          (nil? token)
+          (nil? token')
           (throw (ex-info "Unexpected end of reference expression"
-                          {:position []}))))
+                          {:position {:begin (:begin (runtime/position root-expr))
+                                      :end (::lexer/end token)}}))))
 
       (lexer/bracket-literal? token ["["])
       (let [d (::lexer/depth token)
