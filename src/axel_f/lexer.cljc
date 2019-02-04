@@ -234,7 +234,7 @@
                    (text-literal? ch)
                    (punctuation-literal? ch)
                    (bracket-literal? ch)
-                   (operator-literal? ch)))
+                   (operator-literal? ch ["/"])))
           {::value (clean-escaped-string (apply str acc))
            ::type ::symbol
            ::begin begin

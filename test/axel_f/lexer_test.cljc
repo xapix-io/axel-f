@@ -297,6 +297,45 @@
                      :position #::sut{:line 1, :column 20}}]
              (sut/read-formula ":+-!.*/&=^%<<=>>=<>")))))
 
+(t/deftest symbols-reading
+
+  (t/is (= [#::sut{:value "foo",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 1},
+                   :end #::sut{:line 1, :column 3},
+                   :depth 0}
+            #::sut{:type :axel-f.lexer/eoi,
+                   :position #::sut{:line 1, :column 4}}]
+           (sut/read-formula "foo")))
+
+  (t/is (= [#::sut{:value "foo-bar",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 1},
+                   :end #::sut{:line 1, :column 7},
+                   :depth 0}
+            #::sut{:type :axel-f.lexer/eoi,
+                   :position #::sut{:line 1, :column 8}}]
+           (sut/read-formula "foo-bar")))
+
+  (t/is (= [#::sut{:value "foo",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 1},
+                   :end #::sut{:line 1, :column 3},
+                   :depth 0}
+            #::sut{:value "/",
+                   :type :axel-f.lexer/operator,
+                   :begin #::sut{:line 1, :column 4},
+                   :end #::sut{:line 1, :column 4},
+                   :depth 0}
+            #::sut{:value "bar",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 5},
+                   :end #::sut{:line 1, :column 7},
+                   :depth 0}
+            #::sut{:type :axel-f.lexer/eoi,
+                   :position #::sut{:line 1, :column 8}}]
+           (sut/read-formula "foo/bar"))))
+
 (t/deftest expression-reading
 
   (t/is (= [#::sut{:value 1,
