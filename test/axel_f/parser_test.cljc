@@ -51,16 +51,6 @@
     (t/is (= 1.234e2
              (parse* "1.234E+2")))
 
-    (t/is (thrown-with-msg?
-           ExceptionInfo
-           #"Wrong number format"
-           (parse* "1.234e0.2")))
-
-    (t/is (thrown-with-msg?
-           ExceptionInfo
-           #"Wrong number format"
-           (parse* "1.234.123")))
-
     (t/is (= "foo"
              (parse* "'foo'")))
 

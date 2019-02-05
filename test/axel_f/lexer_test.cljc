@@ -445,7 +445,26 @@
                    :depth 0}
             #::sut{:type ::sut/eoi,
                    :position #::sut{:line 1, :column 8}}]
-           (sut/read-formula "123.foo"))))
+           (sut/read-formula "123.foo")))
+
+  (t/is (= [#::sut{:value "1to1-mapping",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 1},
+                   :end #::sut{:line 1, :column 12},
+                   :depth 0}
+            #::sut{:value ".",
+                   :type ::sut/punctuation,
+                   :begin #::sut{:line 1, :column 13},
+                   :end #::sut{:line 1, :column 13},
+                   :depth 0}
+            #::sut{:value "body",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 14},
+                   :end #::sut{:line 1, :column 17},
+                   :depth 0}
+            #::sut{:type ::sut/eoi,
+                   :position #::sut{:line 1, :column 18}}]
+           (sut/read-formula "1to1-mapping.body"))))
 
 (t/deftest errors
 

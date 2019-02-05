@@ -183,7 +183,12 @@
           :otherwise
           (let [n (apply str acc)]
             (cond
-              (re-matches number-pattern n)
+              (and (re-matches number-pattern n)
+                   (or (not ch)
+                       (operator-literal? ch)
+                       (punctuation-literal? ch)
+                       (bracket-literal? ch)
+                       (whitespace? ch)))
               {::value (#?(:clj edn/read-string
                            :cljs js/parseFloat) n)
                ::type ::number
@@ -199,9 +204,10 @@
                  ::end (update (get-position rdr) ::column dec)})
 
               :otherwise
-              (throw (ex-info "Wrong number format"
-                              {:position {:begin begin
-                                          :end end}})))))))))
+              (do
+                (doseq [c (reverse acc)]
+                  (reader/unread-elem rdr c))
+                ((.getMethod read-token! ::symbol) rdr)))))))))
 
 (defmethod read-token! ::punctuation [rdr]
   (let [begin (get-position rdr)]
