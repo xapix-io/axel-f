@@ -165,7 +165,7 @@
             end' (get-position rdr)]
         (cond
           (punctuation-literal? ch ["."])
-          (recur (conj acc (reader/read-elem rdr)) end' #"[0-9]+.[0-9]+")
+          (recur (conj acc (reader/read-elem rdr)) end' #"[0-9]+\.[0-9]+")
 
           (contains? (set "eE") ch)
           (let [acc (conj acc (reader/read-elem rdr))
@@ -173,8 +173,8 @@
                 nch (reader/read-elem rdr)]
             (recur (conj acc nch) end'
                    (if (contains? (set "+-") nch)
-                     #"[0-9]+.?[0-9]*(e|E)(\+|-)[0-9]+"
-                     #"[0-9]+.?[0-9]*(e|E)[0-9]+")))
+                     #"[0-9]+\.?[0-9]*(e|E)(\+|-)[0-9]+"
+                     #"[0-9]+\.?[0-9]*(e|E)[0-9]+")))
 
           (and (number-literal? ch)
                (re-matches number-pattern (apply str (conj acc ch))))
@@ -182,12 +182,23 @@
 
           :otherwise
           (let [n (apply str acc)]
-            (if (re-matches number-pattern n)
+            (cond
+              (re-matches number-pattern n)
               {::value (#?(:clj edn/read-string
                            :cljs js/parseFloat) n)
                ::type ::number
                ::begin begin
                ::end end}
+
+              (re-matches #"[0-9]+\." n)
+              (do
+                (reader/unread-elem rdr (last acc))
+                {::value (apply str (butlast acc))
+                 ::type ::symbol
+                 ::begin begin
+                 ::end (update (get-position rdr) ::column dec)})
+
+              :otherwise
               (throw (ex-info "Wrong number format"
                               {:position {:begin begin
                                           :end end}})))))))))

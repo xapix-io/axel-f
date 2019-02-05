@@ -304,7 +304,7 @@
                    :begin #::sut{:line 1, :column 1},
                    :end #::sut{:line 1, :column 3},
                    :depth 0}
-            #::sut{:type :axel-f.lexer/eoi,
+            #::sut{:type ::sut/eoi,
                    :position #::sut{:line 1, :column 4}}]
            (sut/read-formula "foo")))
 
@@ -313,7 +313,7 @@
                    :begin #::sut{:line 1, :column 1},
                    :end #::sut{:line 1, :column 7},
                    :depth 0}
-            #::sut{:type :axel-f.lexer/eoi,
+            #::sut{:type ::sut/eoi,
                    :position #::sut{:line 1, :column 8}}]
            (sut/read-formula "foo-bar")))
 
@@ -323,7 +323,7 @@
                    :end #::sut{:line 1, :column 3},
                    :depth 0}
             #::sut{:value "/",
-                   :type :axel-f.lexer/operator,
+                   :type ::sut/operator,
                    :begin #::sut{:line 1, :column 4},
                    :end #::sut{:line 1, :column 4},
                    :depth 0}
@@ -332,7 +332,7 @@
                    :begin #::sut{:line 1, :column 5},
                    :end #::sut{:line 1, :column 7},
                    :depth 0}
-            #::sut{:type :axel-f.lexer/eoi,
+            #::sut{:type ::sut/eoi,
                    :position #::sut{:line 1, :column 8}}]
            (sut/read-formula "foo/bar"))))
 
@@ -425,6 +425,27 @@
             #::sut{:type ::sut/eoi,
                    :position #::sut{:line 1, :column 20}}]
            (sut/read-formula "!foo.baz[*] <> TRUE"))))
+
+(t/deftest number-as-a-part-of-reference
+
+  (t/is (= [#::sut{:value "123",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 1},
+                   :end #::sut{:line 1, :column 3},
+                   :depth 0}
+            #::sut{:value ".",
+                   :type ::sut/punctuation,
+                   :begin #::sut{:line 1, :column 4},
+                   :end #::sut{:line 1, :column 4},
+                   :depth 0}
+            #::sut{:value "foo",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 5},
+                   :end #::sut{:line 1, :column 7},
+                   :depth 0}
+            #::sut{:type ::sut/eoi,
+                   :position #::sut{:line 1, :column 8}}]
+           (sut/read-formula "123.foo"))))
 
 (t/deftest errors
 
