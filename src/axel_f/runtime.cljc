@@ -137,7 +137,8 @@
 
 (defmethod eval ::index-expr [{::keys [ctx-expr ref-expr]} & [g l]]
   (let [m (if ctx-expr (eval ctx-expr g l) g)]
-    (if (operator? ref-expr)
+    (if (or (nil? ref-expr)
+            (operator? ref-expr))
       (when (sequential? m) m)
       (let [i (eval ref-expr g l)]
         ((core/find-impl "flexy-nth") m i)))))

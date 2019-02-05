@@ -182,6 +182,12 @@
     (t/is (= [1 2 3]
              (parse* "foo.[  *  ]" {:foo [1 2 3]})))
 
+    (t/is (= [1 2 3]
+             (parse* "foo.[]" {:foo [1 2 3]})))
+
+    (t/is (= [1 2 3]
+             (parse* "foo.[].bar" {:foo [{:bar 1} {:bar 2} {:bar 3}]})))
+
     (t/is (= nil
              (parse* "foo[*]" {:foo {:bar 1}})))
 
