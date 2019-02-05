@@ -207,7 +207,8 @@
               (do
                 (doseq [c (reverse acc)]
                   (reader/unread-elem rdr c))
-                ((.getMethod read-token! ::symbol) rdr)))))))))
+                ((#?(:clj .getMethod
+                     :cljs get-method) read-token! ::symbol) rdr)))))))))
 
 (defmethod read-token! ::punctuation [rdr]
   (let [begin (get-position rdr)]
