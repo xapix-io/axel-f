@@ -1,6 +1,6 @@
 {
     "name": "axel-f",
-    "version": "1.0.0-SNAPSHOT",
+    "version": "1.0.1-SNAPSHOT",
     "description": "axel-f is an engine that can evaluate excel-like expressions.",
     "homepage": "https://github.com/xapix-io/axel-f",
     "author": "Kirill Chernyshov (https://github.com/DeLaGuardo)",
