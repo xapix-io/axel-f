@@ -270,10 +270,13 @@
 (defn binary-expr
   "Construct binary expression from operator and two expressions"
   [operator left-expr right-expr]
-  {::type ::binary-expr
-   ::left-expr left-expr
-   ::right-expr right-expr
-   ::operator operator})
+  (if (nil? right-expr)
+    (throw (ex-info "Missing operand for binary expression"
+                    {:position (position operator)}))
+    {::type ::binary-expr
+     ::left-expr left-expr
+     ::right-expr right-expr
+     ::operator operator}))
 
 (defn list-expr
   "Build an expression to be a list of `exps`"

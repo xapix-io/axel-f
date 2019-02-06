@@ -2,6 +2,7 @@
   (:require #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])
             [axel-f.functions.text :as text]
+            [axel-f.lexer :as l]
             [axel-f.core :as sut])
   #?(:clj (:import clojure.lang.ExceptionInfo)))
 
@@ -35,8 +36,8 @@
       (catch ExceptionInfo e
         (let [data (ex-data e)]
           (t/is (= {:position
-                    {:begin #:axel-f.lexer{:line 1, :column 1},
-                     :end #:axel-f.lexer{:line 1, :column 6}}}
+                    {:begin #::l{:line 1, :column 1},
+                     :end #::l{:line 1, :column 6}}}
                    data)))))))
 
 (t/deftest error-in-binary
@@ -47,14 +48,26 @@
            #"Formula error"
            (f))))
 
+  (try
+    ((sut/compile "1 + (2 *)"))
+    (catch ExceptionInfo e
+      (t/is (= "Missing operand for binary expression"
+               (#?(:clj .getMessage
+                   :cljs .-message)
+                e)))
+      (t/is (= {:position
+                {:begin #::l{:line 1, :column 8},
+                 :end #::l{:line 1, :column 8}}}
+               (ex-data e)))))
+
   (let [f (sut/compile "2 + 'foo'")]
     (try
       (f)
       (catch ExceptionInfo e
         (let [data (ex-data e)]
           (t/is (= {:position
-                    {:begin #:axel-f.lexer{:line 1, :column 1},
-                     :end #:axel-f.lexer{:line 1, :column 9}}}
+                    {:begin #::l{:line 1, :column 1},
+                     :end #::l{:line 1, :column 9}}}
                    data)))))))
 
 (t/deftest map-function
@@ -66,8 +79,8 @@
     ((sut/compile "MAP(_)"))
     (catch ExceptionInfo e
       (t/is (= {:position
-                {:begin #:axel-f.lexer{:line 1, :column 1},
-                 :end #:axel-f.lexer{:line 1, :column 6}}}
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 6}}}
                (ex-data e)))
       (t/is (= "Wrong number of arguments passed to `MAP` function."
                (#?(:clj .getMessage
@@ -82,8 +95,8 @@
     ((sut/compile "FILTER(_)"))
     (catch ExceptionInfo e
       (t/is (= {:position
-                {:begin #:axel-f.lexer{:line 1, :column 1},
-                 :end #:axel-f.lexer{:line 1, :column 9}}}
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 9}}}
                (ex-data e)))
       (t/is (= "Wrong number of arguments passed to `FILTER` function."
                (#?(:clj .getMessage
@@ -98,8 +111,8 @@
     ((sut/compile "SORT(_)"))
     (catch ExceptionInfo e
       (t/is (= {:position
-                {:begin #:axel-f.lexer{:line 1, :column 1},
-                 :end #:axel-f.lexer{:line 1, :column 7}}}
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 7}}}
                (ex-data e)))
       (t/is (= "Wrong number of arguments passed to `SORT` function."
                (#?(:clj .getMessage
@@ -114,8 +127,8 @@
     ((sut/compile "IF(True)"))
     (catch ExceptionInfo e
       (t/is (= {:position
-                {:begin #:axel-f.lexer{:line 1, :column 1},
-                 :end #:axel-f.lexer{:line 1, :column 8}}}
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 8}}}
                (ex-data e)))
       (t/is (= "Wrong number of arguments passed to `IF` function."
                (#?(:clj .getMessage
@@ -130,8 +143,8 @@
     ((sut/compile "IFS(True, 1, False, 2, !1<>2)"))
     (catch ExceptionInfo e
       (t/is (= {:position
-                {:begin #:axel-f.lexer{:line 1, :column 1},
-                 :end #:axel-f.lexer{:line 1, :column 29}}}
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 29}}}
                (ex-data e)))
       (t/is (= "Function `IFS` expecting even number of arguments"
                (#?(:clj .getMessage
@@ -148,8 +161,8 @@
     ((sut/compile "FOO.BAR(1,2,3)"))
     (catch ExceptionInfo e
       (t/is (= {:position
-                {:begin #:axel-f.lexer{:line 1, :column 1},
-                 :end #:axel-f.lexer{:line 1, :column 7}}}
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 7}}}
                (ex-data e))))))
 
 (t/deftest internal-exceptions
@@ -158,8 +171,8 @@
     ((sut/compile "SUM(VALUE(_), 2 3)") "qwe")
     (catch ExceptionInfo e
       (t/is (= {:position
-                {:begin #:axel-f.lexer{:line 1, :column 5},
-                 :end #:axel-f.lexer{:line 1, :column 12}},
+                {:begin #::l{:line 1, :column 5},
+                 :end #::l{:line 1, :column 12}},
                 :arguments ["qwe"],
                 :cause
                 {:message "Fail to coerce `qwe` to number.", :data {:type :argument-type}}}
@@ -174,8 +187,8 @@
     ((sut/compile "VALUE(1, 2)"))
     (catch ExceptionInfo e
       (t/is (= {:position
-                {:begin #:axel-f.lexer{:line 1, :column 6},
-                 :end #:axel-f.lexer{:line 1, :column 11}}}
+                {:begin #::l{:line 1, :column 6},
+                 :end #::l{:line 1, :column 11}}}
                (ex-data e)))
       (t/is (= "Wrong number of arguments passed to `VALUE` function."
                (#?(:clj .getMessage
