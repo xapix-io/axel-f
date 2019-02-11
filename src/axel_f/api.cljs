@@ -18,8 +18,8 @@
 
 (defn ^:export context [formula-str]
   (try
-    (let [{:keys [used-references]} (axel-f/analyze formula-str)]
-      (clj->js used-references))
+    (let [{:keys [vars]} (axel-f/analyze formula-str)]
+      (clj->js vars))
     (catch ExceptionInfo e
       (throw (js/Error. (js/JSON.stringify (clj->js
                                             {:message (.-message e)

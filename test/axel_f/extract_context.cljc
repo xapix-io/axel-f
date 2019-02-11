@@ -8,7 +8,7 @@
 (defn- get-context [formula]
   (-> formula
       sut/analyze
-      :used-references))
+      :vars))
 
 (t/deftest derive-context
 

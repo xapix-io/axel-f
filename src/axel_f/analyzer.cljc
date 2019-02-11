@@ -1,54 +1,47 @@
 (ns axel-f.analyzer
   (:require [axel-f.runtime :as runtime]))
 
-(defmulti analyze runtime/type)
+(defmulti free-variables runtime/type)
 
-(defmethod analyze :default [_ & _])
+(defmethod free-variables :default [_ & _])
 
-(defmethod analyze ::runtime/unary-expr [{::runtime/keys [expr]} & [*acc*]]
-  (analyze expr *acc*))
+(defmethod free-variables ::runtime/unary-expr [{::runtime/keys [expr]} & [vars]]
+  (free-variables expr vars))
 
-(defmethod analyze ::runtime/binary-expr [{::runtime/keys [left-expr right-expr]} & [*acc*]]
-  (doseq [expr [left-expr right-expr]]
-    (analyze expr *acc*)))
+(defmethod free-variables ::runtime/binary-expr [{::runtime/keys [left-expr right-expr]} & [vars]]
+  (concat
+   (free-variables left-expr vars)
+   (free-variables right-expr vars)))
 
-(defmethod analyze ::runtime/root-reference-expr [{::runtime/keys [field-expr]} & [*acc*]]
+(defmethod free-variables ::runtime/root-reference-expr [{::runtime/keys [field-expr]} & [vars]]
   (let [field (runtime/eval field-expr)]
-    (swap! *acc* update :refs conj (reverse (conj (:proc @*acc*) field)))
-    (swap! *acc* assoc :proc [])))
+    (cons []
+          (cons (cons field (first vars))
+                (rest vars)))))
 
-(defmethod analyze ::runtime/reference-expr [{::runtime/keys [ctx-expr field-expr]} & [*acc*]]
+(defmethod free-variables ::runtime/reference-expr [{::runtime/keys [ctx-expr field-expr]} & [vars]]
   (let [field (runtime/eval field-expr nil nil)]
-    (swap! *acc* update :proc conj field)
-    (analyze ctx-expr *acc*)))
+    (free-variables ctx-expr (cons (cons field (first vars))
+                                   (rest vars)))))
 
-(defmethod analyze ::runtime/index-expr [{::runtime/keys [ctx-expr ref-expr]} & [*acc*]]
+(defmethod free-variables ::runtime/index-expr [{::runtime/keys [ctx-expr ref-expr]} & [vars]]
   (if ctx-expr
-    (do
-      (swap! *acc* update :proc conj "*")
-      (let [nacc (atom {:proc []
-                        :refs []})]
-        (analyze ref-expr nacc)
-        (when-let [nrefs (not-empty (:refs @nacc))]
-          (swap! *acc* update :refs concat nrefs))
-        (analyze ctx-expr *acc*)))
-    (do
-      (swap! *acc* update :refs conj (reverse (conj (:proc @*acc*) "*")))
-      (swap! *acc* assoc :proc []))))
+    (concat (free-variables ctx-expr (cons (cons "*" (first vars))
+                                           (rest vars)))
+            (free-variables ref-expr []))
+    (cons []
+          (cons (cons "*" (first vars))
+                (rest vars)))))
 
-(defmethod analyze ::runtime/list-expr [{::runtime/keys [exprs]} & [*acc*]]
-  (doseq [expr exprs]
-    (analyze expr *acc*)))
+(defmethod free-variables ::runtime/list-expr [{::runtime/keys [exprs]} & [vars]]
+  (apply concat
+         (map #(free-variables % vars) exprs)))
 
-(defmethod analyze ::runtime/application-expr [{::runtime/keys [arg-list]} & [*acc*]]
-  (analyze arg-list *acc*))
+(defmethod free-variables ::runtime/application-expr [{::runtime/keys [arg-list]} & [vars]]
+  (free-variables arg-list vars))
 
-(defmethod analyze ::runtime/formula [{::runtime/keys [expr]}]
-  (let [acc (atom {:proc []
-                   :refs []})]
-    (analyze expr acc)
-    @acc))
+(defmethod free-variables ::runtime/formula [{::runtime/keys [expr]}]
+  (free-variables expr []))
 
 (defn report [ast]
-  (let [{:keys [refs]} (analyze ast)]
-    {:used-references (distinct refs)}))
+  {:vars (filter not-empty (distinct (free-variables ast)))})
