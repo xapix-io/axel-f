@@ -31,7 +31,8 @@
       (if (lexer/operator-literal? (last acc) ["/"])
         (cons (runtime/root-reference-expr
                (runtime/constant-expr
-                {::lexer/value (keyword (apply str (map ::lexer/value (butlast (rest acc))))
+                {::lexer/value (keyword (when-let [ns-part (not-empty (map ::lexer/value (butlast (rest acc))))]
+                                          (apply str ns-part))
                                         (::lexer/value token))}))
               tokens')
         (recur (conj acc token) tokens')))))

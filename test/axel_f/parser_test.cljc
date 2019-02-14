@@ -1,18 +1,10 @@
 (ns axel-f.parser-test
-  #?@
-   (:clj
-    [(:require
-      [axel-f.lexer :as l]
-      [axel-f.parser :as sut]
-      [axel-f.runtime :as r]
-      [clojure.test :as t])
-     (:import clojure.lang.ExceptionInfo)]
-    :cljs
-    [(:require
-      [axel-f.lexer :as l]
-      [axel-f.parser :as sut]
-      [axel-f.runtime :as r]
-      [cljs.test :as t :include-macros true])]))
+  (:require [axel-f.lexer :as l]
+            [axel-f.parser :as sut]
+            [axel-f.runtime :as r]
+            #?(:clj [clojure.test :as t]
+               :cljs [cljs.test :as t :include-macros true]))
+  #?(:clj (:import clojure.lang.ExceptionInfo)))
 
 (defn- parse*
   ([f]
@@ -160,7 +152,10 @@
              (parse* "foo.'bar'" {:foo {:bar 1}})))
 
     (t/is (= 1
-             (parse* "foo.\"bar\"" {:foo {"bar" 1}}))))
+             (parse* "foo.\"bar\"" {:foo {"bar" 1}})))
+
+    (t/is (= 1
+             (parse* ":/foo.bar" {:foo {:bar 1}}))))
 
   (t/testing "index references resolved during parsing"
 
