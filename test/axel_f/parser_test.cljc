@@ -155,7 +155,22 @@
              (parse* "foo.\"bar\"" {:foo {"bar" 1}})))
 
     (t/is (= 1
-             (parse* ":/foo.bar" {:foo {:bar 1}}))))
+             (parse* ":/foo.bar" {:foo {:bar 1}})))
+
+    (t/is (= 1
+             (parse* ":foo/bar" {:foo/bar 1})))
+
+    (t/is (= 1
+             (parse* ":foo.bar/baz" {:foo.bar/baz 1})))
+
+    (t/is (= 1
+             (parse* ":foo.bar/baz.:/foo" {:foo.bar/baz {"foo" 1}})))
+
+    (t/is (= 1
+             (parse* ":foo.bar/baz.:foo.bar/baz" {:foo.bar/baz {:foo.bar/baz 1}})))
+
+    (t/is (= 2
+             (parse* ":foo.bar/baz.:foo.bar/baz + 1" {:foo.bar/baz {:foo.bar/baz 1}}))))
 
   (t/testing "index references resolved during parsing"
 

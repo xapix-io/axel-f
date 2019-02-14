@@ -29,11 +29,10 @@
 
       (lexer/symbol-literal? token)
       (if (lexer/operator-literal? (last acc) ["/"])
-        (cons (runtime/root-reference-expr
-               (runtime/constant-expr
-                {::lexer/value (keyword (when-let [ns-part (not-empty (map ::lexer/value (butlast (rest acc))))]
-                                          (apply str ns-part))
-                                        (::lexer/value token))}))
+        (cons (runtime/constant-expr
+               {::lexer/value (keyword (when-let [ns-part (not-empty (map ::lexer/value (butlast (rest acc))))]
+                                         (apply str ns-part))
+                                       (::lexer/value token))})
               tokens')
         (recur (conj acc token) tokens')))))
 
@@ -105,6 +104,13 @@
           (parse-reference* root-expr
                             tokens)
 
+          (lexer/operator-literal? token' [":"])
+          (let [[k & tokens'] (parse-keyword tokens)]
+            (parse-reference*
+             (runtime/reference-expr root-expr
+                                     k)
+             tokens'))
+
           (nil? token')
           (throw (ex-info "Unexpected end of reference expression"
                           {:position {:begin (:begin (runtime/position root-expr))
@@ -137,7 +143,7 @@
               (and (= d (::lexer/depth token))
                    (or (lexer/whitespace? token)
                        (lexer/bracket-literal? token ["("])
-                       (lexer/operator-literal? token)
+                       (lexer/operator-literal? token (disj (set lexer/operators) ":" "/"))
                        (lexer/punctuation-literal? token [","]))))
         (cons (parse-reference* root-reference acc) (cons token tokens'))
         (recur (conj acc token) tokens')))))
@@ -153,8 +159,10 @@
         [token & tokens'] tokens]
     (cond
       (lexer/operator-literal? token [":"])
-      (let [[root-reference-expr & rest-tokens] (parse-keyword tokens)]
-        (parse-primary (cons root-reference-expr rest-tokens)))
+      (let [[keyword-expr & rest-tokens] (parse-keyword tokens)]
+        (parse-primary (cons (runtime/root-reference-expr
+                              keyword-expr)
+                             rest-tokens)))
 
       (lexer/prefix-operator? token)
       (let [op (runtime/operator-expr token)
