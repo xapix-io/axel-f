@@ -1,6 +1,7 @@
 (ns axel-f.functions.core
   (:require [axel-f.functions.coercion :as coerce]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [axel-f.type-system :as type-system])
   #?(:clj (:import clojure.lang.ExceptionInfo)))
 
 (defonce ^:dynamic *functions-store* (atom {}))
@@ -88,20 +89,29 @@
     (nth m i nil)
     (flexy-get m i)))
 
+(def returning-number {:return (constantly (type-system/simple-type ::type-system/number))})
+(def returning-string {:return (constantly (type-system/simple-type ::type-system/string))})
+(def returning-boolean {:return (constantly (type-system/simple-type ::type-system/boolean))})
+
+(defn unify-types [lT rT]
+  (type-system/union (type-system/simple-type ::type-system/string)
+                     (when (type-system/free-type? lT) lT)
+                     (when (type-system/free-type? rT) rT)))
+
 (def-excel-fn
-  "+" add nil
-  "-" sub nil
-  "*" mult nil
-  "/" div nil
-  "<" less nil
-  ">" more nil
-  "<=" less-or-eq nil
-  ">=" more-or-eq nil
-  "<>" not-eq nil
-  "=" eq nil
-  "&" concatenate nil
-  "^" pow nil
-  "!" negate nil
-  "%" percent nil
+  "+" add returning-number
+  "-" sub returning-number
+  "*" mult returning-number
+  "/" div returning-number
+  "<" less returning-boolean
+  ">" more returning-boolean
+  "<=" less-or-eq returning-boolean
+  ">=" more-or-eq returning-boolean
+  "<>" not-eq returning-boolean
+  "=" eq returning-boolean
+  "&" concatenate {:return unify-types}
+  "^" pow returning-number
+  "!" negate returning-boolean
+  "%" percent returning-number
   "flexy-get" flexy-get nil
   "flexy-nth" flexy-nth nil)

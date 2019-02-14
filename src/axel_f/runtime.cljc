@@ -253,12 +253,11 @@
 (defn operator-expr
   "Convert `token` into operator expression"
   [{::lexer/keys [value] :as token}]
-  (let [p (operator-precedence value)
-        op (core/find-impl value)]
-    {::type ::operator
-     ::operator op
-     ::precedence p
-     ::token token}))
+  {::type ::operator
+   ::operator (core/find-impl value)
+   ::meta (core/find-meta value)
+   ::precedence (operator-precedence value)
+   ::token token})
 
 (defn unary-expr
   "Construct unary expression from operator and another expression as operand"
