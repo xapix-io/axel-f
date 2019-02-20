@@ -32,7 +32,9 @@
         (cons (runtime/constant-expr
                {::lexer/value (keyword (when-let [ns-part (not-empty (map ::lexer/value (butlast (rest acc))))]
                                          (apply str ns-part))
-                                       (::lexer/value token))})
+                                       (::lexer/value token))
+                ::lexer/begin (::lexer/begin (first acc))
+                ::lexer/end (::lexer/end token)})
               tokens')
         (recur (conj acc token) tokens')))))
 

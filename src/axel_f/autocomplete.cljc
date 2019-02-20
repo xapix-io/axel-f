@@ -73,12 +73,14 @@
 (defn analyze-ref [ref context]
   (let [context (get-base-context ref context)
         field (get-last-field ref context)
-        fnname (get-function-name ref)]
-    (concat
-     (when-not (and (sequential? context)
-                    (nil? fnname))
-       (get-similar-functions fnname))
-     (get-similar-fields field context))))
+        fnname (get-function-name ref)
+        position (runtime/position (::runtime/field-expr ref))]
+    (map #(assoc % :position position)
+         (concat
+          (when-not (and (sequential? context)
+                         (nil? fnname))
+            (get-similar-functions fnname))
+          (get-similar-fields field context)))))
 
 (defn subs-ref [tokens depth]
   (loop [acc [] [t & tokens'] tokens]
@@ -90,20 +92,21 @@
                  (> (::lexer/depth t) depth)
                  (lexer/end-of-input? t)))
       (recur (cons t acc) tokens')
-      (let [acc (if (lexer/end-of-input? (last acc))
-                  (butlast acc)
-                  acc)
-            acc (if (lexer/punctuation-literal? (last acc) ["."])
-                  (concat acc [#::lexer{:type ::lexer/symbol
-                                        :value ""
-                                        :depth (::lexer/depth (last acc))
-                                        :begin (::lexer/end (last acc))
-                                        :end (::lexer/end (last acc))}])
-                  acc)]
-        (first (parser/parse-primary acc))))))
+      (let [acc' (if (lexer/end-of-input? (last acc))
+                   (butlast acc)
+                   acc)
+            acc' (if (or (nil? (last acc'))
+                         (lexer/punctuation-literal? (last acc') ["."]))
+                   (concat acc' [#::lexer{:type ::lexer/symbol
+                                          :value ""
+                                          :depth (::lexer/depth (last acc))
+                                          :begin (::lexer/end (last acc))
+                                          :end (::lexer/end (last acc))}])
+                   acc')]
+        (first (parser/parse-primary acc'))))))
 
 (defn analyze-fncall [f current-arg]
-  (when-let [fnname (get-function-name f)]
+  (when-let [fnname (not-empty (get-function-name f))]
     (merge {:current-arg current-arg
             :type :FNCALL
             :value fnname}

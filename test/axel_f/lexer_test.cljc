@@ -10,7 +10,8 @@
 
     (t/is (= [#::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 1 :column 1}}]
+                     :begin #::sut{:line 1 :column 1}
+                     :end #::sut{:line 1 :column 1}}]
              (sut/read-formula ""))))
 
   (t/testing "whitespaces"
@@ -22,7 +23,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 1, :column 2}}]
+                     :begin #::sut{:line 1, :column 2}
+                     :end #::sut{:line 1, :column 2}}]
              (sut/read-formula " ")))
 
     (t/is (= [#::sut{:type ::sut/whitespace,
@@ -32,7 +34,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 1, :column 5}}]
+                     :begin #::sut{:line 1, :column 5}
+                     :end #::sut{:line 1, :column 5}}]
              (sut/read-formula "    ")))
 
     (t/is (= [#::sut{:type ::sut/whitespace,
@@ -47,7 +50,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 1, :column 8}}]
+                     :begin #::sut{:line 1, :column 8}
+                     :end #::sut{:line 1, :column 8}}]
              (sut/read-formula "    qwe"))))
 
   (t/testing "newlines"
@@ -58,7 +62,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 2, :column 1}}]
+                     :begin #::sut{:line 2, :column 1}
+                     :end #::sut{:line 2, :column 1}}]
              (sut/read-formula "\n")))
 
     (t/is (= [#::sut{:type ::sut/newline,
@@ -67,7 +72,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 5, :column 1}}]
+                     :begin #::sut{:line 5, :column 1}
+                     :end #::sut{:line 5, :column 1}}]
              (sut/read-formula "\n\n\n\n")))
 
     (t/is (= [#::sut{:type ::sut/newline,
@@ -81,7 +87,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 5, :column 4}}]
+                     :begin #::sut{:line 5, :column 4}
+                     :end #::sut{:line 5, :column 4}}]
              (sut/read-formula "\n\n\n\nqwe"))))
 
   (t/testing "text literals"
@@ -93,7 +100,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 1, :column 6}}]
+                     :begin #::sut{:line 1, :column 6}
+                     :end #::sut{:line 1, :column 6}}]
              (sut/read-formula "\"qwe\"")
              (sut/read-formula "'qwe'")))
 
@@ -104,7 +112,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 2, :column 3}}]
+                     :begin #::sut{:line 2, :column 3}
+                     :end #::sut{:line 2, :column 3}}]
              (sut/read-formula "\"q\nw\"")))
 
     (t/is (= [#::sut{:value "qwe\n\newq\nqwe",
@@ -119,7 +128,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 4, :column 8}}]
+                     :begin #::sut{:line 4, :column 8}
+                     :end #::sut{:line 4, :column 8}}]
              (sut/read-formula "\"qwe\n\newq\nqwe\"qwe"))))
 
   (t/testing "number literals"
@@ -151,7 +161,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 1, :column 26}}]
+                     :begin #::sut{:line 1, :column 26}
+                     :end #::sut{:line 1, :column 26}}]
              (remove sut/whitespace? (sut/read-formula "1 1.2 1.2e1 1e-1 1.0E+123")))))
 
   (t/testing "punctuation"
@@ -168,7 +179,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 1, :column 3}}]
+                     :begin #::sut{:line 1, :column 3}
+                     :end #::sut{:line 1, :column 3}}]
              (sut/read-formula ".,"))))
 
   (t/testing "brackets"
@@ -205,7 +217,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 1, :column 7}}]
+                     :begin #::sut{:line 1, :column 7}
+                     :end #::sut{:line 1, :column 7}}]
              (sut/read-formula "([{}])")))
 
     (t/are [x] (thrown-with-msg? #?(:clj clojure.lang.ExceptionInfo
@@ -308,7 +321,8 @@
                      :depth 0}
               #::sut{:type ::sut/eoi,
                      :depth 0,
-                     :position #::sut{:line 1, :column 20}}]
+                     :begin #::sut{:line 1, :column 20}
+                     :end #::sut{:line 1, :column 20}}]
              (sut/read-formula ":+-!.*/&=^%<<=>>=<>")))))
 
 (t/deftest symbols-reading
@@ -319,8 +333,9 @@
                    :end #::sut{:line 1, :column 3},
                    :depth 0}
             #::sut{:type ::sut/eoi,
-                     :depth 0,
-                   :position #::sut{:line 1, :column 4}}]
+                   :depth 0,
+                   :begin #::sut{:line 1, :column 4}
+                   :end #::sut{:line 1, :column 4}}]
            (sut/read-formula "foo")))
 
   (t/is (= [#::sut{:value "foo-bar",
@@ -329,8 +344,9 @@
                    :end #::sut{:line 1, :column 7},
                    :depth 0}
             #::sut{:type ::sut/eoi,
-                     :depth 0,
-                   :position #::sut{:line 1, :column 8}}]
+                   :depth 0,
+                   :begin #::sut{:line 1, :column 8}
+                   :end #::sut{:line 1, :column 8}}]
            (sut/read-formula "foo-bar")))
 
   (t/is (= [#::sut{:value "foo",
@@ -349,8 +365,9 @@
                    :end #::sut{:line 1, :column 7},
                    :depth 0}
             #::sut{:type ::sut/eoi,
-                     :depth 0,
-                   :position #::sut{:line 1, :column 8}}]
+                   :depth 0,
+                   :begin #::sut{:line 1, :column 8}
+                   :end #::sut{:line 1, :column 8}}]
            (sut/read-formula "foo/bar"))))
 
 (t/deftest expression-reading
@@ -381,8 +398,9 @@
                    :end #::sut{:line 1, :column 5},
                    :depth 0}
             #::sut{:type ::sut/eoi,
-                     :depth 0,
-                   :position #::sut{:line 1, :column 6}}]
+                   :depth 0,
+                   :begin #::sut{:line 1, :column 6}
+                   :end #::sut{:line 1, :column 6}}]
            (sut/read-formula "1 + 1")))
 
   (t/is (= [#::sut{:value "!",
@@ -441,8 +459,9 @@
                    :end #::sut{:line 1, :column 19},
                    :depth 0}
             #::sut{:type ::sut/eoi,
-                     :depth 0,
-                   :position #::sut{:line 1, :column 20}}]
+                   :depth 0,
+                   :begin #::sut{:line 1, :column 20}
+                   :end #::sut{:line 1, :column 20}}]
            (sut/read-formula "!foo.baz[*] <> TRUE"))))
 
 (t/deftest number-as-a-part-of-reference
@@ -463,8 +482,9 @@
                    :end #::sut{:line 1, :column 7},
                    :depth 0}
             #::sut{:type ::sut/eoi,
-                     :depth 0,
-                   :position #::sut{:line 1, :column 8}}]
+                   :depth 0,
+                   :begin #::sut{:line 1, :column 8}
+                   :end #::sut{:line 1, :column 8}}]
            (sut/read-formula "123.foo")))
 
   (t/is (= [#::sut{:value "1to1-mapping",
@@ -483,8 +503,9 @@
                    :end #::sut{:line 1, :column 17},
                    :depth 0}
             #::sut{:type ::sut/eoi,
-                     :depth 0,
-                   :position #::sut{:line 1, :column 18}}]
+                   :depth 0,
+                   :begin #::sut{:line 1, :column 18}
+                   :end #::sut{:line 1, :column 18}}]
            (sut/read-formula "1to1-mapping.body"))))
 
 (t/deftest errors

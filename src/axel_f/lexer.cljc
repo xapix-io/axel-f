@@ -96,7 +96,8 @@
 
 (defmethod read-token! ::eoi [rdr]
   {::type ::eoi
-   ::position (get-position rdr)})
+   ::begin (get-position rdr)
+   ::end (get-position rdr)})
 
 (defmethod read-token! ::whitespace [rdr]
   (let [begin (get-position rdr)]
