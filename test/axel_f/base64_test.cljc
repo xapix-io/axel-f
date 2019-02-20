@@ -1,15 +1,8 @@
 (ns axel-f.base64-test
-  #?@
-   (:clj
-    [(:require
-      [axel-f.core :as af]
-      [axel-f.functions.base64 :as sut]
-      [clojure.test :as t])]
-    :cljs
-    [(:require
-      [axel-f.core :as af]
-      [axel-f.functions.base64 :as sut]
-      [cljs.test :as t :include-macros true])]))
+   (:require [axel-f.core :as af]
+             [axel-f.functions.base64 :as sut]
+             #?(:clj [clojure.test :as t]
+                :cljs [cljs.test :as t :include-macros true])))
 
 (t/deftest base64
   (t/testing "Encode string"

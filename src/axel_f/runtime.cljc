@@ -46,6 +46,9 @@
 
 (defmulti function-name type)
 
+(defmethod function-name :default [_]
+  (throw (ex-info "Not implemented" {})))
+
 (defmethod function-name ::root-reference-expr [{::keys [field-expr]}]
   (eval field-expr nil nil))
 

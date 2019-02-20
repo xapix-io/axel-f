@@ -1,12 +1,7 @@
 (ns axel-f.lexer
-  #?@
-   (:clj
-    [(:require
-      [axel-f.reader :as reader]
-      [clojure.edn :as edn]
-      [clojure.string :as string])]
-    :cljs
-    [(:require [axel-f.reader :as reader] [clojure.string :as string])]))
+  (:require [axel-f.reader :as reader]
+            #?(:clj [clojure.edn :as edn])
+            [clojure.string :as string]))
 
 (defn get-position [rdr]
   {::line (reader/get-line-number rdr)
@@ -70,14 +65,14 @@
 (defn postfix-operator? [{::keys [value] :as el}]
   (operator-literal? el postfix-operators))
 
-(defn append-bracket [brackets {::keys [value begin] :as bracket}]
+(defn append-bracket [brackets {::keys [value begin] :as bracket} throw?]
   (if-let [bracket' (last brackets)]
     (let [value' (::value bracket')
           begin' (::begin bracket')]
       (if (contains? #{"()" "[]" "{}"} (str value' value))
         (vec (butlast brackets))
         (conj brackets bracket)))
-    (if (bracket-literal? value [")" "}" "]"])
+    (if (and throw? (bracket-literal? value [")" "}" "]"]))
       (throw (ex-info "Unexpected closing bracket"
                       {:position {:begin begin
                                   :end begin}}))
@@ -267,23 +262,26 @@
                        false)
                      end'))))))))
 
-(defn read-formula* [rdr tokens brackets-heap]
+(defn read-formula* [rdr tokens brackets-heap throw?]
   (let [init-position {::line 0 ::column 0}
         token (read-token! rdr)
         brackets-heap' (if (bracket-literal? token)
-                         (append-bracket brackets-heap token)
+                         (append-bracket brackets-heap token throw?)
                          brackets-heap)
         old-depth (count brackets-heap)
         new-depth (count brackets-heap')
-        depth (if (<= old-depth new-depth) old-depth new-depth)]
+        depth (if (<= old-depth new-depth) old-depth new-depth)
+        token (assoc token ::depth depth)]
     (if (end-of-input? token)
-      (if (empty? brackets-heap)
-        (conj tokens token)
+      (if (and throw? (not-empty brackets-heap))
         (throw (ex-info "Unbalanced brackets"
                         {:position {:begin (::begin (last brackets-heap))
-                                    :end (get-position rdr)}})))
-      (recur rdr (conj tokens (assoc token ::depth depth)) brackets-heap'))))
+                                    :end (get-position rdr)}}))
+        (conj tokens token))
+      (recur rdr (conj tokens token) brackets-heap' throw?))))
 
-(defn read-formula [s]
-  (let [rdr (-> s reader/reader reader/push-back-reader reader/indexing-push-back-reader)]
-    (read-formula* rdr [] [])))
+(defn read-formula
+  ([s] (read-formula s true))
+  ([s throw?]
+   (let [rdr (-> s reader/reader reader/push-back-reader reader/indexing-push-back-reader)]
+     (read-formula* rdr [] [] throw?))))

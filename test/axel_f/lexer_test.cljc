@@ -8,7 +8,8 @@
 
   (t/testing "end of string"
 
-    (t/is (= [#::sut{:type ::sut/eoi
+    (t/is (= [#::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 1 :column 1}}]
              (sut/read-formula ""))))
 
@@ -20,6 +21,7 @@
                      :end #::sut{:line 1, :column 2},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 1, :column 2}}]
              (sut/read-formula " ")))
 
@@ -29,6 +31,7 @@
                      :end #::sut{:line 1, :column 5},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 1, :column 5}}]
              (sut/read-formula "    ")))
 
@@ -43,6 +46,7 @@
                      :end #::sut{:line 1, :column 7},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 1, :column 8}}]
              (sut/read-formula "    qwe"))))
 
@@ -53,6 +57,7 @@
                      :end #::sut{:line 2, :column 1},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 2, :column 1}}]
              (sut/read-formula "\n")))
 
@@ -61,6 +66,7 @@
                      :end #::sut{:line 5, :column 1},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 5, :column 1}}]
              (sut/read-formula "\n\n\n\n")))
 
@@ -74,6 +80,7 @@
                      :end #::sut{:line 5, :column 3},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 5, :column 4}}]
              (sut/read-formula "\n\n\n\nqwe"))))
 
@@ -85,6 +92,7 @@
                      :end #::sut{:line 1, :column 5},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 1, :column 6}}]
              (sut/read-formula "\"qwe\"")
              (sut/read-formula "'qwe'")))
@@ -95,6 +103,7 @@
                      :end #::sut{:line 2, :column 2},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 2, :column 3}}]
              (sut/read-formula "\"q\nw\"")))
 
@@ -109,6 +118,7 @@
                      :end #::sut{:line 4, :column 7},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 4, :column 8}}]
              (sut/read-formula "\"qwe\n\newq\nqwe\"qwe"))))
 
@@ -140,6 +150,7 @@
                      :end #::sut{:line 1, :column 25},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 1, :column 26}}]
              (remove sut/whitespace? (sut/read-formula "1 1.2 1.2e1 1e-1 1.0E+123")))))
 
@@ -156,6 +167,7 @@
                      :end #::sut{:line 1, :column 2},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 1, :column 3}}]
              (sut/read-formula ".,"))))
 
@@ -192,6 +204,7 @@
                      :end #::sut{:line 1, :column 6},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 1, :column 7}}]
              (sut/read-formula "([{}])")))
 
@@ -294,6 +307,7 @@
                      :end #::sut{:line 1, :column 19},
                      :depth 0}
               #::sut{:type ::sut/eoi,
+                     :depth 0,
                      :position #::sut{:line 1, :column 20}}]
              (sut/read-formula ":+-!.*/&=^%<<=>>=<>")))))
 
@@ -305,6 +319,7 @@
                    :end #::sut{:line 1, :column 3},
                    :depth 0}
             #::sut{:type ::sut/eoi,
+                     :depth 0,
                    :position #::sut{:line 1, :column 4}}]
            (sut/read-formula "foo")))
 
@@ -314,6 +329,7 @@
                    :end #::sut{:line 1, :column 7},
                    :depth 0}
             #::sut{:type ::sut/eoi,
+                     :depth 0,
                    :position #::sut{:line 1, :column 8}}]
            (sut/read-formula "foo-bar")))
 
@@ -333,6 +349,7 @@
                    :end #::sut{:line 1, :column 7},
                    :depth 0}
             #::sut{:type ::sut/eoi,
+                     :depth 0,
                    :position #::sut{:line 1, :column 8}}]
            (sut/read-formula "foo/bar"))))
 
@@ -364,6 +381,7 @@
                    :end #::sut{:line 1, :column 5},
                    :depth 0}
             #::sut{:type ::sut/eoi,
+                     :depth 0,
                    :position #::sut{:line 1, :column 6}}]
            (sut/read-formula "1 + 1")))
 
@@ -423,6 +441,7 @@
                    :end #::sut{:line 1, :column 19},
                    :depth 0}
             #::sut{:type ::sut/eoi,
+                     :depth 0,
                    :position #::sut{:line 1, :column 20}}]
            (sut/read-formula "!foo.baz[*] <> TRUE"))))
 
@@ -444,6 +463,7 @@
                    :end #::sut{:line 1, :column 7},
                    :depth 0}
             #::sut{:type ::sut/eoi,
+                     :depth 0,
                    :position #::sut{:line 1, :column 8}}]
            (sut/read-formula "123.foo")))
 
@@ -463,6 +483,7 @@
                    :end #::sut{:line 1, :column 17},
                    :depth 0}
             #::sut{:type ::sut/eoi,
+                     :depth 0,
                    :position #::sut{:line 1, :column 18}}]
            (sut/read-formula "1to1-mapping.body"))))
 

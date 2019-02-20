@@ -104,4 +104,9 @@
   "!" negate nil
   "%" percent nil
   "flexy-get" flexy-get nil
-  "flexy-nth" flexy-nth nil)
+  "flexy-nth" flexy-nth nil
+  "MAP" nil {}
+  "FILTER" nil {}
+  "SORT" nil {}
+  "IF" nil {}
+  "IFS" nil {})
