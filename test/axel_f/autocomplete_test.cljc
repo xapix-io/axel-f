@@ -45,7 +45,7 @@
               :context nil}
              (sut/suggestions "fo" {"foo" {"bar" 1}})))
 
-    (t/is (= {:suggestions
+    #_(t/is (= {:suggestions
               [{:type :FN,
                 :value "EXACT",
                 :desc "Tests whether two strings are identical.",
