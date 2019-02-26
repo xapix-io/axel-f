@@ -1,54 +1,195 @@
 (ns axel-f.error-test
-  (:require [axel-f.error :as sut]
-            [axel-f.core :as af-sut]
-            #?(:clj [clojure.test :as t]
-               :cljs [cljs.test :as t :include-macros true])))
+  (:require #?(:clj [clojure.test :as t]
+               :cljs [cljs.test :as t :include-macros true])
+            [axel-f.functions.text :as text]
+            [axel-f.lexer :as l]
+            [axel-f.core :as sut])
+  #?(:clj (:import clojure.lang.ExceptionInfo)))
 
-(t/deftest error-test
+(t/deftest value-function
 
-  (t/testing "error function returns error instance with additional information"
+  (t/is (thrown-with-msg?
+         ExceptionInfo
+         #"Fail to coerce `foo` to number."
+         (text/value "foo")))
 
-    (t/is (instance? #?(:clj clojure.lang.ExceptionInfo
-                        :cljs js/Error)
-                     (sut/error "FOO")))
+  (t/is (thrown?
+         ExceptionInfo
+         (text/value [1 2 3]))))
 
-    (t/is (= "FOO" (#?(:clj .getMessage
-                       :cljs .-message)
-                    (sut/error "FOO"))))
+(t/deftest error-in-unary
 
-    (t/is (= {:type "FOO"} (#?(:clj ex-data
-                               :cljs .-data)
-                            (sut/error "FOO"))))
+  (let [f (sut/compile "-'asd'")]
+    (t/is (thrown?
+           ExceptionInfo
+           (f))))
 
-    (t/is (= {:reason {:foo "1"}
-              :type "FOO"} (#?(:clj ex-data
-                            :cljs .-data)
-                            (sut/error "FOO" {:foo "1"})))))
+  (let [f (sut/compile "'qwe'%")]
+    (t/is (thrown-with-msg?
+           ExceptionInfo
+           #"Formula error"
+           (f))))
 
-  (t/testing "errors returned bu the formula passed from run function"
+  (let [f (sut/compile "'foo'%")]
+    (try
+      (f)
+      (catch ExceptionInfo e
+        (let [data (ex-data e)]
+          (t/is (= {:position
+                    {:begin #::l{:line 1, :column 1},
+                     :end #::l{:line 1, :column 6}}}
+                   data)))))))
 
-    (t/is (= {:type "#VALUE!"}
-             (#?(:clj ex-data
-                 :cljs .-data)
-              (af-sut/run "#VALUE!"))))
+(t/deftest error-in-binary
 
-    (t/is (= {:type "#N/A"
-              :reason "Wrong number of args (0) passed to: ROUND"}
-             (af-sut/run "ROUND()")))
+  (let [f (sut/compile "2 - 'asd'")]
+    (t/is (thrown-with-msg?
+           ExceptionInfo
+           #"Formula error"
+           (f))))
 
-    (t/are [x] (= {:type "#N/A"
-                   :reason (str "Wrong number of args (0) passed to: " x)}
-                  (af-sut/run (str x "()")))
-      "ROUND"
-      "CHAR"
-      "JOIN")
+  (try
+    ((sut/compile "1 + (2 *)"))
+    (catch ExceptionInfo e
+      (t/is (= "Missing operand for binary expression"
+               (#?(:clj .getMessage
+                   :cljs .-message)
+                e)))
+      (t/is (= {:position
+                {:begin #::l{:line 1, :column 8},
+                 :end #::l{:line 1, :column 8}}}
+               (ex-data e)))))
 
-    (t/is (thrown? #?(:clj clojure.lang.ExceptionInfo
-                      :cljs ExceptionInfo)
-             (af-sut/run "ADJADKHAJDLA()"))))
+  (let [f (sut/compile "2 + 'foo'")]
+    (try
+      (f)
+      (catch ExceptionInfo e
+        (let [data (ex-data e)]
+          (t/is (= {:position
+                    {:begin #::l{:line 1, :column 1},
+                     :end #::l{:line 1, :column 9}}}
+                   data)))))))
 
-  #?(:clj
-     (t/testing "non-excel errors are thrown from run function"
+(t/deftest map-function
 
-       (t/is (thrown? java.lang.ArithmeticException
-                      (af-sut/run "1 / 0"))))))
+  (t/is (thrown? ExceptionInfo
+                 ((sut/compile "MAP()"))))
+
+  (try
+    ((sut/compile "MAP(_)"))
+    (catch ExceptionInfo e
+      (t/is (= {:position
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 6}}}
+               (ex-data e)))
+      (t/is (= "Wrong number of arguments passed to `MAP` function."
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
+
+(t/deftest filter-function
+
+  (t/is (thrown? ExceptionInfo
+                 ((sut/compile "FILTER()"))))
+
+  (try
+    ((sut/compile "FILTER(_)"))
+    (catch ExceptionInfo e
+      (t/is (= {:position
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 9}}}
+               (ex-data e)))
+      (t/is (= "Wrong number of arguments passed to `FILTER` function."
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
+
+(t/deftest sort-function
+
+  (t/is (thrown? ExceptionInfo
+                 ((sut/compile "SORT()"))))
+
+  (try
+    ((sut/compile "SORT(_)"))
+    (catch ExceptionInfo e
+      (t/is (= {:position
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 7}}}
+               (ex-data e)))
+      (t/is (= "Wrong number of arguments passed to `SORT` function."
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
+
+(t/deftest if-function
+
+  (t/is (thrown? ExceptionInfo
+                 ((sut/compile "IF()"))))
+
+  (try
+    ((sut/compile "IF(True)"))
+    (catch ExceptionInfo e
+      (t/is (= {:position
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 8}}}
+               (ex-data e)))
+      (t/is (= "Wrong number of arguments passed to `IF` function."
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
+
+(t/deftest ifs-function
+
+  (t/is (thrown? ExceptionInfo
+                 ((sut/compile "IFS(True)"))))
+
+  (try
+    ((sut/compile "IFS(True, 1, False, 2, !1<>2)"))
+    (catch ExceptionInfo e
+      (t/is (= {:position
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 29}}}
+               (ex-data e)))
+      (t/is (= "Function `IFS` expecting even number of arguments"
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
+
+(t/deftest unknown-function
+
+  (t/is (thrown-with-msg?
+         ExceptionInfo
+         #"Unknown function `FOO.BAR`"
+         ((sut/compile "FOO.BAR(1, 2, 3)"))))
+
+  (try
+    ((sut/compile "FOO.BAR(1,2,3)"))
+    (catch ExceptionInfo e
+      (t/is (= {:position
+                {:begin #::l{:line 1, :column 1},
+                 :end #::l{:line 1, :column 7}}}
+               (ex-data e))))))
+
+(t/deftest internal-exceptions
+
+  (try
+    ((sut/compile "SUM(VALUE(_), 2 3)") "qwe")
+    (catch ExceptionInfo e
+      (t/is (= {:position
+                {:begin #::l{:line 1, :column 5},
+                 :end #::l{:line 1, :column 12}},
+                :arguments ["qwe"],
+                :cause
+                {:message "Fail to coerce `qwe` to number.", :data {:type :argument-type}}}
+               (ex-data e)))
+      (t/is (= "Error in function `VALUE`"
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))
+
+(t/deftest args-count-check
+
+  (try
+    ((sut/compile "VALUE(1, 2)"))
+    (catch ExceptionInfo e
+      (t/is (= {:position
+                {:begin #::l{:line 1, :column 6},
+                 :end #::l{:line 1, :column 11}}}
+               (ex-data e)))
+      (t/is (= "Wrong number of arguments passed to `VALUE` function."
+               (#?(:clj .getMessage
+                   :cljs .-message) e))))))

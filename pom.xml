@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.xapix</groupId>
     <artifactId>axel-f</artifactId>
-    <version>0.3.1-SNAPSHOT</version>
+    <version>1.0.2-SNAPSHOT</version>
     <name>axel-f</name>
     <dependencies>
         <dependency>
@@ -12,9 +12,9 @@
             <version>1.9.0</version>
         </dependency>
         <dependency>
-            <groupId>instaparse</groupId>
-            <artifactId>instaparse</artifactId>
-            <version>1.4.9</version>
+            <groupId>cheshire</groupId>
+            <artifactId>cheshire</artifactId>
+            <version>5.8.1</version>
         </dependency>
         <dependency>
             <groupId>clj-fuzzy</groupId>

@@ -19,10 +19,4 @@
   (t/testing "booleans processed correctly"
 
     (t/is (= true (sut/run (sut/compile "true"))))
-    (t/is (= false (sut/run (sut/compile "false")))))
-
-  (t/testing "stringified form with a constant processed correctly"
-
-    (t/is (= "foo" (sut/run ["STRING" "foo"])))
-    (t/is (= 1 (sut/run 1)))
-    (t/is (= true (sut/run true)))))
+    (t/is (= false (sut/run (sut/compile "false"))))))

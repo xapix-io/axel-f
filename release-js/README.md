@@ -14,17 +14,17 @@ npm i --save axel-f
 In Node.js
 
 ```javascript
-const {compile: compile, run: run, autocomplete: autocomplete} = require('axel-f');
+const {compile: compile, autocomplete: autocomplete, context: context} = require('axel-f');
 
 # Precompile excel formula
-compile("=SUM(1, 2, {5, 6, 8})");
+compile("SUM(1, 2, {5, 6, 8})");
 
 # Execute formula as string
-run("SUM(foo.bar[*].baz, {5, 6, 7})", {foo: {bar: [{baz: 1}, {baz: 2}]}});
+compile("SUM(foo.bar[*].baz, {5, 6, 7})")({foo: {bar: [{baz: 1}, {baz: 2}]}});
 
 # Execute precompiled formula
 const formula = compile("=SUM(1, 2, {5, 6, 8})");
-run(formula) # => 22
+formula() # => 22
 
 # Autocomplete ability
 autocomplete("") # => [... All implemented functions ...]

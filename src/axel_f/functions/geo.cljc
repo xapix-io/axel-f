@@ -1,6 +1,5 @@
-(ns axel-f.geo
-  (:require [axel-f.macros :refer [def-excel-fn]]
-            #?(:cljs [goog.math :as math])))
+(ns axel-f.functions.geo
+  (:require [axel-f.functions.core :refer [def-excel-fn]]))
 
 (def earth-radius 6371.0)
 
@@ -9,31 +8,27 @@
   equivalent angle measured in radians."
   [x]
   #?(:clj (Math/toRadians x)
-     :cljs (math/toRadians x)))
+     :cljs (* x (/ Math/PI 180))))
 
 (defn asin
   "Returns the arc sine of `x`."
   [x]
-  #?(:clj (Math/asin x)
-     :cljs (.asin js/Math x)))
+  (Math/asin x))
 
 (defn sin
   "Returns the sine of `x`."
   [x]
-  #?(:clj (Math/sin x)
-     :cljs (.sin js/Math x)))
+  (Math/sin x))
 
 (defn cos
   "Returns the cosine of `x`."
   [x]
-  #?(:clj (Math/cos x)
-     :cljs (.cos js/Math x)))
+  (Math/cos x))
 
 (defn sqrt
   "Returns the square root of `x`."
   [x]
-  #?(:clj (Math/sqrt x)
-     :cljs (.sqrt js/Math x)))
+  (Math/sqrt x))
 
 (defn distance
   "Returns the distance from `point-1` to `point-2`, in km using the
@@ -51,11 +46,17 @@
                 (cos lat-2)))]
     (* earth-radius 2 (asin (sqrt a)))))
 
-(def-excel-fn geo.distance
-  "Calculate the distance for the path described as a list of geo points
-   Each point must a tuple of two or three float numbers."
-  {:args [{:desc "List of points. Each point must be a tuple of latitude and longitude"}]}
+(defn geo-distance
   [points]
   (->> points
        (partition 2 1)
        (reduce #(+ %1 (apply distance %2)) 0)))
+
+(def geo-distance-meta
+  {:args [{:desc "List of points. Each point must be a tuple of latitude and longitude"}]
+   :desc "Calculate the distance for the path described as a list of geo points. Each point must a tuple of two or three float numbers."})
+
+(def-excel-fn
+  "GEO.DISTANCE"
+  geo-distance
+  geo-distance-meta)

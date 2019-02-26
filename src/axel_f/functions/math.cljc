@@ -1,40 +1,42 @@
 (ns axel-f.functions.math
-  (:require [axel-f.error :as error]
-            [axel-f.functions.coercion :as coercion]
-            [axel-f.macros #?(:clj :refer :cljs :refer-macros) [def-excel-fn]]))
+  (:require [axel-f.functions.coercion :as coercion]
+            [axel-f.functions.core :refer [def-excel-fn]]))
 
-(def-excel-fn round
-  "Rounds a number to a certain number of decimal places according to standard rules."
-  {:args [{:desc "The value to round to places number of places."}
-          {:desc "The number of decimal places to which to round."
-           :opt true}]}
+(defn round
   [d & [precision]]
-  (if d
-    (let [precision (or precision 0)]
-      (if-let [d (coercion/excel-number d)]
-        (if-let [precision (coercion/excel-number precision)]
-          (let [factor (Math/pow 10 precision)
-                res (/ (Math/round (* d factor)) factor)]
-            (if (> precision 0)
-              res
-              (int res)))
-          (throw (error/error "#VALUE!" (error/format-not-a-number-error "ROUND" 2 precision))))
-        (throw (error/error "#VALUE!" (error/format-not-a-number-error "ROUND" 1 d)))))
-    (throw (error/error "#N/A" "Wrong number of args (0) passed to: ROUND"))))
+  (let [precision (coercion/excel-number (or precision 0))
+        d (coercion/excel-number d)]
+    (let [factor (Math/pow 10 precision)
+          res (/ (Math/round (* d factor)) factor)]
+      (if (> precision 0)
+        res
+        (int res)))))
+
+(def round-meta
+  {:desc "Rounds a number to a certain number of decimal places according to standard rules."
+   :args [{:desc "The value to round to places number of places."}
+          {:desc "The number of decimal places to which to round."
+           :opt true}]})
 
 (defn sum-fn [& items]
-  (reduce #?(:clj +' :cljs +)
-          (map (fn [n]
-                 (if-let [n (coercion/excel-number n)]
-                   n
-                   (throw (error/error "#VALUE!" (error/format-not-a-number-error "SUM" nil n)))))
-               (flatten items))))
+  (reduce + (map coercion/excel-number (flatten items))))
 
-(def-excel-fn sum
-  "Returns the sum of a series of numbers and/or references."
-  {:args [{:desc "The first number or range to add together."}
-          {:desc "Additional numbers or ranges to add to arg1."
-           :opt true
-           :repeatable true}]}
+(defn sum
   [& items]
   (apply sum-fn items))
+
+(def sum-meta
+  {:desc "Returns the sum of a series of numbers and/or references."
+   :args [{:desc "The first number or range to add together."}
+          {:desc "Additional numbers or ranges to add to arg1."
+           :opt true
+           :repeatable true}]})
+
+(def-excel-fn
+  "SUM"
+  sum
+  sum-meta
+
+  "ROUND"
+  round
+  round-meta)
