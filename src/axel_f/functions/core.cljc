@@ -105,8 +105,14 @@
   "%" percent nil
   "flexy-get" flexy-get nil
   "flexy-nth" flexy-nth nil
-  "MAP" nil {}
-  "FILTER" nil {}
-  "SORT" nil {}
+  "MAP" nil {:args [{:desc "Partialy defined formula with free variables to apply to the collection"}
+                    {:desc "Collection of elements"}]
+             :desc "Applies partiualy defined formula to every element in a collection and returns an array."}
+  "FILTER" nil {:args [{:desc "Condition which will be applied to members of collection"}
+                       {:desc "Collection of elements"}]
+                :desc "Returns an array of elements that have been filtered based on a condition."}
+  "SORT" nil {:args [{:desc "Sorting function that will be applied to each element of the collection"}
+                     {:desc "Collection of elements"}]
+              :desc "Sorts a collection by the values returned from applying a sorting function to each element in said collection."}
   "IF" nil {}
   "IFS" nil {})
