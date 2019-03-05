@@ -288,3 +288,17 @@
                   #::l{:begin #::l{:line 1, :column 7},
                        :end #::l{:line 1, :column 7}}}
                  data))))))
+
+(t/deftest newlines
+
+  (t/testing "ignore newlines"
+
+    (t/is (= "foobarbaz"
+             (parse* "CONCATENATE('foo',
+                                  'bar',
+                                  'baz')")))
+
+    (t/is (= "foobarbaz"
+             (parse* "'foo' &
+                      'bar' &
+                      'baz'")))))

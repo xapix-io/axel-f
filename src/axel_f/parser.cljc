@@ -4,12 +4,12 @@
             [clojure.string :as string]))
 
 (defn triml-whitespaces [tokens]
-  (if (lexer/whitespace? (first tokens))
+  (if ((some-fn lexer/whitespace? lexer/newline?) (first tokens))
     (recur (rest tokens))
     tokens))
 
 (defn trimr-whitespaces [tokens]
-  (if (lexer/whitespace? (last tokens))
+  (if ((some-fn lexer/whitespace? lexer/newline?) (last tokens))
     (recur (butlast tokens))
     tokens))
 
