@@ -218,6 +218,11 @@
       [(runtime/unary-expr (runtime/operator-expr (first tokens')) expr)
        (rest tokens')]
 
+      (or (lexer/punctuation-literal? (first tokens') ["."])
+          (lexer/bracket-literal? (first tokens') ["["]))
+      (parse-expression (cons (runtime/root-reference-expr expr)
+                              tokens'))
+
       :otherwise
       [expr tokens'])))
 
