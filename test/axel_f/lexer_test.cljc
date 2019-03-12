@@ -327,6 +327,17 @@
 
 (t/deftest symbols-reading
 
+  (t/is (= [#::sut{:value "foo bar",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 1},
+                   :end #::sut{:line 1, :column 8},
+                   :depth 0}
+            #::sut{:type ::sut/eoi,
+                   :begin #::sut{:line 1, :column 9},
+                   :end #::sut{:line 1, :column 9},
+                   :depth 0}]
+           (sut/read-formula "foo\\ bar")))
+
   (t/is (= [#::sut{:value "foo",
                    :type ::sut/symbol,
                    :begin #::sut{:line 1, :column 1},
@@ -368,7 +379,45 @@
                    :depth 0,
                    :begin #::sut{:line 1, :column 8}
                    :end #::sut{:line 1, :column 8}}]
-           (sut/read-formula "foo/bar"))))
+           (sut/read-formula "foo/bar")))
+
+  (t/is (= [#::sut{:value "foo bar",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 1},
+                   :end #::sut{:line 1, :column 10},
+                   :depth 0}
+            #::sut{:type ::sut/eoi,
+                   :begin #::sut{:line 1, :column 11},
+                   :end #::sut{:line 1, :column 11},
+                   :depth 0}]
+           (sut/read-formula "#'foo bar'")))
+
+  (t/is (= [#::sut{:value "foo bar",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 1},
+                   :end #::sut{:line 1, :column 10},
+                   :depth 0}
+            #::sut{:type ::sut/eoi,
+                   :begin #::sut{:line 1, :column 11},
+                   :end #::sut{:line 1, :column 11},
+                   :depth 0}]
+           (sut/read-formula "#\"foo bar\"")))
+
+  (t/is (= [#::sut{:type ::sut/whitespace,
+                   :value "  ",
+                   :begin #::sut{:line 1, :column 1},
+                   :end #::sut{:line 1, :column 3},
+                   :depth 0}
+            #::sut{:value "foo bar",
+                   :type ::sut/symbol,
+                   :begin #::sut{:line 1, :column 3},
+                   :end #::sut{:line 1, :column 12},
+                   :depth 0}
+            #::sut{:type ::sut/eoi,
+                   :begin #::sut{:line 1, :column 13},
+                   :end #::sut{:line 1, :column 13},
+                   :depth 0}]
+           (sut/read-formula "  #'foo bar'"))))
 
 (t/deftest expression-reading
 

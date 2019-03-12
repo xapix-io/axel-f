@@ -27,8 +27,9 @@
   (or (= type ::number)
       (contains? (set "0123456789") t)))
 
-(defn symbol-literal? [{::keys [type]}]
-  (= type ::symbol))
+(defn symbol-literal? [{::keys [type] :as t}]
+  (or (= type ::symbol)
+      (contains? #{\#} t)))
 
 (defn punctuation-literal?
   ([t] (punctuation-literal? t ["," "."]))
@@ -236,6 +237,11 @@
     (loop [acc [] escaped? false end (get-position rdr)]
       (let [ch (reader/peek-elem rdr)]
         (cond
+          (= \# ch)
+          (let [_ (reader/read-elem rdr)
+                s ((get-method read-token! ::text) rdr)]
+            (assoc s ::type ::symbol ::begin begin))
+
           (and escaped? (end-of-input? ch))
           (throw (ex-info "Unexpected end of token"
                           {:position {:begin end

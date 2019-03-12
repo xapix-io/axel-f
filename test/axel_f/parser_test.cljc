@@ -109,6 +109,14 @@
 
 (t/deftest parse-references
 
+  (t/testing "result of function application can be used as a context for reference expression"
+
+    (t/is (= 1
+             (parse* "FILTER(_.x = 1, foo)[0].x" {:foo [{:x 2} {:x 1}]})))
+
+    (t/is (= [1 2 3]
+             (parse* "SORT(_.x, _).[*].x" [{:x 2} {:x 1 :y "af"} {:x 3}]))))
+
   (t/testing "symbols resolved as references during parsing"
 
     (t/is (= 1
@@ -288,3 +296,17 @@
                   #::l{:begin #::l{:line 1, :column 7},
                        :end #::l{:line 1, :column 7}}}
                  data))))))
+
+(t/deftest newlines
+
+  (t/testing "ignore newlines"
+
+    (t/is (= "foobarbaz"
+             (parse* "CONCATENATE('foo',
+                                  'bar',
+                                  'baz')")))
+
+    (t/is (= "foobarbaz"
+             (parse* "'foo' &
+                      'bar' &
+                      'baz'")))))

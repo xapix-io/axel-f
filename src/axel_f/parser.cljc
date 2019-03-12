@@ -4,12 +4,12 @@
             [clojure.string :as string]))
 
 (defn triml-whitespaces [tokens]
-  (if (lexer/whitespace? (first tokens))
+  (if ((some-fn lexer/whitespace? lexer/newline?) (first tokens))
     (recur (rest tokens))
     tokens))
 
 (defn trimr-whitespaces [tokens]
-  (if (lexer/whitespace? (last tokens))
+  (if ((some-fn lexer/whitespace? lexer/newline?) (last tokens))
     (recur (butlast tokens))
     tokens))
 
@@ -217,6 +217,11 @@
       (lexer/postfix-operator? (first tokens'))
       [(runtime/unary-expr (runtime/operator-expr (first tokens')) expr)
        (rest tokens')]
+
+      (or (lexer/punctuation-literal? (first tokens') ["."])
+          (lexer/bracket-literal? (first tokens') ["["]))
+      (parse-expression (cons (runtime/root-reference-expr expr)
+                              tokens'))
 
       :otherwise
       [expr tokens'])))
