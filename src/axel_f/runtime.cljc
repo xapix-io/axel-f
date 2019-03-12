@@ -113,10 +113,12 @@
    :end (:end (position field-expr))})
 
 (defmethod eval ::root-reference-expr [{::keys [field-expr]} & [g l]]
-  (let [f (eval field-expr g l)]
-    (if (= "_" f)
-      (if (= ::no-ctx l) g l)
-      ((core/find-impl "flexy-get") g f))))
+  (if (= ::application-expr (::type field-expr))
+    (eval field-expr g l)
+    (let [f (eval field-expr g l)]
+      (if (= "_" f)
+        (if (= ::no-ctx l) g l)
+        ((core/find-impl "flexy-get") g f)))))
 
 (defmethod position ::reference-expr [{::keys [ctx-expr field-expr]}]
   (merge (position ctx-expr)
