@@ -62,6 +62,7 @@ In addition to a formula, the run function can accept execution context as a sec
 
 # Data types
 
+- [x] Null as in Excel (NULL).
 - [x] Booleans as in Excel (TRUE/FALSE). In addition axel-f understands `True/False/true/false`
 - [x] Numbers (Integers, Floats, Exponential form)
 - [x] Strings in double or single quotes. (`'Some String'`, `"Some String"`)
