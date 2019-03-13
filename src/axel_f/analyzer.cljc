@@ -44,4 +44,7 @@
   (free-variables expr []))
 
 (defn report [ast]
-  {:vars (filter not-empty (distinct (free-variables ast)))})
+  {:vars (filter (fn [path]
+                   (and (not-empty path)
+                        (every? not-empty path)))
+                 (distinct (free-variables ast)))})

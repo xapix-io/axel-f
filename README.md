@@ -58,6 +58,7 @@ In addition to a formula, the run function can accept execution context as a sec
 * `_` can be used as a self reference. When used in special functions (MAP, FILTER, SORT) will reference single item of collection.
 * field reference can have any character except space, single/double quote, dot, comma, opening/closing square/round brackets and operators
   * fields with mentioned symbols inside must be quoted by wrapping into `#''` or just a string: `#'bar > baz'[0].foo` or `'foo -> bar'.baz`
+  * some functions such as `FILTER` or `SORT` possibly can return nested data structure and this data can be used as a root reference object: `FILTER(_.x = 1, _)[0].x` with context `[{:x 2} {:x 1} {:x 3}]` returns `1` as expected.
 
 # Data types
 
