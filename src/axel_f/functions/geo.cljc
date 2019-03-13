@@ -54,7 +54,7 @@
 
 (def geo-distance-meta
   {:args [{:desc "List of points. Each point must be a tuple of latitude and longitude"}]
-   :desc "Calculate the distance for the path described as a list of geo points. Each point must a tuple of two or three float numbers."})
+   :desc "Calculate the distance for the path described as a list of geo points. Each point must a tuple of two float numbers."})
 
 (def-excel-fn
   "GEO.DISTANCE"
