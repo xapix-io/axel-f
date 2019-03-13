@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.xapix</groupId>
     <artifactId>axel-f</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <name>axel-f</name>
     <dependencies>
         <dependency>
@@ -20,6 +20,11 @@
             <groupId>clj-fuzzy</groupId>
             <artifactId>clj-fuzzy</artifactId>
             <version>0.4.1</version>
+        </dependency>
+        <dependency>
+            <groupId>digest</groupId>
+            <artifactId>digest</artifactId>
+            <version>1.4.8</version>
         </dependency>
     </dependencies>
     <build>
