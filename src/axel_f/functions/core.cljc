@@ -72,6 +72,9 @@
 (defn percent [x]
   (* 0.01 (coerce/excel-number x)))
 
+(defn range* [x y]
+  (range x y))
+
 (defn flexy-get [m k]
   (cond
     (string? k)
@@ -83,12 +86,20 @@
         (get m (string/join "/" (filter identity ((juxt namespace name) k)))))))
 
 (defn flexy-nth [m i]
-  (if (and (sequential? m)
+  (cond
+    (and (sequential? m)
            (integer? i))
     (nth m i nil)
+
+    (and (sequential? m)
+         (sequential? i))
+    (subvec m (first i) (inc (last i)))
+
+    :otherwise
     (flexy-get m i)))
 
 (def-excel-fn
+  ":" range* nil
   "+" add nil
   "-" sub nil
   "*" mult nil

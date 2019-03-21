@@ -1,6 +1,6 @@
 (ns axel-f.functions.math
   (:require [axel-f.functions.coercion :as coercion]
-            [axel-f.functions.core :refer [def-excel-fn]]))
+            [axel-f.functions.core :refer [def-excel-fn add sub]]))
 
 (defn round
   [d & [precision]]
@@ -32,6 +32,20 @@
            :opt true
            :repeatable true}]})
 
+(defn inc* [x]
+  (add x 1))
+
+(def inc*-meta
+  {:desc "Increment number by 1"
+   :args [{:desc "The number to increment"}]})
+
+(defn dec* [x]
+  (sub x 1))
+
+(def dec*-meta
+  {:desc "Decrement number by 1"
+   :args [{:desc "The number to decrement"}]})
+
 (def-excel-fn
   "SUM"
   sum
@@ -39,4 +53,12 @@
 
   "ROUND"
   round
-  round-meta)
+  round-meta
+
+  "INC"
+  inc*
+  inc*-meta
+
+  "DEC"
+  dec*
+  dec*-meta)
