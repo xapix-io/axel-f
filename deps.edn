@@ -38,4 +38,19 @@
                             {:git/url "https://github.com/cognitect-labs/test-runner"
                              :sha     "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}
                :main-opts  ["-m" "cognitect.test-runner"
-                            "-d" "test"]}}}
+                            "-d" "test"]}
+
+  :kaocha {:extra-paths ["test"]
+           :extra-deps {org.clojure/test.check {:mvn/version "RELEASE"}
+                        lambdaisland/kaocha {:mvn/version "0.0-413"}
+                        lambdaisland/kaocha-junit-xml {:mvn/version "0.0-63"}
+                        lambdaisland/kaocha-cloverage {:mvn/version "0.0-32"}
+                        lambdaisland/kaocha-cljs {:mvn/version "0.0-21"}}}
+
+  :unit {:main-opts ["-m" "kaocha.runner" "unit"]}
+
+  :unit-cljs {:main-opts ["-m" "kaocha.runner" "unit-cljs"]
+              :extra-deps {org.clojure/clojurescript {:mvn/version "RELEASE"}}
+              :override-deps {org.clojure/clojure {:mvn/version "1.10.0"}}}
+
+  :watch {:main-opts ["-m" "kaocha.runner" "unit" "--watch"]}}}

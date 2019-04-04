@@ -41,19 +41,3 @@
             :otherwise
             (throw (ex-info "Formula must be a string or precompiled expression." {})))]
     (f context)))
-
-#?(:clj
-   (defn repl
-     "start read eval print loop"
-     [ctx]
-     (println "press ctrl-D or type `end` to exit")
-     (loop []
-       (print "? ")
-       (flush)
-       (let [formula (read-line)]
-         (if (= "end" formula)
-           (print "end")
-           (let [f (try (compile formula) (catch Throwable e (print "formula read error\n")))
-                 res (when f (try (f ctx) (catch Throwable e (print "formula eval error\n"))))]
-             (when res (print "=" res "\n"))
-             (recur)))))))
