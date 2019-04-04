@@ -9,6 +9,7 @@
 /checkouts/
 /js/
 /cljs-test-runner-out/
+/.cljs_node_repl/
 /.cpcache/
 /out/
 /test-results/

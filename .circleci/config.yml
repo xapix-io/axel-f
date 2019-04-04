@@ -1,9 +1,10 @@
+version: 2
+
 defaults: &defaults
   docker:
     - image: clojure:tools-deps
   working_directory: ~/repo
 
-version: 2
 jobs:
   checkout_code:
     <<: *defaults
@@ -25,12 +26,17 @@ jobs:
       - restore_cache:
           key: 1.9-{{ checksum "deps.edn" }}
 
+      - run: mkdir -p test-results/junit
+
       - run:
           name: Test with clojure 1.9
           type: shell
           command: |
-            clojure -A:test:coverage
+            clojure -A:1.9:kaocha:unit
             bash <(curl -s https://codecov.io/bash)
+
+      - store_test_results:
+          path: test-results
 
       - save_cache:
           paths:
@@ -51,7 +57,7 @@ jobs:
           name: Test with clojure 1.10-master
           type: shell
           command: |
-            clojure -A:master:test:clj-runner
+            clojure -A:1.10:kaocha:unit
 
       - save_cache:
           paths:
@@ -75,12 +81,13 @@ jobs:
             apt-get update
             curl -sL https://deb.nodesource.com/setup_10.x | bash -
             apt-get install -y build-essential nodejs
+            npm install ws isomorphic-ws
 
       - run:
           name: Test clojurescript
           type: shell
           command: |
-            clojure -A:cljs:test:cljs-runner
+            clojure -A:1.10:kaocha:unit-cljs
 
       - save_cache:
           paths:
@@ -102,7 +109,7 @@ jobs:
           name: Build JavaScript bundle
           type: shell
           command: |
-            clojure -A:cljs -m cljs.main -co axel_f.min.js.edn --compile
+            clojure -A:1.10:cljs -m cljs.main -co axel_f.min.js.edn --compile
 
       - run:
           name: Prepare workspace for publishing
