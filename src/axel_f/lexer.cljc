@@ -46,7 +46,7 @@
        (contains? (set val) (str t)))))
 
 (def prefix-operators [":" "+" "-" "!"])
-(def infix-operators ["+" "-" "*" "/" "&" "=" "<" ">" "<=" ">=" "<>" "^"])
+(def infix-operators [":" "+" "-" "*" "/" "&" "=" "<" ">" "<=" ">=" "<>" "^"])
 (def postfix-operators ["%"])
 (def operators (distinct (concat prefix-operators infix-operators postfix-operators)))
 
