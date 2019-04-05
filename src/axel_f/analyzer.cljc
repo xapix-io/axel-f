@@ -14,13 +14,13 @@
    (free-variables right-expr vars)))
 
 (defmethod free-variables ::runtime/root-reference-expr [{::runtime/keys [field-expr]} & [vars]]
-  (let [field (runtime/eval field-expr)]
+  (let [field (runtime/eval* field-expr nil nil nil)]
     (cons []
           (cons (cons field (first vars))
                 (rest vars)))))
 
 (defmethod free-variables ::runtime/reference-expr [{::runtime/keys [ctx-expr field-expr]} & [vars]]
-  (let [field (runtime/eval field-expr nil nil)]
+  (let [field (runtime/eval* field-expr nil nil nil)]
     (free-variables ctx-expr (cons (cons field (first vars))
                                    (rest vars)))))
 

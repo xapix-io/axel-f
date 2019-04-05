@@ -9,12 +9,11 @@
 /checkouts/
 /js/
 /cljs-test-runner-out/
-.lein-deps-sum
-.lein-repl-history
-.lein-plugins/
-.lein-failures
+/.cljs_node_repl/
+/.cpcache/
+/out/
+/test-results/
 .nrepl-port
-.cpcache/
 
 
 # End of https://www.gitignore.io/api/clojure

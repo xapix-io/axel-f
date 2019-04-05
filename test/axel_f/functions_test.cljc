@@ -87,11 +87,23 @@
   (t/is (= [1 2 3]
            (eval* "MAP(_, {1,2,3})")))
 
+  (t/is (= [1 2 3]
+           (eval* "MAP(FN(_), {1,2,3})") ))
+
+  (t/is (= [2 3 4]
+           (eval* "WITH(inc, FN(_ + 1), MAP(inc, {1,2,3}))")))
+
   (t/is (= [1 3]
            (eval* "FILTER(_ <> 2, {1,2,3})")))
 
+  (t/is (= [1 3]
+           (eval* "WITH(nottwo, FN(_ <> 2), FILTER(nottwo, foo))" {:foo [1 2 3]})))
+
   (t/is (= [{:foo 1} {:foo 2} {:foo 3}]
            (eval* "SORT(_.foo, _)" [{:foo 3} {:foo 1} {:foo 2}])))
+
+  (t/is (= [{:foo 1} {:foo 2} {:foo 3}]
+           (eval* "WITH(by-foo, FN(_.foo), SORT(by-foo, _))" [{:foo 3} {:foo 1} {:foo 2}]) ))
 
   (t/is (= 1
            (eval* "IF(1 = 1, 1, 2)")))
@@ -107,6 +119,34 @@
 
   (t/is (= "found two"
            (eval* "IFS(foo = 1, 'found one', _.foo = 2, 'found two')" {:foo 2}))))
+
+(t/deftest closures
+
+  (t/is (= "foobar"
+           (eval* "WITH(foo, 'f' & 'o' & 'o',
+                        bar, CONCATENATE('b', 'a', 'r'),
+                        foo & bar)")))
+
+  (t/is (= [1 2 3]
+           (eval* "WITH(x, 1,
+                        y, x + 1,
+                        z, y + 1,
+                        {x, y, z})")))
+
+  (let [f1 (-> "CONCATENATE(MAP(inc, foo), _.bar)" l/read-formula p/parse r/eval)
+        f2 (-> "CONCATENATE(foo, _.bar)" l/read-formula p/parse r/eval)]
+
+    (t/is (= "123"
+             (f1 {:foo [0 1 2]} nil {"inc" inc})))
+
+    (t/is (= "123456"
+             (f1 {:foo [0 1 2]} {:bar [4 5 6]} {"inc" inc})))
+
+    (t/is (= "123"
+             (f2 {:foo [1 2 3]})))
+
+    (t/is (= "123456"
+             (f2 {:foo [1 2 3]} {:bar [4 5 6]})))))
 
 (t/deftest math-functions
 
