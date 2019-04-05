@@ -32,7 +32,7 @@
       (contains? #{\#} t)))
 
 (defn punctuation-literal?
-  ([t] (punctuation-literal? t ["," "."]))
+  ([t] (punctuation-literal? t ["," "." ";" ";;"]))
   ([{::keys [type value] :as t} val]
    (or (and (= type ::punctuation)
             (contains? (set val) value))
@@ -208,11 +208,20 @@
                      :cljs get-method) read-token! ::symbol) rdr)))))))))
 
 (defmethod read-token! ::punctuation [rdr]
-  (let [begin (get-position rdr)]
-    {::value (str (reader/read-elem rdr))
-     ::type ::punctuation
-     ::begin begin
-     ::end begin}))
+  (let [begin (get-position rdr)
+        ch (reader/read-elem rdr)
+        next-ch (reader/peek-elem rdr)]
+    (if (punctuation-literal? next-ch [";"])
+      (loop []
+        (let [ch (reader/read-elem rdr)]
+          (if (or (newline? ch)
+                  (end-of-input? ch))
+            (read-token! rdr)
+            (recur))))
+      {::value (str ch)
+       ::type ::punctuation
+       ::begin begin
+       ::end begin})))
 
 (defmethod read-token! ::bracket [rdr]
   (let [begin (get-position rdr)]

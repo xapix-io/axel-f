@@ -557,6 +557,99 @@
                    :end #::sut{:line 1, :column 18}}]
            (sut/read-formula "1to1-mapping.body"))))
 
+(t/deftest comments
+
+  (t/is (= [#::sut{:type ::sut/eoi,
+                   :begin #::sut{:line 1, :column 15},
+                   :end #::sut{:line 1, :column 15},
+                   :depth 0}]
+           (sut/read-formula ";; I'm comment")))
+
+  (t/is (= [#::sut{:type ::sut/whitespace,
+                   :value "                              ",
+                   :begin #::sut{:line 2, :column 1},
+                   :end #::sut{:line 2, :column 31},
+                   :depth 0}
+            #::sut{:value 1,
+                   :type ::sut/number,
+                   :begin #::sut{:line 2, :column 31},
+                   :end #::sut{:line 2, :column 31},
+                   :depth 0}
+            #::sut{:type ::sut/whitespace,
+                   :value " ",
+                   :begin #::sut{:line 2, :column 32},
+                   :end #::sut{:line 2, :column 33},
+                   :depth 0}
+            #::sut{:value "+",
+                   :type ::sut/operator,
+                   :begin #::sut{:line 2, :column 33},
+                   :end #::sut{:line 2, :column 33},
+                   :depth 0}
+            #::sut{:type ::sut/whitespace,
+                   :value " ",
+                   :begin #::sut{:line 2, :column 34},
+                   :end #::sut{:line 2, :column 35},
+                   :depth 0}
+            #::sut{:value 1,
+                   :type ::sut/number,
+                   :begin #::sut{:line 2, :column 35},
+                   :end #::sut{:line 2, :column 35},
+                   :depth 0}
+            #::sut{:type ::sut/eoi,
+                   :begin #::sut{:line 2, :column 36},
+                   :end #::sut{:line 2, :column 36},
+                   :depth 0}]
+           (sut/read-formula ";; I'm comment
+                              1 + 1")))
+
+  (t/is (= [#::sut{:type ::sut/whitespace,
+                   :value "                              ",
+                   :begin #::sut{:line 2, :column 1},
+                   :end #::sut{:line 2, :column 31},
+                   :depth 0}
+            #::sut{:value 1,
+                   :type ::sut/number,
+                   :begin #::sut{:line 2, :column 31},
+                   :end #::sut{:line 2, :column 31},
+                   :depth 0}
+            #::sut{:type ::sut/whitespace,
+                   :value " ",
+                   :begin #::sut{:line 2, :column 32},
+                   :end #::sut{:line 2, :column 33},
+                   :depth 0}
+            #::sut{:value "+",
+                   :type ::sut/operator,
+                   :begin #::sut{:line 2, :column 33},
+                   :end #::sut{:line 2, :column 33},
+                   :depth 0}
+            #::sut{:type ::sut/whitespace,
+                   :value " ",
+                   :begin #::sut{:line 2, :column 34},
+                   :end #::sut{:line 2, :column 35},
+                   :depth 0}
+            #::sut{:value 1,
+                   :type ::sut/number,
+                   :begin #::sut{:line 2, :column 35},
+                   :end #::sut{:line 2, :column 35},
+                   :depth 0}
+            #::sut{:type ::sut/whitespace,
+                   :value " ",
+                   :begin #::sut{:line 2, :column 36},
+                   :end #::sut{:line 2, :column 37},
+                   :depth 0}
+            #::sut{:type ::sut/whitespace,
+                   :value "                              ",
+                   :begin #::sut{:line 3, :column 1},
+                   :end #::sut{:line 3, :column 31},
+                   :depth 0}
+            #::sut{:type ::sut/eoi,
+                   :begin #::sut{:line 3, :column 47},
+                   :end #::sut{:line 3, :column 47},
+                   :depth 0}]
+           (sut/read-formula ";; I'm comment
+                              1 + 1 ;; Another comment
+                              ;; More comments"))))
+
 (t/deftest errors
 
   (t/is (thrown-with-msg?
