@@ -42,7 +42,7 @@
 (defn binary? [{::keys [type]}]
   (= type ::binary-expr))
 
-(declare eval)
+(declare eval eval*)
 
 (defmulti function-name type)
 
@@ -50,26 +50,26 @@
   (throw (ex-info "Not implemented" {})))
 
 (defmethod function-name ::root-reference-expr [{::keys [field-expr]}]
-  (eval field-expr nil nil))
+  (eval* field-expr nil nil nil))
 
 (defmethod function-name ::reference-expr [{::keys [ctx-expr field-expr]}]
-  (str (function-name ctx-expr) "." (eval field-expr nil nil)))
+  (str (function-name ctx-expr) "." (eval* field-expr nil nil nil)))
 
 (defmulti position type)
 
-(defmulti eval type)
+(defmulti eval* (fn [{::keys [type]} _ _ _] type))
 
 (defmethod position ::constant-expr [{::keys [token]}]
   {:begin (::lexer/begin token)
    :end (::lexer/end token)})
 
-(defmethod eval ::constant-expr [{::keys [value]} & [_ _ _]] value)
+(defmethod eval* ::constant-expr [{::keys [value]} _ _ _] value)
 
 (defmethod position ::operator [{::keys [token]}]
   {:begin (::lexer/begin token)
    :end (::lexer/end token)})
 
-(defmethod eval ::operator [{::keys [operator]} & [_ _ _]] operator)
+(defmethod eval* ::operator [{::keys [operator]} _ _ _] operator)
 
 (defmethod position ::unary-expr [{::keys [operator expr]}]
   (if (lexer/prefix-operator? (::token operator))
@@ -78,9 +78,9 @@
     {:end (:end (position operator))
      :begin (:begin (position expr))}))
 
-(defmethod eval ::unary-expr [{::keys [operator expr] :as ue} & [g l c]]
-  (let [op (eval operator g l c)
-        arg (eval expr g l c)]
+(defmethod eval* ::unary-expr [{::keys [operator expr] :as ue} g l c]
+  (let [op (eval* operator g l c)
+        arg (eval* expr g l c)]
     (try
       (op arg)
       (catch ExceptionInfo e
@@ -91,10 +91,10 @@
   {:begin (:begin (position left-expr))
    :end (:end (position right-expr))})
 
-(defmethod eval ::binary-expr [{::keys [operator left-expr right-expr] :as be} & [g l c]]
-  (let [op (eval operator g l c)
-        arg1 (eval left-expr g l c)
-        arg2 (eval right-expr g l c)]
+(defmethod eval* ::binary-expr [{::keys [operator left-expr right-expr] :as be} g l c]
+  (let [op (eval* operator g l c)
+        arg1 (eval* left-expr g l c)
+        arg2 (eval* right-expr g l c)]
     (try
       (op arg1 arg2)
       (catch ExceptionInfo e
@@ -105,17 +105,17 @@
   {:begin (::lexer/begin open-token)
    :end (::lexer/end close-token)})
 
-(defmethod eval ::list-expr [{::keys [exprs]} & [g l c]]
-  (map #(eval % g l c) exprs))
+(defmethod eval* ::list-expr [{::keys [exprs]} g l c]
+  (map #(eval* % g l c) exprs))
 
 (defmethod position ::root-reference-expr [{::keys [field-expr]}]
   {:begin (:begin (position field-expr))
    :end (:end (position field-expr))})
 
-(defmethod eval ::root-reference-expr [{::keys [field-expr]} & [g l c]]
+(defmethod eval* ::root-reference-expr [{::keys [field-expr]} g l c]
   (if (= ::application-expr (::type field-expr))
-    (eval field-expr g l c)
-    (let [f (eval field-expr g l c)]
+    (eval* field-expr g l c)
+    (let [f (eval* field-expr g l c)]
       (if (= "_" f)
         (if (= ::no-ctx l) g l)
         (or (get c f)
@@ -125,9 +125,9 @@
   (merge (position ctx-expr)
          {:end (:end (position field-expr))}))
 
-(defmethod eval ::reference-expr [{::keys [ctx-expr field-expr]} & [g l c]]
-  (let [m (eval ctx-expr g l c)
-        f (eval field-expr g l c)]
+(defmethod eval* ::reference-expr [{::keys [ctx-expr field-expr]} g l c]
+  (let [m (eval* ctx-expr g l c)
+        f (eval* field-expr g l c)]
     (cond
       (map? m)
       ((core/find-impl "flexy-get") m f)
@@ -141,12 +141,12 @@
             (::lexer/begin open-token))
    :end (::lexer/end close-token)})
 
-(defmethod eval ::index-expr [{::keys [ctx-expr ref-expr]} & [g l c]]
-  (let [m (if ctx-expr (eval ctx-expr g l c) g)]
+(defmethod eval* ::index-expr [{::keys [ctx-expr ref-expr]} g l c]
+  (let [m (if ctx-expr (eval* ctx-expr g l c) g)]
     (if (or (nil? ref-expr)
             (operator? ref-expr))
       (when (sequential? m) m)
-      (let [i (eval ref-expr g l)]
+      (let [i (eval* ref-expr g l c)]
         ((core/find-impl "flexy-nth") m i)))))
 
 (defmethod position ::application-expr [{::keys [ref-expr arg-list]}]
@@ -169,18 +169,21 @@
       (throw (ex-info (str "Wrong number of arguments passed to `" f "` function.")
                       {:position (position arg-list)})))))
 
-(defn- eval-special-fn [special-f fn arg-exprs arg-list ref-expr g l c]
+(defn- eval-special-fn [special-f fname arg-exprs arg-list ref-expr g l c]
   (when-not (= (count arg-exprs) 2)
-    (throw (ex-info (str "Wrong number of arguments passed to `" fn "` function.")
+    (throw (ex-info (str "Wrong number of arguments passed to `" fname "` function.")
                     {:position {:begin (:begin (position ref-expr))
                                 :end (:end (position arg-list))}})))
   (let [f (first arg-exprs)
         args (second arg-exprs)]
-    (let [f' (and (= ::root-reference-expr (::type f)) (get c (function-name f)))]
-      (special-f (or f' #(eval f g % c))
-                 (eval args g l c)))))
+    (let [f' (or (and (= ::root-reference-expr (::type f)) (get c (function-name f)))
+                 (and (= ::application-expr (::type f))
+                      (= "FN" (::fs f))
+                      (eval* f g c l))
+                 #(eval* f g % c))]
+      (special-f f' (eval* args g l c)))))
 
-(defmethod eval ::application-expr [{::keys [fs arg-list ref-expr]} & [g l c]]
+(defmethod eval* ::application-expr [{::keys [fs arg-list ref-expr]} g l c]
   (let [arg-exprs (::exprs arg-list)]
     (case fs
       "MAP" (eval-special-fn map fs arg-exprs arg-list ref-expr g l c)
@@ -192,12 +195,10 @@
                (throw (ex-info "Wrong number of arguments passed to `IF` function."
                                {:position {:begin (:begin (position ref-expr))
                                            :end (:end (position arg-list))}})))
-             (let [condition (eval (first arg-exprs) g l c)
-                   condition (if (fn? condition) (condition g l) condition)]
-               (if condition
-                   (eval (second arg-exprs) g l c)
-                 (when-let [arg-expr (nth arg-exprs 2 nil)]
-                   (eval arg-expr g l c)))))
+             (if (eval* (first arg-exprs) g l c)
+               (eval* (second arg-exprs) g l c)
+               (when-let [arg-expr (nth arg-exprs 2 nil)]
+                 (eval* arg-expr g l c))))
 
       "IFS" (do
               (when-not (even? (count arg-exprs))
@@ -206,27 +207,27 @@
                                             :end (:end (position arg-list))}})))
               (loop [[[if-expr then-expr] & clauses] (partition 2 2 arg-exprs)]
                 (when (some? if-expr)
-                  (let [condition (eval if-expr g l c)
-                        condition (if (fn? condition) (condition g l) condition)]
-                    (if condition
-                      (eval then-expr g l c)
-                      (recur clauses))))))
+                  (if (eval* if-expr g l c)
+                    (eval* then-expr g l c)
+                    (recur clauses)))))
 
       "WITH" (let [arg-exprs (partition-all 2 arg-exprs)]
                (loop [[binding & bindings] arg-exprs closures c]
                  (if (= 1 (count binding))
-                   (eval (first binding) g l closures)
+                   (eval* (first binding) g l closures)
                    (let [[name-expr val-expr] binding]
                      (recur bindings (assoc closures
                                             (function-name name-expr)
-                                            (eval val-expr g l closures)))))))
+                                            (eval* val-expr g l closures)))))))
 
-      "FN" ((get-method eval ::formula) {::expr (first arg-exprs)} g l c)
+      "FN" (let [f (eval {::expr (first arg-exprs)})]
+             (fn [ctx]
+               (f g ctx c)))
 
       (if-let [f-impl (core/find-impl fs)]
         (do
           (check-arguments fs (core/find-meta fs) arg-list)
-          (let [args (map #(eval % g l c)
+          (let [args (map #(eval* % g l c)
                           arg-exprs)]
             (try
               (apply f-impl args)
@@ -244,15 +245,14 @@
 (defmethod position ::formula [{::keys [expr]}]
   (position expr))
 
-(defmethod eval nil [_] nil)
-
-(defmethod eval ::formula [{::keys [expr]} & [g l c]]
+(defn eval [{::keys [expr]}]
   (let [f (gensym)]
     (fn f
-      ([] (f nil))
-      ([ctx] (f ctx nil))
-      ([global-ctx local-ctx]
-       (eval expr (or global-ctx g) (or local-ctx l ::no-ctx) (or c {}))))))
+      ([] (f nil ::no-ctx {}))
+      ([global-ctx] (f global-ctx ::no-ctx {}))
+      ([global-ctx local-ctx] (f global-ctx local-ctx {}))
+      ([global-ctx local-ctx closures]
+       (eval* expr global-ctx local-ctx closures)))))
 
 (defn constant-expr
   "Convert `token` into constant expression"

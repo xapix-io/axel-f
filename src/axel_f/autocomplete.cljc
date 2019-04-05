@@ -12,12 +12,12 @@
   (if ref
     (case (runtime/type ref)
       ::runtime/root-reference-expr context
-      ::runtime/reference-expr (runtime/eval (::runtime/ctx-expr ref) context))
+      ::runtime/reference-expr (runtime/eval* (::runtime/ctx-expr ref) context nil nil))
     context))
 
 (defn get-last-field [ref context]
   (if ref
-    (runtime/eval (::runtime/field-expr ref) context nil)
+    (runtime/eval* (::runtime/field-expr ref) context nil nil)
     ""))
 
 (defn next-fields [context]
