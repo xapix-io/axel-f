@@ -569,7 +569,7 @@ WITH(starting-point, Position.GpsDataCompressed.gpsPoint,
                                                {'longitude', starting-point.longitude + SUM(MAP(_.longitude, normalized[0:INC(_)]))}}))),
      into-point, FN({_.latitude, _.longitude}),
      decompressed, MAP(decompressor, 0:LENGTH(normalized)),
-     GEO.DISTANCE({into-point(starting-point), into-point(decompressed[0])}) + GEO.DISTANCE(MAP(into-point, decompressed)))
+     ROUND(GEO.DISTANCE({into-point(starting-point), into-point(decompressed[0])}) + GEO.DISTANCE(MAP(into-point, decompressed)), 10))
 "
         f (-> f l/read-formula p/parse r/eval)
         data {"Position" {"GpsDataCompressed" {"gpsDelta" [{"latitude" 9 "longitude" 32872 "time" 120}
@@ -587,4 +587,4 @@ WITH(starting-point, Position.GpsDataCompressed.gpsPoint,
                                 "heading" 298.64
                                 "dateTime" 1521105337000
                                 "height" 269.46667}}}]
-    (t/is (= 0.0397927387867958 (f data)))))
+    (t/is (= 0.0397927388 (f data)))))
