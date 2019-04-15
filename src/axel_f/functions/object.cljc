@@ -10,7 +10,7 @@
       {}))
 
 (def-excel-fn
-  "OBJECT"
+  "OBJECT.NEW"
   obj
   {:desc "Construct an object from collection of key/value pairs"
    :args [{:desc "Collection of key/value pairs"}]}

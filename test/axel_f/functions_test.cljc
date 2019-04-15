@@ -71,6 +71,14 @@
          #"Formula error"
          (eval* "--'foo'"))))
 
+(t/deftest operator-precedence
+
+  (t/is (= 6 (eval* "2 + 2 * 2")))
+
+  (t/is (= 8 (eval* "(2 + 2) * 2")))
+
+  (t/is (= 8 (eval* "2 * (2 + 2)"))))
+
 (t/deftest references
 
   (t/is (= 1

@@ -44,8 +44,8 @@
                                         (= (::lexer/depth t)
                                            (::lexer/depth token)))))
                             tokens)
-        [expr _] (parse-expression tokens')]
-    (cons expr (drop (inc (count tokens')) tokens))))
+        [expr [token' & _]] (parse-expression tokens')]
+    (cons (runtime/group-expr expr token token') (drop (inc (count tokens')) tokens))))
 
 (defn parse-array [[token & tokens] close-symbol]
   (let [tokens' (take-while (fn [t]
