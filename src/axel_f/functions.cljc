@@ -7,7 +7,8 @@
             axel-f.functions.geo
             axel-f.functions.json
             axel-f.functions.base64
-            axel-f.functions.hash)
+            axel-f.functions.hash
+            axel-f.functions.object)
   #?(:clj (:import clojure.lang.ExceptionInfo)))
 
 (defn find-impl [fname]
