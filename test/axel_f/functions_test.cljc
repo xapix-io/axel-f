@@ -71,6 +71,14 @@
          #"Formula error"
          (eval* "--'foo'"))))
 
+(t/deftest operator-precedence
+
+  (t/is (= 6 (eval* "2 + 2 * 2")))
+
+  (t/is (= 8 (eval* "(2 + 2) * 2")))
+
+  (t/is (= 8 (eval* "2 * (2 + 2)"))))
+
 (t/deftest references
 
   (t/is (= 1
@@ -545,3 +553,38 @@
 
   (t/is (= "foo, , baz"
            (eval* "TEXTJOIN(\", \", FALSE, _)" ["foo" nil "baz"]))))
+
+(t/deftest complex-example
+
+  (let [f "
+WITH(starting-point, Position.GpsDataCompressed.gpsPoint,
+     normalized, WITH(gps-delta, Position.GpsDataCompressed.gpsDelta,
+                      normalize, FN(WITH(normalize, FN(IF(_ > 2^15, 2^15 - _, _) / 600000),
+                                         latitude, normalize(_.latitude),
+                                         longitude, normalize(_.longitude),
+                                         OBJECT.MERGE(_, OBJECT.NEW({{'latitude', latitude}, {'longitude', longitude}})))),
+                      MAP(normalize, gps-delta)),
+     decompressor, FN(OBJECT.MERGE(normalized[_],
+                                   OBJECT.NEW({{'latitude', starting-point.latitude + SUM(MAP(_.latitude, normalized[0:INC(_)]))},
+                                               {'longitude', starting-point.longitude + SUM(MAP(_.longitude, normalized[0:INC(_)]))}}))),
+     into-point, FN({_.latitude, _.longitude}),
+     decompressed, MAP(decompressor, 0:LENGTH(normalized)),
+     ROUND(GEO.DISTANCE({into-point(starting-point), into-point(decompressed[0])}) + GEO.DISTANCE(MAP(into-point, decompressed)), 10))
+"
+        f (-> f l/read-formula p/parse r/eval)
+        data {"Position" {"GpsDataCompressed" {"gpsDelta" [{"latitude" 9 "longitude" 32872 "time" 120}
+                                                           {"latitude" 32844 "longitude" 19 "time" 240}
+                                                           {"latitude" 64 "longitude" 37 "time" 180}]
+                                               "gpsPoint" {"latitude" 48.723717
+                                                           "longitude" 9.1222725
+                                                           "speed" 0.8791895
+                                                           "heading" 0
+                                                           "dateTime" 1521099587000}
+                                               "neglect" 0}
+                    "GpsPoint" {"latitude" 47.905552
+                                "longitude" 16.274143
+                                "speed" 0.62131244
+                                "heading" 298.64
+                                "dateTime" 1521105337000
+                                "height" 269.46667}}}]
+    (t/is (= 0.0397927388 (f data)))))

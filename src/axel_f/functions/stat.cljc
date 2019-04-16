@@ -86,6 +86,11 @@
   count*
   count*-meta
 
+  "LENGTH"
+  count
+  {:args [{:opt true
+           :repeatable true}]}
+
   "AVERAGE"
   average
   average-meta)

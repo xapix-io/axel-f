@@ -9,7 +9,7 @@
            (sut/obj [["foo" 1] [1 2]])))
 
   (t/is (= {"foo" 1 1 2}
-           ((af/compile "OBJECT({{'foo', 1}, {1, 2}})")))))
+           ((af/compile "OBJECT.NEW({{'foo', 1}, {1, 2}})")))))
 
 (t/deftest object-merge
   (t/is (= {"foo" 1 0 2 :baz 3}

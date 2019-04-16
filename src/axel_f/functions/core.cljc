@@ -93,7 +93,9 @@
 
     (and (sequential? m)
          (sequential? i))
-    (subvec m (first i) (inc (last i)))
+    (if (empty? i)
+      [(first m)]
+      (subvec (vec m) (first i) (inc (last i))))
 
     :otherwise
     (flexy-get m i)))

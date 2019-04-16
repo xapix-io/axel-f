@@ -149,6 +149,13 @@
       (let [i (eval* ref-expr g l c)]
         ((core/find-impl "flexy-nth") m i)))))
 
+(defmethod eval* ::group-expr [{::keys [expr]} g l c]
+  (eval* expr g l c))
+
+(defmethod position ::group-expr [{::keys [begin end]}]
+  {:begin (::lexer/begin begin)
+   :end (::lexer/end end)})
+
 (defmethod position ::application-expr [{::keys [ref-expr arg-list]}]
   {:begin (:begin (position ref-expr))
    :end (:end (position arg-list))})
@@ -239,8 +246,12 @@
                                               :end (:end (position arg-list))}
                                    :arguments args
                                    :cause (:cause (ex-data e))})))))))
-        (throw (ex-info (str "Unknown function `" fs "`")
-                        {:position (position ref-expr)}))))))
+        (if-let [f-impl (get c fs)]
+          (let [args (map #(eval* % g l c)
+                          arg-exprs)]
+            (apply f-impl args))
+          (throw (ex-info (str "Unknown function `" fs "`")
+                          {:position (position ref-expr)})))))))
 
 (defmethod position ::formula [{::keys [expr]}]
   (position expr))
@@ -328,6 +339,12 @@
    ::fs (function-name ref-expr)
    ::ref-expr ref-expr
    ::arg-list arg-list})
+
+(defn group-expr [expr begin-token end-token]
+  {::type ::group-expr
+   ::expr expr
+   ::begin begin-token
+   ::end end-token})
 
 (defn formula-expr [expr]
   {::type ::formula
