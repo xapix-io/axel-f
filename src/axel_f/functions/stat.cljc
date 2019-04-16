@@ -88,7 +88,8 @@
 
   "LENGTH"
   count
-  {:args [{:opt true
+  {:desc "Returns the number of items in the collection."
+   :args [{:opt true
            :repeatable true}]}
 
   "AVERAGE"
