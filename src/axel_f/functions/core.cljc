@@ -127,5 +127,6 @@
   "SORT" nil {:args [{:desc "Sorting function that will be applied to each element of the collection"}
                      {:desc "Collection of elements"}]
               :desc "Sorts a collection by the values returned from applying a sorting function to each element in said collection."}
-  "IF" nil {}
-  "IFS" nil {})
+  "IF" nil {:desc "Evaluates test. If not the singular values nil or false, evaluates and yields then, otherwise, evaluates and yields else. If else is not supplied it defaults to nil."}
+  "IFS" nil {:desc "Takes a set of test/expr pairs. It evaluates each test one at a time.  If a test returns logical true, cond evaluates and returns the value of the corresponding expr and doesn't evaluate any of the other tests or exprs. (IFS) returns nil."}
+  "FN" nil {:desc "Defines lambda function"})
