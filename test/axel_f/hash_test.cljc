@@ -1,6 +1,6 @@
 (ns axel-f.hash-test
-  (:require [axel-f.core :as af]
-            [axel-f.functions.hash :as sut]
+  (:require [axel-f.excel :as af]
+            [axel-f.excel.hash :as sut]
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])))
 
@@ -11,5 +11,5 @@
              (sut/sha256 "foo")))))
 
 (t/deftest HASHSHA256
-  (let [f (af/compile "HASH.SHA256('foo')")]
+  (let [f (af/eval "HASH.SHA256('foo')")]
     (t/is (= "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae" (f)))))

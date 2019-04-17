@@ -1,16 +1,16 @@
 (ns axel-f.functions-test
   (:require [axel-f.lexer :as l]
             [axel-f.parser :as p]
-            [axel-f.runtime :as r]
+            [axel-f.excel :as r]
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true]))
   #?(:clj (:import [clojure.lang ExceptionInfo])))
 
 (defn- eval*
-  ([f]
-   ((-> f l/read-formula p/parse r/eval)))
+  ([f] (eval* f nil))
   ([f c]
-   ((-> f l/read-formula p/parse r/eval) c)))
+   (let [f (-> f l/read p/parse r/eval)]
+     (f c))))
 
 (t/deftest operators
 
@@ -68,7 +68,7 @@
 
   (t/is (thrown-with-msg?
          ExceptionInfo
-         #"Formula error"
+         #"Fail to coerce `foo` to number."
          (eval* "--'foo'"))))
 
 (t/deftest operator-precedence
@@ -82,13 +82,20 @@
 (t/deftest references
 
   (t/is (= 1
-           (eval* "foo.'foo'" {"foo" {:foo 1}})))
+           (eval* "foo.'foo'" {"foo" {:foo 1}}) ))
 
   (t/is (= 1
            (eval* ":foo/bar" {"foo/bar" 1})))
 
   (t/is (= 1
-           (eval* "['foo']" {:foo 1}))))
+           (eval* "['foo']" {:foo 1})))
+
+  (t/is (= 1
+           (eval* "[:foo/bar]" {:foo/bar 1})))
+
+  (t/is (= 1
+           (eval* ":abr.bar[:abr.foo]" {:abr {:foo 0
+                                              :bar [1 2 3]}}))))
 
 (t/deftest special-functions
 
@@ -99,19 +106,19 @@
            (eval* "MAP(FN(_), {1,2,3})") ))
 
   (t/is (= [2 3 4]
-           (eval* "WITH(inc, FN(_ + 1), MAP(inc, {1,2,3}))")))
+           (eval* "WITH(inc, FN(_ + 1), MAP(inc(_), {1,2,3}))")))
 
   (t/is (= [1 3]
            (eval* "FILTER(_ <> 2, {1,2,3})")))
 
   (t/is (= [1 3]
-           (eval* "WITH(nottwo, FN(_ <> 2), FILTER(nottwo, foo))" {:foo [1 2 3]})))
+           (eval* "WITH(nottwo, FN(_ <> 2), FILTER(nottwo(_), foo))" {:foo [1 2 3]})))
 
   (t/is (= [{:foo 1} {:foo 2} {:foo 3}]
-           (eval* "SORT(_.foo, _)" [{:foo 3} {:foo 1} {:foo 2}])))
+           (eval* "SORT(FN(_.foo), _)" [{:foo 3} {:foo 1} {:foo 2}])))
 
   (t/is (= [{:foo 1} {:foo 2} {:foo 3}]
-           (eval* "WITH(by-foo, FN(_.foo), SORT(by-foo, _))" [{:foo 3} {:foo 1} {:foo 2}]) ))
+           (eval* "WITH(by-foo, FN(_.foo), SORT(by-foo(_), _))" [{:foo 3} {:foo 1} {:foo 2}]) ))
 
   (t/is (= 1
            (eval* "IF(1 = 1, 1, 2)")))
@@ -141,20 +148,20 @@
                         z, y + 1,
                         {x, y, z})")))
 
-  (let [f1 (-> "CONCATENATE(MAP(inc, foo), _.bar)" l/read-formula p/parse r/eval)
-        f2 (-> "CONCATENATE(foo, _.bar)" l/read-formula p/parse r/eval)]
+  (let [f1 (-> "CONCATENATE(MAP(inc(_), foo), _.bar)" l/read p/parse r/eval)
+        f2 (-> "CONCATENATE(foo, _.bar)" l/read p/parse r/eval)]
 
     (t/is (= "123"
-             (f1 {:foo [0 1 2]} nil {"inc" inc})))
+             (f1 {:foo [0 1 2]} {"inc" inc})))
 
     (t/is (= "123456"
-             (f1 {:foo [0 1 2]} {:bar [4 5 6]} {"inc" inc})))
+             (f1 {:foo [0 1 2] :bar [4 5 6]} {"inc" inc})))
 
     (t/is (= "123"
              (f2 {:foo [1 2 3]})))
 
     (t/is (= "123456"
-             (f2 {:foo [1 2 3]} {:bar [4 5 6]})))))
+             (f2 {:foo [1 2 3] :bar [4 5 6]})))))
 
 (t/deftest math-functions
 
@@ -563,15 +570,15 @@ WITH(starting-point, Position.GpsDataCompressed.gpsPoint,
                                          latitude, normalize(_.latitude),
                                          longitude, normalize(_.longitude),
                                          OBJECT.MERGE(_, OBJECT.NEW({{'latitude', latitude}, {'longitude', longitude}})))),
-                      MAP(normalize, gps-delta)),
+                      MAP(normalize(_), gps-delta)),
      decompressor, FN(OBJECT.MERGE(normalized[_],
                                    OBJECT.NEW({{'latitude', starting-point.latitude + SUM(MAP(_.latitude, normalized[0:INC(_)]))},
                                                {'longitude', starting-point.longitude + SUM(MAP(_.longitude, normalized[0:INC(_)]))}}))),
      into-point, FN({_.latitude, _.longitude}),
-     decompressed, MAP(decompressor, 0:LENGTH(normalized)),
-     ROUND(GEO.DISTANCE({into-point(starting-point), into-point(decompressed[0])}) + GEO.DISTANCE(MAP(into-point, decompressed)), 10))
+     decompressed, MAP(decompressor(_), 0:LENGTH(normalized)),
+     ROUND(GEO.DISTANCE({into-point(starting-point), into-point(decompressed[0])}) + GEO.DISTANCE(MAP(into-point(_), decompressed)), 10))
 "
-        f (-> f l/read-formula p/parse r/eval)
+        f (-> f l/read p/parse r/eval)
         data {"Position" {"GpsDataCompressed" {"gpsDelta" [{"latitude" 9 "longitude" 32872 "time" 120}
                                                            {"latitude" 32844 "longitude" 19 "time" 240}
                                                            {"latitude" 64 "longitude" 37 "time" 180}]

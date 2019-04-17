@@ -1,5 +1,4 @@
-(ns axel-f.functions.geo
-  (:require [axel-f.functions.core :refer [def-excel-fn]]))
+(ns axel-f.excel.geo)
 
 (def earth-radius 6371.0)
 
@@ -46,17 +45,14 @@
                 (cos lat-2)))]
     (* earth-radius 2 (asin (sqrt a)))))
 
-(defn geo-distance
+(defn geo-distance*
+  "Calculate the distance for the path described as a list of geo points. Each point must a tuple of two float numbers."
   [points]
   (->> points
        (partition 2 1)
        (reduce #(+ %1 (apply distance %2)) 0)))
 
-(def geo-distance-meta
-  {:args [{:desc "List of points. Each point must be a tuple of latitude and longitude"}]
-   :desc "Calculate the distance for the path described as a list of geo points. Each point must a tuple of two float numbers."})
+(def geo-distance #'geo-distance*)
 
-(def-excel-fn
-  "GEO.DISTANCE"
-  geo-distance
-  geo-distance-meta)
+(def env
+  {"GEO" {"DISTANCE" geo-distance}})

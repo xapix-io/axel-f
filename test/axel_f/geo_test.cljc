@@ -1,8 +1,8 @@
 (ns axel-f.geo-test
   (:require #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])
-            [axel-f.core :as af]
-            [axel-f.functions.geo :as sut]))
+            [axel-f.excel :as af]
+            [axel-f.excel.geo :as sut]))
 
 (t/deftest to-radians
   (t/are [deg rad] (= (sut/to-radians deg) rad)
@@ -14,7 +14,7 @@
 
 (t/deftest distance
   (t/testing "Calculate distance for given path"
-    (let [f (af/compile "GEO.DISTANCE(_)")]
+    (let [f (af/eval "GEO.DISTANCE(_)")]
       (t/are [path dist] (= (f path) dist)
         [[55.751244 37.618423] ;; Moscow
          [52.520008 13.404954] ;; Berlin

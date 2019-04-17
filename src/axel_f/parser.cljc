@@ -1,234 +1,357 @@
 (ns axel-f.parser
+  (:refer-clojure :exclude [memoize])
   (:require [axel-f.lexer :as lexer]
-            [axel-f.runtime :as runtime]
             [clojure.string :as string]))
 
-(defn triml-whitespaces [tokens]
-  (if ((some-fn lexer/whitespace? lexer/newline?) (first tokens))
-    (recur (rest tokens))
-    tokens))
+(declare ^:dynamic *store*)
+(declare parse-expression
+         parse-square-block
+         parse-atom
+         parse-binary
+         maybe-expression
+         maybe-square-block)
 
-(defn trimr-whitespaces [tokens]
-  (if ((some-fn lexer/whitespace? lexer/newline?) (last tokens))
-    (recur (butlast tokens))
-    tokens))
+(defn memoize [f store-key]
+  (fn [& args]
+    (if-let [res (get-in @*store* [store-key (cons (ffirst args) (next args))])]
+      res
+      (let [res (apply f args)]
+        (vswap! *store* assoc-in [store-key (cons (ffirst args) (next args))] res)
+        res))))
 
-(defn trim-whitespaces [tokens]
-  (-> tokens
-      trimr-whitespaces
-      triml-whitespaces))
+(defn- eof? [{::lexer/keys [type] :as token}]
+  (= type ::lexer/eof))
 
-(declare parse-expression parse-primary)
+(defn- postfix? [{::lexer/keys [value] ::keys [type parts] :as token}]
+  (let [value (or value (and (= type ::var) (= 1 (count parts)) (::lexer/value (first parts))))]
+    (= "%" value)))
 
-(defn parse-keyword [tokens]
-  (loop [acc [] [token & tokens'] tokens]
-    (cond
-      (or (lexer/operator-literal? token [":" "/"])
-          (lexer/punctuation-literal? token ["."]))
-      (recur (conj acc token) tokens')
+(defn- prefix? [{::lexer/keys [value] ::keys [type parts] :as op}]
+  (let [value (or value (and (= type ::var) (= 1 (count parts)) (::lexer/value (first parts))))]
+    (contains? (set ["!" "+" "-"]) value)))
 
-      (lexer/symbol-literal? token)
-      (if (lexer/operator-literal? (last acc) ["/"])
-        (cons (runtime/constant-expr
-               {::lexer/value (keyword (when-let [ns-part (not-empty (map ::lexer/value (butlast (rest acc))))]
-                                         (apply str ns-part))
-                                       (::lexer/value token))
-                ::lexer/begin (::lexer/begin (first acc))
-                ::lexer/end (::lexer/end token)})
-              tokens')
-        (recur (conj acc token) tokens')))))
+(defn- punctuation?
+  "Check if token matches desired symbol and has punctuation type
+  Possible values: `[\".\" \",\" \"(\" \")\" \"[\" \"]\" \"{\" \"}\"]`"
+  [{::lexer/keys [type value]} desired]
+  (let [desired (if (set? desired) desired (set [desired]))]
+    (and (= type ::lexer/punct)
+         (contains? desired value))))
 
-(defn parse-group [[token & tokens]]
-  (let [tokens' (take-while (fn [t]
-                              (not (and (lexer/bracket-literal? t [")"])
-                                        (= (::lexer/depth t)
-                                           (::lexer/depth token)))))
-                            tokens)
-        [expr [token' & _]] (parse-expression tokens')]
-    (cons (runtime/group-expr expr token token') (drop (inc (count tokens')) tokens))))
+(defn- operator?
+  "Check if token matches desired symbol and has operator type
+  Possible values: `[\":\" \"+\" \"-\" \"!\" \"*\" \"/\" \"&\" \"=\" \"<\" \">\" \"<=\" \">=\" \"<>\" \"^\" \"%\"]`"
+  [{::lexer/keys [type value]} desired]
+  (let [desired (if (set? desired) desired (set [desired]))]
+    (and (= type ::lexer/operator)
+         (contains? desired value))))
 
-(defn parse-array [[token & tokens] close-symbol]
-  (let [tokens' (take-while (fn [t]
-                              (not (and (lexer/bracket-literal? t [close-symbol])
-                                        (= (::lexer/depth t)
-                                           (::lexer/depth token)))))
-                            tokens)
-        delimeter-depth (inc (::lexer/depth token))]
-    (cons (runtime/list-expr (->> tokens'
-                                  (partition-by (fn [t]
-                                                  (and (lexer/punctuation-literal? t [","])
-                                                       (= delimeter-depth (::lexer/depth t)))))
-                                  (filter (fn [t]
-                                            (not (and (= 1 (count t))
-                                                      (lexer/punctuation-literal? (first t) [","])))))
-                                  (map parse-expression)
-                                  (map first))
-                             token
-                             (first (drop (count tokens') tokens)))
-          (drop (inc (count tokens')) tokens))))
+(defn- symbol*? [{parser-type ::type
+                  lexer-type ::lexer/type}]
+  (or (= ::symbol parser-type)
+      (= ::lexer/symbol lexer-type)))
 
-(defn parse-symbol [[token & tokens]]
-  (cond
-    (or (lexer/punctuation-literal? (first tokens) ["."])
-        (lexer/bracket-literal? (first tokens) ["["]))
-    (parse-primary (cons (runtime/root-reference-expr (runtime/constant-expr token))
-                         tokens))
+(defn- precedence [{::lexer/keys [value] ::keys [parts]}]
+  ({"^" 30
+    "*" 20 "/" 20
+    "+" 10 "-" 10
+    "<" 7 ">" 7 "<=" 7 ">=" 7 "<>" 7 "=" 7
+    "&" 1
+    ":" 0}
+   (or value (-> parts first ::lexer/value))))
 
-    (and (contains? #{"true" "false"} (string/lower-case (::lexer/value token)))
-         (not (or (lexer/punctuation-literal? (first tokens) ["."])
-                  (lexer/bracket-literal? (first tokens) ["["]))))
-    (cons (runtime/constant-expr
-           {::lexer/value (let [s (string/lower-case (::lexer/value token))]
-                            (case s
-                              "true" true
-                              "false" false))})
-          tokens)
+(defn- formula [exprs]
+  {::type ::formula
+   ::body exprs})
 
-    :otherwise
-    (cons (runtime/root-reference-expr (runtime/constant-expr token))
-          tokens)))
+(defn- binary [left right op]
+  {::type ::binary
+   ::left left
+   ::right right
+   ::operator op})
 
-(defn parse-reference* [root-expr [token & tokens]]
-  (if token
-    (cond
-      (lexer/punctuation-literal? token ["."])
-      (let [token' (first tokens)]
+(defn- postfix [operand op]
+  {::type ::postfix
+   ::operand operand
+   ::operator op})
+
+(defn- prefix [{::lexer/keys [value length] :as operand} {::lexer/keys [line col] :as op}]
+  {::type ::prefix
+   ::operand operand
+   ::operator op})
+
+(defn- var* [var-parts]
+  {::type ::var
+   ::parts var-parts})
+
+(defn- constant [const]
+  (assoc const ::type ::constant))
+
+(defn- symbol* [token]
+  (assoc token
+         ::type ::symbol
+         ::lexer/type ::lexer/symbol))
+
+(defn- list-ref [ref]
+  {::type ::list-ref
+   ::expr ref})
+
+(defn parse-constant* [tokens]
+  (let [[{::lexer/keys [type] :as token} & tokens'] tokens]
+    (if (contains? #{::lexer/number ::lexer/string} type)
+      [(constant token) tokens']
+      [nil tokens])))
+
+(def parse-constant (memoize parse-constant* ::constant))
+
+(defn maybe-constant [tokens]
+  (let [res (parse-constant tokens)
+        [const _] res]
+    (when const res)))
+
+(defn parse-application* [tokens fn-var]
+  (letfn [(parse-arguments [acc tokens]
+            (let [tokens (if (punctuation? (first tokens) #{"," "("})
+                           (next tokens) tokens)]
+              (if (punctuation? (first tokens) ")")
+                [acc (next tokens)]
+                (let [[arg-expr tokens'] (parse-expression tokens)]
+                  (recur (conj acc arg-expr) tokens')))))]
+    (let [[args tokens] (parse-arguments [] tokens)]
+      [{::type ::application
+        ::function fn-var
+        ::args args}
+       tokens])))
+
+(def parse-application (memoize parse-application* ::application))
+
+(defn parse-symbol* [tokens]
+  (let [[{::lexer/keys [type] :as token} & tokens'] tokens]
+    (if (= ::lexer/symbol type)
+      [(symbol* token) tokens']
+      [nil tokens])))
+
+(def parse-symbol (memoize parse-symbol* ::symbol))
+
+(defn maybe-symbol [tokens]
+  (let [res (parse-symbol tokens)
+        [sym _] res]
+    (when sym res)))
+
+(defn parse-operator* [tokens]
+  (let [[{::lexer/keys [type] :as token} & tokens'] tokens]
+    (if (= ::lexer/operator type)
+      [(var* [(assoc token ::type ::symbol)]) tokens']
+      [nil tokens])))
+
+(def parse-operator (memoize parse-operator* ::operator))
+
+(defn maybe-operator [tokens]
+  (let [res (parse-operator tokens)
+        [op _] res]
+    (when op res)))
+
+(defn parse-kw* [tokens]
+  (let [{::lexer/keys [line col] :as op} (first tokens)
+        {::lexer/keys [value length]} (second tokens)]
+    (if (operator? op ":")
+      (let [kw (string/split value #"/" 2)]
+        [{::lexer/type ::keyword
+          ::lexer/value (apply keyword (filter identity kw))
+          ::lexer/line line
+          ::lexer/col col
+          ::lexer/length (inc length)
+          ::type ::symbol}
+         (nnext tokens)])
+      [nil tokens])))
+
+(def parse-kw (memoize parse-kw* ::kw))
+
+(defn maybe-kw [tokens]
+  (let [res (parse-kw tokens)
+        [kw _] res]
+    (when kw res)))
+
+(defn parse-var* [tokens]
+  (let [[root & tokens'] tokens]
+    (loop [acc [root] tokens' tokens']
+      (if (punctuation? (first tokens') "(")
+        (parse-application tokens' (var* acc))
+        (let [[var-part tokens'']
+              (cond
+                (punctuation? (first tokens') ".")
+                (or (maybe-symbol (next tokens'))
+                    (maybe-square-block (next tokens'))
+                    (maybe-kw (next tokens'))
+                    (maybe-constant (next tokens')))
+
+                (punctuation? (first tokens') "[")
+                (parse-square-block tokens'))]
+          (if var-part
+            (recur (conj acc var-part) tokens'')
+            [(var* acc) tokens']))))))
+
+(def parse-var (memoize parse-var* ::var))
+
+(defn parse-block* [tokens]
+  (let [[_ & tokens'] tokens
+        [expr tokens''] (parse-expression tokens')]
+    (if (and expr (punctuation? (first tokens'') ")"))
+      [expr (next tokens'')]
+      [nil tokens])))
+
+(def parse-block (memoize parse-block* ::block))
+
+(defn maybe-block [tokens]
+  (when (punctuation? (first tokens) "(")
+    (let [res (parse-block tokens)
+          [block _] res]
+      (when block res))))
+
+(defn parse-square-block* [tokens]
+  (let [[parsed tokens'] (or (let [[_ tokens' :as kw] (maybe-kw (next tokens))]
+                               (when kw
+                                 (if-not (punctuation? (first tokens') "]")
+                                   (maybe-expression (next tokens))
+                                   kw)))
+                             (maybe-operator (next tokens))
+                             (maybe-expression (next tokens))
+                             [nil tokens])]
+    (if parsed
+      (if-not (punctuation? (first tokens') "]")
+        (throw (ex-info "Unexpected token" (first tokens')))
+        [(list-ref parsed) (next tokens')])
+      [nil tokens])))
+
+(def parse-square-block (memoize parse-square-block* ::square-block))
+
+(defn maybe-square-block [tokens]
+  (when (punctuation? (first tokens) "[")
+    (let [res (parse-square-block tokens)
+          [block _] res]
+      (when block res))))
+
+(defn parse-curly-block* [tokens]
+  (letfn [(parse-multiple [acc tokens]
+            (let [tokens (if (punctuation? (first tokens) #{"," "{"})
+                           (next tokens) tokens)]
+              (if (punctuation? (first tokens) "}")
+                [acc (next tokens)]
+                (let [[entry-expr tokens'] (parse-expression tokens)]
+                  (recur (conj acc entry-expr) tokens')))))]
+    (let [[entries tokens] (parse-multiple [] tokens)]
+      [{::type ::list
+        ::entries entries}
+       tokens])))
+
+(def parse-curly-block (memoize parse-curly-block* ::curly-block))
+
+(defn maybe-curly-block [tokens]
+  (when (punctuation? (first tokens) "{")
+    (let [res (parse-curly-block tokens)
+          [block _] res]
+      (when block res))))
+
+(defn parse-atom* [tokens]
+  (or (when-let [res (maybe-constant tokens)]
+        (if (and (= ::lexer/string (::lexer/type (first res)))
+                 (punctuation? (first (second res)) #{"[" "." "("}))
+          (parse-atom (apply cons (update res 0 symbol*)))
+          res))
+      (when-let [res (maybe-kw tokens)]
+        (parse-var (apply cons res)))
+      (when-let [res (maybe-symbol tokens)]
         (cond
-          (or (lexer/symbol-literal? token')
-              (lexer/text-literal? token')
-              (lexer/number-literal? token'))
-          (parse-reference*
-           (runtime/reference-expr root-expr
-                                   (runtime/constant-expr token'))
-           (rest tokens))
+          (punctuation? (first (second res)) #{"[" "." "("})
+          (parse-var (apply cons res))
 
-          (lexer/bracket-literal? token' ["["])
-          (parse-reference* root-expr
-                            tokens)
+          (contains? #{"TRUE" "True" "true" "FALSE" "False" "false" "NULL" "Null" "null"}
+                     (::lexer/value (first res)))
+          (update res 0 constant)
 
-          (lexer/operator-literal? token' [":"])
-          (let [[k & tokens'] (parse-keyword tokens)]
-            (parse-reference*
-             (runtime/reference-expr root-expr
-                                     k)
-             tokens'))
+          :otherwise
+          (update-in res [0] (fn [x]
+                               (var* (cond
+                                       (map? x) [x]
+                                       (sequential? x) x))))))
+      (maybe-block tokens)
+      (maybe-curly-block tokens)
+      (when-let [res (maybe-square-block tokens)]
+        (parse-var (apply cons res)))
+      [nil tokens]))
 
-          (nil? token')
-          (throw (ex-info "Unexpected end of reference expression"
-                          {:position {:begin (:begin (runtime/position root-expr))
-                                      :end (::lexer/end token)}}))))
+(def parse-atom (memoize parse-atom* ::atom))
 
-      (lexer/bracket-literal? token ["["])
-      (let [d (::lexer/depth token)
-            tokens' (take-while #(< d (::lexer/depth %)) tokens)
-            tokens'' (trim-whitespaces tokens')]
-        (if (and (lexer/operator-literal? (first tokens'') ["*"])
-                 (= 1 (count tokens'')))
-          (parse-reference* (runtime/index-expr root-expr
-                                                (runtime/operator-expr (first tokens''))
-                                                token
-                                                (first (drop (count tokens') tokens)))
-                            (drop (inc (count tokens')) tokens))
-          (let [[expr rest-tokens] (parse-expression tokens')]
-            ;; TODO rest-tokens must be `empty`
-            (parse-reference* (runtime/index-expr root-expr
-                                                  expr
-                                                  token
-                                                  (first (drop (count tokens') tokens)))
-                              (drop (inc (count tokens')) tokens))))))
-    root-expr))
+(defn parse-binary*
+  ([tokens lexpr] (parse-binary* tokens lexpr 0))
+  ([tokens lexpr prec]
+   (let [[operator tokens'] (parse-operator tokens)]
+     (if (or (empty? operator) (< (precedence operator) prec))
+       [lexpr tokens]
+       (let [[rexpr tokens''] (parse-atom tokens')
+             [rexpr tokens''] (parse-binary tokens'' rexpr (precedence operator))]
+         (parse-binary tokens'' (binary lexpr rexpr operator) prec))))))
 
-(defn parse-reference [[root-reference & tokens]]
-  (let [d (::lexer/depth (first tokens))]
-    (loop [acc [] [token & tokens'] tokens]
-      (if (or (lexer/end-of-input? token)
-              (and (= d (::lexer/depth token))
-                   (or (lexer/whitespace? token)
-                       (lexer/bracket-literal? token ["("])
-                       (lexer/operator-literal? token (disj (set lexer/operators) ":" "/"))
-                       (lexer/punctuation-literal? token [","]))))
-        (cons (parse-reference* root-reference acc) (cons token tokens'))
-        (recur (conj acc token) tokens')))))
+(def parse-binary (memoize parse-binary* ::binary))
 
-(defn parse-function-call [ref-expr tokens]
-  (let [[args & tokens'] (parse-array tokens ")")]
-    (cons (runtime/application-expr ref-expr
-                                    args)
-          tokens')))
+(defn maybe-binary [tokens lexpr]
+  (when lexpr
+    (let [[b _ :as res] (parse-binary tokens lexpr)]
+      (when b res))))
 
-(defn parse-primary [tokens]
-  (let [tokens (triml-whitespaces tokens)
-        [token & tokens'] tokens]
-    (cond
-      (lexer/operator-literal? token [":"])
-      (let [[keyword-expr & rest-tokens] (parse-keyword tokens)]
-        (parse-primary (cons (runtime/root-reference-expr
-                              keyword-expr)
-                             rest-tokens)))
+(defn parse-postfix* [tokens]
+  (let [[operand tokens'] (parse-atom tokens)
+        [operator tokens'] (parse-operator tokens')]
+    (if (and operand operator (postfix? operator))
+      [(postfix operand operator) tokens']
+      [nil tokens])))
 
-      (lexer/prefix-operator? token)
-      (let [op (runtime/operator-expr token)
-            [expr' & tokens''] (parse-primary tokens')]
-        (cons (runtime/unary-expr op expr') tokens''))
+(def parse-postfix (memoize parse-postfix* ::postfix))
 
-      (lexer/bracket-literal? token ["{"])
-      (parse-array tokens "}")
+(defn maybe-postfix [tokens]
+  (let [res (parse-postfix tokens)
+        [post _] res]
+    (when post res)))
 
-      (lexer/bracket-literal? token ["("])
-      (parse-group tokens)
+(defn parse-prefix* [tokens]
+  (let [[operator tokens'] (parse-operator tokens)
+        [operand tokens'] (when (and operator (prefix? operator)) (maybe-expression tokens'))]
+    (if operand
+      (let [parsed (prefix operand operator)]
+        (if (symbol*? parsed)
+          (parse-var (cons parsed tokens'))
+          [parsed tokens']))
+      [nil tokens])))
 
-      (lexer/bracket-literal? token ["["])
-      (parse-reference (cons nil tokens))
+(def parse-prefix (memoize parse-prefix* ::prefix))
 
-      (lexer/symbol-literal? token)
-      (parse-primary (parse-symbol tokens))
+(defn maybe-prefix [tokens]
+  (let [res (parse-prefix tokens)
+        [pref _] res]
+    (when pref res)))
 
-      (and (runtime/expr? token)
-           (= (runtime/type token) ::runtime/root-reference-expr))
-      (let [tokens (parse-reference tokens)
-            [ref-expr & tokens'] tokens]
-        (if (lexer/bracket-literal? (first tokens') ["("])
-          (parse-function-call ref-expr tokens')
-          tokens))
+(defn parse-expression* [tokens]
+  (let [[binary tokens']
+        (let [[atom tokens'] (or (maybe-prefix tokens)
+                                 (maybe-postfix tokens)
+                                 (parse-atom tokens))]
+          (maybe-binary tokens' atom))]
+    (if (not-empty binary)
+      [binary tokens']
+      [nil tokens])))
 
-      (or (lexer/number-literal? token)
-          (lexer/text-literal? token))
-      (cons (runtime/constant-expr token) tokens')
+(def parse-expression (memoize parse-expression* ::expression))
 
-      (runtime/expr? token)
-      tokens)))
-
-(defn parse-expression [tokens]
-  (let [[expr & tokens'] (parse-primary tokens)
-        tokens' (triml-whitespaces tokens')]
-    (cond
-      (lexer/infix-operator? (first tokens'))
-      (let [op (runtime/operator-expr (first tokens'))
-            [expr' tokens''] (parse-expression (rest tokens'))]
-        [(if (and (runtime/binary? expr')
-                  (< (runtime/precedence (runtime/operator expr'))
-                     (runtime/precedence op)))
-           (runtime/binary-expr (runtime/operator expr')
-                                (runtime/binary-expr op expr (runtime/left expr'))
-                                (runtime/right expr'))
-           (runtime/binary-expr op expr expr'))
-         tokens''])
-
-      (lexer/postfix-operator? (first tokens'))
-      [(runtime/unary-expr (runtime/operator-expr (first tokens')) expr)
-       (rest tokens')]
-
-      (or (lexer/punctuation-literal? (first tokens') ["."])
-          (lexer/bracket-literal? (first tokens') ["["]))
-      (parse-expression (cons (runtime/root-reference-expr expr)
-                              tokens'))
-
-      :otherwise
-      [expr tokens'])))
+(defn maybe-expression [tokens]
+  (let [res (parse-expression tokens)
+        [expr _] res]
+    (when expr res)))
 
 (defn parse [tokens]
-  (let [[expr [token & _]] (parse-expression tokens)]
-    (if (not (lexer/end-of-input? token))
-      (throw (ex-info "Unexpected token"
-                      {:position (select-keys token [::lexer/begin ::lexer/end])}))
-      (runtime/formula-expr expr))))
+  ;; TODO parse exactly one expression. throw an expression when non-eof token(s)
+  (binding [*store* (volatile! {})]
+    (loop [acc [] tokens tokens]
+      (if (or (empty? tokens) (eof? (first tokens)))
+        (formula acc)
+        (let [[expr tokens'] (parse-expression tokens)]
+          (recur (conj acc expr) tokens'))))))

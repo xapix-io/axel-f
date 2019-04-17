@@ -1,6 +1,5 @@
-(ns axel-f.functions.coercion
-  #?(:clj
-     (:require [clojure.edn :as edn])))
+(ns axel-f.excel.coerce
+  #?(:clj (:require [clojure.edn :as edn])))
 
 (defn excel-number [maybe-number]
   (cond
