@@ -73,22 +73,25 @@
   (map (partial eval* env) entries))
 
 (defmethod eval* ::parser/binary [env {::parser/keys [left right operator]}]
+  ;; TODO throw when no operator
   ((eval* env operator)
    (eval* env left)
    (eval* env right)))
 
 (defmethod eval* ::parser/prefix [env {::parser/keys [operator operand]}]
+  ;; TODO throw when no operator
   ((eval* env operator)
    (eval* env operand)))
 
 (defmethod eval* ::parser/postfix [env {::parser/keys [operator operand]}]
+  ;; TODO throw when no operator
   ((eval* env operator)
    (eval* env operand)))
 
 (defmethod eval* ::parser/application [env {::parser/keys [function args]}]
   (let [f (eval* env function)
         {:keys [special? arglists]} (meta f)]
-    ;; TODO check arity
+    ;; TODO check arity and presense of f
     (if special?
       (apply (partial f env) args)
       (apply f (map (partial eval* env) args)))))
