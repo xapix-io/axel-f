@@ -6,4 +6,4 @@
 (t/deftest trim-whitespaces
 
   (t/is (= 1
-           ((af/eval "  1  ")))))
+           ((af/compile "  1  ")))))

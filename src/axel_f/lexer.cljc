@@ -174,9 +174,6 @@
            (drop-block-comment (next ex))
            (drop-inline-comment (next ex) l))]))
 
-(defmethod read-next* :default [{::keys [v] :as e} & _]
-  (*throw* (ex-info (str "Can't handle character: " v) e)))
-
 (defmethod read-next* ::eof [ex]
   [{::type ::eof} nil])
 

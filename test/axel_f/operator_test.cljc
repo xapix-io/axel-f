@@ -5,34 +5,37 @@
 
 (t/deftest range-operator
   (t/is (= '(0 1 2)
-           ((af/eval "0:3"))))
+           ((af/compile "0:3"))))
 
   (t/is (= '(0 1 2)
-           ((af/eval "foo[0:3]") {:foo [0 1 2 3 4]})))
+           ((af/compile "foo[0:3]") {:foo [0 1 2 3 4]})))
 
   (t/is (= '((0 (1)) (1 (1 2)) (2 (1 2 3)))
-           ((af/eval "MAP({_, foo[0:INC(_)]}, 0:COUNT(foo))")
+           ((af/compile "MAP(FN(x, {x, foo[0:INC(x)]}), 0:COUNT(foo))")
             {:foo [1 2 3]}))))
 
 (t/deftest prefix
   (t/is (= false
-           ((af/eval "!TRUE"))))
+           ((af/compile "!TRUE"))))
 
   (t/is (= true
-           ((af/eval "!!true"))))
+           ((af/compile "!!true"))))
 
   (t/is (= 1
-           ((af/eval "+1"))))
+           ((af/compile "+1"))))
 
   (t/is (= -1
-           ((af/eval "-1"))))
+           ((af/compile "-1"))))
 
   (t/is (= -1
-           ((af/eval "-(+1)")))))
+           ((af/compile "-(+1)"))))
+
+  (t/is (= 1
+           ((af/compile "-foo.bar") {:foo {:bar -1}}))))
 
 (t/deftest postfix
   (t/is (= 0.02
-           ((af/eval "2%"))))
+           ((af/compile "2%"))))
 
   (t/is (= -0.02
-           ((af/eval "-2%")))))
+           ((af/compile "-2%")))))

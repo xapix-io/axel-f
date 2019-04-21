@@ -12,9 +12,9 @@
     (t/is (= {"foo" 1} (sut/json-decode "{\"foo\":1}")))))
 
 (t/deftest JSONENCODE
-  (let [f (af/eval "JSON.ENCODE(_)")]
+  (let [f (af/compile "JSON.ENCODE(_)")]
     (t/is (= "{\"foo\":1}" (f {:foo 1})))))
 
 (t/deftest JSONDECODE
-  (let [f (af/eval "JSON.DECODE('{\"foo\":1}')")]
+  (let [f (af/compile "JSON.DECODE('{\"foo\":1}')")]
     (t/is (= {"foo" 1} (f)))))

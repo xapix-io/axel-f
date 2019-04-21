@@ -4,4 +4,4 @@
              [axel-f.excel :as af]))
 
 (t/deftest complex-example
-  (t/is (= {"foo" 1} ((af/eval "JSON.DECODE(BASE64.DECODE(_))") "eyJmb28iOjF9"))))
+  (t/is (= {"foo" 1} ((af/compile "JSON.DECODE(BASE64.DECODE(_))") "eyJmb28iOjF9"))))

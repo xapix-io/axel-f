@@ -6,20 +6,20 @@
 
 (t/deftest comments
   (t/is (= 1
-           ((af/eval ";; Line comment
+           ((af/compile ";; Line comment
                       1"))))
 
   (t/is (= 1
-           ((af/eval "1 ;; Line comment"))))
+           ((af/compile "1 ;; Line comment"))))
 
   (t/is (= 1
-           ((af/eval "1
+           ((af/compile "1
                       ;; Line comment"))))
 
   (t/is (= 1
-           ((af/eval ";~ Block comment ~; 1"))))
+           ((af/compile ";~ Block comment ~; 1"))))
 
   (t/is (thrown-with-msg?
          ExceptionInfo
          #"Unclosed comment block"
-         ((af/eval "1 ;~ Unclosed comment block")))))
+         ((af/compile "1 ;~ Unclosed comment block")))))

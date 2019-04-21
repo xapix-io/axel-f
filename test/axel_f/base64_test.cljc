@@ -12,9 +12,9 @@
     (t/is (= "qwe" (sut/base64-decode "cXdl")))))
 
 (t/deftest BASE64ENCODE
-  (let [f (af/eval "BASE64.ENCODE('qwe')")]
+  (let [f (af/compile "BASE64.ENCODE('qwe')")]
     (t/is (= "cXdl" (f)))))
 
 (t/deftest BASE64DECODE
-  (let [f (af/eval "BASE64.DECODE('cXdl')")]
+  (let [f (af/compile "BASE64.DECODE('cXdl')")]
     (t/is (= "qwe" (f)))))

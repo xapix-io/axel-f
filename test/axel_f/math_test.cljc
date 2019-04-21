@@ -7,9 +7,9 @@
 (t/deftest INC
   (t/testing "increment number"
     (t/is (= 1 (sut/INC 0)))
-    (t/is (= 1 ((af/eval "INC(0)"))))))
+    (t/is (= 1 ((af/compile "INC(0)"))))))
 
 (t/deftest DEC
   (t/testing "decrement number"
     (t/is (= 1 (sut/DEC 2)))
-    (t/is (= 1 ((af/eval "DEC(2)"))))))
+    (t/is (= 1 ((af/compile "DEC(2)"))))))

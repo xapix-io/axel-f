@@ -5,10 +5,11 @@
 
 (t/deftest list-refs
   (t/is (= '(1 2 3)
-           ((af/eval "_.[*]") [1 2 3])))
-
-  (t/is (= '(1 2 3)
-           ((af/eval "[*]") [1 2 3])))
+           ((af/compile "_.[*]") [1 2 3])))
 
   (t/is (= 2
-           ((af/eval "[1 + 0]") [1 2 3]))))
+           ((af/compile "_.[1 + 0]") [1 2 3]))))
+
+(t/deftest reference-can-start-with-string
+  (t/is (= 1
+           ((af/compile "'foo'.bar") {:foo {:bar 1}}))))

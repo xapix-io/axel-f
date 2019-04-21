@@ -9,14 +9,14 @@
 
   (t/testing "fields with unicode symbols inside"
 
-    (t/are [x] (= 1 ((af/eval x) {(keyword (string/replace x #"\\" "")) 1}))
+    (t/are [x] (= 1 ((af/compile x) {(keyword (string/replace x #"\\" "")) 1}))
       "ꙮ"
       "fooꙮbar"
       "foo\\-bar"))
 
   (t/testing "quoted fields with operators inside"
 
-    (t/are [x] (= 1 ((af/eval x) {(keyword (string/replace x #"\\" "")) 1}))
+    (t/are [x] (= 1 ((af/compile x) {(keyword (string/replace x #"\\" "")) 1}))
       "foo\\/bar"
       "foo\\+"
       "foo\\*bar"
@@ -29,7 +29,7 @@
   #_(t/testing "fields with special symbols throw an error without quoting"
 
     (t/are [x] (thrown? ExceptionInfo
-                        ((af/eval x)))
+                        ((af/compile x)))
       "foo.abr baz"
       "foo.bar."
       "foo.bar,baz"

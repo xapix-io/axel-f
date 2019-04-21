@@ -1,9 +1,10 @@
 (ns axel-f.excel
-  (:refer-clojure :exclude [eval])
+  (:refer-clojure :exclude [compile])
   (:require [axel-f.lexer :as lexer]
             [axel-f.parser :as parser]
-            [axel-f.runtime :as runtime]
+            [axel-f.compiler :as compiler]
             [axel-f.excel.operators :as operators]
+            [axel-f.excel.collections :as collections]
             [axel-f.excel.base64 :as base64]
             [axel-f.excel.geo :as geo]
             [axel-f.excel.hash :as hash]
@@ -14,118 +15,77 @@
             [axel-f.excel.stat :as stat]
             [axel-f.excel.text :as text]))
 
-;; ======================== Helpers: ========================
-
-(defn- function? [{::parser/keys [type]
-                   {::parser/keys [parts]} ::parser/function
-                   :as appl}]
-  (and (= ::parser/application type)
-       (= "FN" (::lexer/value (first parts)))))
-
-(defn infer-var-name [{::parser/keys [type parts]}]
-  (when (= ::parser/var type)
-    (loop [acc [] [{::lexer/keys [value] :as p} & parts] parts]
-      (if (some? p)
-        (recur (conj acc value) parts)
-        acc))))
-
-(defn assign [env value var-path]
-  (if-let [p (first var-path)]
-    (update env p (fn [e]
-                    (assign (or e {}) value (rest var-path))))
-    value))
-
-(defn- wrap-special-fn [f]
-  (fn [env & args]
-    (let [f' (if (function? (first args))
-               (runtime/eval* env (first args))
-               ((get env "FN") env (first args)))
-          args (map (partial runtime/eval* env) (next args))]
-      (apply f f' args))))
-
-(defn special-if [env & args]
-  (loop [[[if-expr then-expr :as if-then-exprs] & clauses] (partition-all 2 2 args)]
-    (cond
-      (empty? if-then-exprs) nil
-      (= 1 (count if-then-exprs)) (runtime/eval* env if-expr)
-      :otherwise
-      (if (runtime/eval* env if-expr)
-        (runtime/eval* env then-expr)
-        (recur clauses)))))
-
-(defn special-with [env & args]
-  (loop [env env [[var-expr expr :as binding] & bindings] (partition-all 2 2 args)]
-    (cond
-      (empty? binding) nil
-      (= 1 (count binding)) (runtime/eval* env var-expr)
-      :otherwise
-      (let [var-name (infer-var-name var-expr)
-            value (runtime/eval* env expr)]
-        (recur (assign env value var-name) bindings)))))
-
-;; ================= Base runtime functions =================
-
 (defn ^:special? FN*
   "Defines lambda function"
-  [env & args]
-  (fn [ctx]
-    (runtime/eval* (assoc env "_" ctx)
-                   (last args))))
+  [forms ast-forms]
+  (let [body (last forms)
+        arglist (map (fn [{::parser/keys [parts]}]
+                       ;; TODO throw if not one part
+                       (first parts))
+                     (butlast ast-forms))]
+    (fn [ctx]
+      (fn [& args]
+        (body (apply assoc ctx (mapcat identity (zipmap arglist args))))))))
 
 (def FN #'FN*)
 
-(def ^:special? ^{:arglists '([f coll])}
-  MAP*
-  "Applies partiualy defined formula to every element in a collection and returns an array."
-  (wrap-special-fn map))
-
-(def MAP #'MAP*)
-
-(def ^:special? ^{:arglists '([f coll])}
-  FILTER*
-  "Returns an array of elements that have been filtered based on a condition."
-  (wrap-special-fn filter))
-
-(def FILTER #'FILTER*)
-
-(def ^:special? ^{:arglists '([f coll])}
-  SORT*
-  "Sorts a collection by the values returned from applying a sorting function to each element in said collection."
-  (wrap-special-fn sort-by))
-
-(def SORT #'SORT*)
-
-(def ^:special? ^{:arglists '([if test then & [else]])}
-  IF*
+(defn ^:special? IF*
   "Evaluates test. If not the singular values nil or false, evaluates and yields then, otherwise, evaluates and yields else. If else is not supplied it defaults to nil."
-  special-if)
+  [[test then else] _]
+  (fn [ctx]
+    (if (test ctx)
+      (then ctx)
+      (when else (else ctx)))))
 
 (def IF #'IF*)
 
-(def ^:special? ^{:arglists '([& clauses])}
-  IFS*
+(defn ^:special? IFS*
   "Takes a set of test/expr pairs. It evaluates each test one at a time.  If a test returns logical true, cond evaluates and returns the value of the corresponding expr and doesn't evaluate any of the other tests or exprs. (IFS) returns nil."
-  special-if)
+  [forms _]
+  (fn [ctx]
+    (loop [[[test then :as test-then] & clauses] (partition-all 2 2 forms)]
+      (cond
+        (empty? test-then)
+        nil
+
+        (= 1 (count test-then))
+        (test ctx)
+
+        :else
+        (if (test ctx)
+          (then ctx)
+          (recur clauses))))))
 
 (def IFS #'IFS*)
 
-(def ^:special? ^{:arglists '([bindings body])}
-  WITH*
+(defn ^:special? WITH*
   "Extends context"
-  special-with)
+  [forms ast-forms]
+  (fn [ctx]
+    (loop [ctx ctx
+           [[_ form :as binding] & bindings] (partition-all 2 2 forms)
+           [[{::parser/keys [parts] :as var} _] & ast-bindings] (partition-all 2 2 ast-forms)]
+      (cond
+        (empty? binding)
+        nil
+
+        (= 1 (count binding))
+        ((first binding) ctx)
+
+        :else
+        (let [value (form ctx)]
+          (recur (assoc ctx (first parts) value) bindings ast-bindings))))))
 
 (def WITH #'WITH*)
 
 (def env
   (merge
    {"FN"     FN
-    "MAP"    MAP
-    "FILTER" FILTER
-    "SORT"   SORT
     "IF"     IF
     "IFS"    IFS
     "WITH"   WITH}
    operators/env
+   collections/env
    base64/env
    geo/env
    hash/env
@@ -138,13 +98,12 @@
 
 ;; ==========================================================
 
-(defn str->ast [s]
+(defn- str->ast [s]
   (-> s lexer/read parser/parse))
 
-(defn eval
-  ([ast] (eval ast nil))
-  ([ast extra-env]
-   (let [ast (if (string? ast)
-               (str->ast ast)
-               ast)]
-     (runtime/eval* (merge env extra-env) ast))))
+(defn compile
+  ([formula] (compile formula nil))
+  ([formula extra-env]
+   (let [ast (str->ast formula)
+         f (compiler/compile ast)]
+     (partial f (merge env extra-env)))))

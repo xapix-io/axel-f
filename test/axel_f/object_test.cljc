@@ -9,11 +9,11 @@
            (sut/OBJECT [["foo" 1] [1 2]])))
 
   (t/is (= {"foo" 1 1 2}
-           ((af/eval "OBJECT.NEW({{'foo', 1}, {1, 2}})")))))
+           ((af/compile "OBJECT.NEW({{'foo', 1}, {1, 2}})")))))
 
 (t/deftest object-merge
   (t/is (= {"foo" 1 0 2 :baz 3}
            (sut/MERGE {"foo" 1} {0 2} {:baz 3})))
 
   (t/is (= {"foo" 1 0 2 :baz 3}
-           ((af/eval "OBJECT.MERGE({{'foo', 1}}, {{0, 2}}, _)") {:baz 3}))))
+           ((af/compile "OBJECT.MERGE({{'foo', 1}}, {{0, 2}}, _)") {:baz 3}))))
