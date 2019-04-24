@@ -3,8 +3,6 @@
   (:require [clojure.edn :as edn]
             [clojure.string :as string]))
 
-(def ^:dynamic ^:private *throw* (fn [ex] (throw ex)))
-
 (defn- whitespace? [{::keys [v]}]
   (contains? #{\space \tab \newline} v))
 
@@ -163,7 +161,7 @@
       (nnext ex)
 
       (not s)
-      (*throw* (ex-info "Unclosed comment block" (first ex)))
+      (throw (ex-info "Unclosed comment block" (first ex)))
 
       :otherwise
       (recur (next ex)))))

@@ -96,8 +96,6 @@
    stat/env
    text/env))
 
-;; ==========================================================
-
 (defn- str->ast [s]
   (-> s lexer/read parser/parse))
 
@@ -105,5 +103,7 @@
   ([formula] (compile formula nil))
   ([formula extra-env]
    (let [ast (str->ast formula)
-         f (compiler/compile ast)]
-     (partial f (merge env extra-env)))))
+         f (compiler/compile ast)
+         env (merge env extra-env)]
+     (fn [ctx]
+       (f (assoc env :axel-f.runtime/context ctx))))))

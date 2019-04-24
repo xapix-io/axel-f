@@ -7,8 +7,7 @@
 (defn switch-type [p]
   (cond
     (string? p) (keyword p)
-    (keyword? p) (string/join "/" ((juxt namespace name) p))
-    :else p))
+    (keyword? p) (string/join "/" ((juxt namespace name) p))))
 
 (defn lookup [ctx [p & path :as px]]
   (if-not p
@@ -38,12 +37,7 @@
 (defn compile [ast]
   (case (::parser/type ast)
     ::parser/formula
-    (let [body (compile (::parser/body ast))
-          fs (gensym)]
-      (fn fs
-        ([base-ctx] (fs base-ctx nil))
-        ([base-ctx ctx]
-         (body (assoc base-ctx :axel-f.runtime/context ctx)))))
+    (compile (::parser/body ast))
 
     ::parser/constant
     (let [{::lexer/keys [value type]} ast
@@ -56,16 +50,21 @@
       (constantly v))
 
     ::parser/operator
-    (fn [ctx] (get ctx (::lexer/value ast)))
+    (let [op-sym (::lexer/value ast)]
+      (fn [ctx]
+        (get ctx op-sym)))
 
     ::parser/application
     (let [f (compile (::parser/function ast))
-          args (map compile (::parser/args ast))]
+          args-ast (::parser/args ast)
+          args (map compile args-ast)]
       (fn [ctx]
         (let [f (f ctx)]
           (if (:special? (meta f))
-            ((f args (::parser/args ast)) ctx)
-            (apply f (map #(% ctx) args))))))
+            ((f args args-ast) ctx)
+            (apply f
+                   (for [x args]
+                     (x ctx)))))))
 
     ::parser/var
     (let [path-fs (map (fn [p]
@@ -83,17 +82,24 @@
                            :else
                            (constantly p)))
                        (::parser/parts ast))]
-      (fn [ctx] (lookup ctx (map (fn [p]
-                                   (if (fn? p)
-                                     (p ctx)
-                                     (update-in p [1] #(% ctx))))
-                                 path-fs))))
+      (fn [ctx]
+        (lookup ctx
+                (for [x path-fs]
+                  (if (fn? x)
+                    (x ctx)
+                    [(first x)
+                     ((second x) ctx)])))))
 
     ::parser/primary
-    (let [args' (map compile (::parser/args ast))
+    (let [args (map compile (::parser/args ast))
           op (compile (::parser/operator ast))]
-      (fn [ctx] (apply (op ctx) (map #(% ctx) args'))))
+      (fn [ctx]
+        (apply (op ctx)
+               (for [f args]
+                 (f ctx)))))
 
     ::parser/list
     (let [entries (map compile (::parser/entries ast))]
-      (fn [ctx] (map #(% ctx) entries)))))
+      (fn [ctx]
+        (for [x entries]
+          (x ctx))))))
