@@ -45,4 +45,7 @@
            (get-context "SUM(foo.bar, foo.baz[*])")))
 
   (t/is (= [["foo" "bar"]]
-           (get-context "SUM(foo.bar, foo.bar)"))))
+           (get-context "SUM(foo.bar, foo.bar)")))
+
+  (t/is (= [["var" "in" "group"]]
+           (get-context "2 * (2 + var.in.group)"))))
