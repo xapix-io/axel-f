@@ -104,6 +104,9 @@
   ([formula extra-env]
    (let [ast (str->ast formula)
          f (compiler/compile ast)
-         env (merge env extra-env)]
-     (fn [ctx]
-       (f (assoc env :axel-f.runtime/context ctx))))))
+         env (merge env extra-env)
+         fname (gensym)]
+     (fn fname
+       ([] (fname nil))
+       ([ctx]
+        (f (assoc env :axel-f.runtime/context ctx)))))))
