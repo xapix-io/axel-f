@@ -40,6 +40,9 @@
 (defmethod free-variables ::runtime/application-expr [{::runtime/keys [arg-list]} & [vars]]
   (free-variables arg-list vars))
 
+(defmethod free-variables ::runtime/group-expr [{::runtime/keys [expr]} & [vars]]
+  (free-variables expr vars))
+
 (defmethod free-variables ::runtime/formula [{::runtime/keys [expr]}]
   (free-variables expr []))
 
