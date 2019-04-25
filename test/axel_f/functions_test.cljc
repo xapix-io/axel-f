@@ -115,7 +115,13 @@
            ((af/compile "IFS(true, 1, false, 2)"))))
 
   (t/is (= "found two"
-           ((af/compile "IFS(foo = 1, 'found one', _.foo = 2, 'found two')") {:foo 2}))))
+           ((af/compile "IFS(foo = 1, 'found one', _.foo = 2, 'found two')") {:foo 2})))
+
+  (t/is (= 1
+           ((af/compile "IFS(foo = 1, 0, 1)") {:foo 2})))
+
+  (t/is (= nil
+           ((af/compile "IFS(false, 1, false, 2)")))))
 
 (t/deftest closures
 
@@ -561,7 +567,7 @@ WITH(
                                      normalize, FN(x, IF(x > 2^15, 2^15 - x, x) / 600000),
                                      latitude, normalize(pos.latitude),
                                      longitude, normalize(pos.longitude),
-                                     OBJECT.MERGE(_, OBJECT.NEW({{'latitude', latitude}, {'longitude', longitude}}))
+                                     OBJECT.MERGE(pos, OBJECT.NEW({{'latitude', latitude}, {'longitude', longitude}}))
                                    )),
                 MAP(normalize, gps-delta)
               ),
