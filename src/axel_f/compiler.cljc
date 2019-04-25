@@ -132,40 +132,38 @@
                    (x ctx))))
         {:free-variables (mapcat #(:free-variables (meta %)) args)}))))
 
+(defn compile-var-part [p]
+  (cond
+    (::parser/type p)
+    (let [path-f (compile p)]
+      (with-meta
+        path-f
+        {:var-part ::dynamic
+         :free-variables (:free-variables (meta path-f))}))
+
+    (and (vector? p)
+         (= ::parser/list-ref (first p)))
+    (let [[_ path-f] p
+          path-f (if (or (= ::parser/select-all path-f)
+                         (nil? (::parser/type path-f)))
+                   (constantly path-f)
+                   (compile path-f))]
+      (with-meta
+        (fn [ctx]
+          [::parser/list-ref (path-f ctx)])
+        {:var-part "*"
+         :free-variables (:free-variables (meta path-f))}))
+
+    :else
+    (with-meta
+      (constantly p)
+      {:var-part p})))
+
 (defn compile-var [ast]
-  (let [path-fs (mapv (fn [p]
-                        (cond
-                          (::parser/type p)
-                          (let [path-f (compile p)]
-                            (with-meta
-                              path-f
-                              {:var-part ::dynamic
-                               :free-variables (:free-variables (meta path-f))}))
-
-                          (and (vector? p)
-                               (= ::parser/list-ref (first p)))
-                          (let [[_ path-f] p
-                                path-f (if (or (= ::parser/select-all path-f)
-                                               (nil? (::parser/type path-f)))
-                                         (constantly path-f)
-                                         (compile path-f))]
-                            (with-meta
-                              (fn [ctx]
-                                [::parser/list-ref (path-f ctx)])
-                              {:var-part "*"
-                               :free-variables (:free-variables (meta path-f))}))
-
-                          :else
-                          (with-meta
-                            (constantly p)
-                            {:var-part p})))
+  (let [path-fs (mapv compile-var-part
                       (::parser/parts ast))
-        free-variables (mapcat (fn [p]
-                                 (:free-variables (meta p)))
-                               path-fs)
-        free-variable (map (fn [p]
-                             (:var-part (meta p)))
-                           path-fs)]
+        free-variables (mapcat #(:free-variables (meta %)) path-fs)
+        free-variable (map #(:var-part (meta %)) path-fs)]
     (with-meta
       (fn [ctx]
         (lookup

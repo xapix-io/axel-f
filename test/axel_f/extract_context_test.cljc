@@ -53,4 +53,7 @@
            (get-context "MAP(FN(x, x + foo.bar), foo.baz)")))
 
   (t/is (= [["foo" "bar" "*"] ["foo" "baz"]]
-           (get-context "WITH(x, 1, y, foo.bar[2] + x, SUM(foo.baz, x, y))"))))
+           (get-context "WITH(x, 1, y, foo.bar[2] + x, SUM(foo.baz, x, y))")))
+
+  (t/is (= []
+           (get-context "IF(NULL, 1, True, 2, false, 3)"))))
