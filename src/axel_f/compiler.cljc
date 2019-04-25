@@ -55,73 +55,85 @@
     (fn [ctx]
       (get ctx op-sym))))
 
+(defn compile-fn [args]
+  (let [body (compile (last args))
+        arglist (mapv #(first (::parser/parts %))
+                      (butlast args))]
+    (with-meta
+      (fn [ctx]
+        (fn [& args]
+          (body (apply assoc ctx (mapcat identity (zipmap arglist args))))))
+      {:free-variables (filter (fn [[v & _]]
+                                 (not (contains? (set arglist) v)))
+                               (:free-variables (meta body)))})))
+
+(defn compile-if [args]
+  (let [[test then else] args
+        test (compile test)
+        then (compile then)
+        else (if else (compile else) (constantly nil))]
+    (with-meta
+      (fn [ctx]
+        (if (test ctx)
+          (then ctx)
+          (else ctx)))
+      {:free-variables (mapcat #(:free-variables (meta %)) [test then else])})))
+
+(defn compile-ifs [args]
+  (let [args (mapv compile args)]
+    (with-meta
+      (fn [ctx]
+        (loop [[[test then :as test-then] & clauses] (partition-all 2 2 args)]
+          (case (count test-then)
+            0 nil
+            1 (test ctx)
+            (if (test ctx)
+              (then ctx)
+              (recur clauses)))))
+      {:free-variables (mapcat #(:free-variables (meta %)) args)})))
+
+(defn compile-with [args]
+  (let [bindings
+        (loop [bindings []
+               binding-var (first args)
+               binding-form (second args)
+               args (nnext args)]
+          (if binding-form
+            (recur (conj bindings [(first (::parser/parts binding-var))
+                                   (compile binding-form)])
+                   (first args)
+                   (second args)
+                   (nnext args))
+            (conj bindings (compile binding-var))))
+        free-variables (loop [free-vars [] closures []
+                              binding* (first bindings)
+                              bindings (next bindings)]
+                         (if (vector? binding*)
+                           (recur (concat free-vars (filter (fn [[v & _]]
+                                                              (not (contains? (set closures) v)))
+                                                            (:free-variables (meta (second binding*)))))
+                                  (cons (first binding*) closures)
+                                  (first bindings)
+                                  (next bindings))
+                           (concat free-vars (filter (fn [[v & _]]
+                                                       (not (contains? (set closures) v)))
+                                                     (:free-variables (meta binding*))))))]
+    (with-meta
+      (fn [ctx]
+        (loop [ctx ctx binding* (first bindings) bindings (next bindings)]
+          (if (vector? binding*)
+            (recur (assoc ctx (first binding*) ((second binding*) ctx))
+                   (first bindings)
+                   (next bindings))
+            (binding* ctx))))
+      {:free-variables free-variables})))
+
 (defn compile-application [{::parser/keys [parts] :as f} args]
   (case (string/join "." parts)
-    "FN" (let [body (compile (last args))
-               arglist (mapv #(first (::parser/parts %))
-                             (butlast args))]
-           (with-meta
-             (fn [ctx]
-               (fn [& args]
-                 (body (apply assoc ctx (mapcat identity (zipmap arglist args))))))
-             {:free-variables (filter (fn [[v & _]]
-                                        (not (contains? (set arglist) v)))
-                                      (:free-variables (meta body)))}))
-    "IF" (let [[test then else] args
-               test (compile test)
-               then (compile then)
-               else (if else (compile else) (constantly nil))]
-           (with-meta
-             (fn [ctx]
-               (if (test ctx)
-                 (then ctx)
-                 (else ctx)))
-             {:free-variables (mapcat #(:free-variables (meta %)) [test then else])}))
-    "IFS" (let [args (mapv compile args)]
-            (with-meta
-              (fn [ctx]
-                (loop [[[test then :as test-then] & clauses] (partition-all 2 2 args)]
-                  (case (count test-then)
-                    0 nil
-                    1 (test ctx)
-                    (if (test ctx)
-                      (then ctx)
-                      (recur clauses)))))
-              {:free-variables (mapcat #(:free-variables (meta %)) args)}))
-    "WITH" (let [bindings
-                 (loop [bindings []
-                        binding-var (first args)
-                        binding-form (second args)
-                        args (nnext args)]
-                   (if binding-form
-                     (recur (conj bindings [(first (::parser/parts binding-var))
-                                            (compile binding-form)])
-                            (first args)
-                            (second args)
-                            (nnext args))
-                     (conj bindings (compile binding-var))))
-                 free-variables (loop [free-vars [] closures []
-                                       binding* (first bindings)
-                                       bindings (next bindings)]
-                                  (if (vector? binding*)
-                                    (recur (concat free-vars (filter (fn [[v & _]]
-                                                                       (not (contains? (set closures) v)))
-                                                                     (:free-variables (meta (second binding*)))))
-                                           (cons (first binding*) closures)
-                                           (first bindings)
-                                           (next bindings))
-                                    (concat free-vars (filter (fn [[v & _]]
-                                                                (not (contains? (set closures) v)))
-                                                              (:free-variables (meta binding*))))))]
-             (with-meta
-               (fn [ctx]
-                 (loop [ctx ctx binding* (first bindings) bindings (next bindings)]
-                   (if (vector? binding*)
-                     (recur (assoc ctx (first binding*) ((second binding*) ctx))
-                            (first bindings)
-                            (next bindings))
-                     (binding* ctx))))
-               {:free-variables free-variables}))
+    "FN" (compile-fn args)
+    "IF" (compile-if args)
+    "IFS" (compile-ifs args)
+    "WITH" (compile-with args)
 
     (let [f (compile f)
           args (mapv compile args)]
