@@ -105,19 +105,20 @@
                    (second args)
                    (nnext args))
             (conj bindings (compile binding-var))))
-        free-variables (loop [free-vars [] closures []
-                              binding* (first bindings)
-                              bindings (next bindings)]
-                         (if (vector? binding*)
-                           (recur (concat free-vars (filter (fn [[v & _]]
-                                                              (not (contains? (set closures) v)))
-                                                            (:free-variables (meta (second binding*)))))
-                                  (cons (first binding*) closures)
-                                  (first bindings)
-                                  (next bindings))
-                           (concat free-vars (filter (fn [[v & _]]
-                                                       (not (contains? (set closures) v)))
-                                                     (:free-variables (meta binding*))))))]
+        free-variables
+        (loop [free-vars [] closures []
+               binding* (first bindings)
+               bindings (next bindings)]
+          (if (vector? binding*)
+            (recur (concat free-vars (filter (fn [[v & _]]
+                                               (not (contains? (set closures) v)))
+                                             (:free-variables (meta (second binding*)))))
+                   (cons (first binding*) closures)
+                   (first bindings)
+                   (next bindings))
+            (concat free-vars (filter (fn [[v & _]]
+                                        (not (contains? (set closures) v)))
+                                      (:free-variables (meta binding*))))))]
     (with-meta
       (fn [ctx]
         (loop [ctx ctx binding* (first bindings) bindings (next bindings)]
@@ -205,9 +206,7 @@
 (defn compile [ast]
   (case (::parser/type ast)
     ::parser/formula
-    (let [f (compile (::parser/body ast))]
-      (with-meta f
-        {:free-variables (distinct (:free-variables (meta f)))}))
+    (compile (::parser/body ast))
 
     ::parser/constant
     (compile-constant ast)

@@ -41,4 +41,4 @@
          ([] (fname nil))
          ([ctx]
           (f (assoc env :axel-f.runtime/context ctx))))
-       (meta f)))))
+       (update (meta f) :free-variables distinct)))))

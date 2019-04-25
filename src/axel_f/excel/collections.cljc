@@ -2,8 +2,8 @@
 
 (defn MAP*
   "Applies partialy defined formula to every element in a collection and returns an array."
-  [f coll]
-  (map f coll))
+  [f & colls]
+  (apply map f colls))
 
 (def MAP #'MAP*)
 
