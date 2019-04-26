@@ -143,7 +143,8 @@
           (apply (f ctx)
                  (for [x args]
                    (x ctx))))
-        {:free-variables (mapcat #(:free-variables (meta %)) args)}))))
+        {:free-variables (mapcat #(:free-variables (meta %)) args)
+         :fn-name (:free-variables (meta f))}))))
 
 (defn compile-var-part [p]
   (cond

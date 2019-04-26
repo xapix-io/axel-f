@@ -3,7 +3,7 @@
 
 (defn run
   "start read eval print loop"
-  [ctx eval-fn]
+  [ctx compile-fn]
   (println "press ctrl-D or type `exit` to exit")
   (loop [ctx ctx]
     (print "=> ")
@@ -19,7 +19,7 @@
               (println ctx-var "=" res)
               (println res))
             (recur (if ctx-var (assoc ctx ctx-var res) ctx)))
-          (let [f (try (eval-fn formula)
+          (let [f (try (compile-fn formula)
                        (catch #?(:clj Throwable :cljs js/Error) e
                          (println "formula read error\n")))
                 res (if f

@@ -3,6 +3,7 @@
   (:require [axel-f.lexer :as lexer]
             [axel-f.parser :as parser]
             [axel-f.compiler :as compiler]
+            [axel-f.autocomplete :as autocomplete]
             [axel-f.excel.operators :as operators]
             [axel-f.excel.collections :as collections]
             [axel-f.excel.base64 :as base64]
@@ -42,3 +43,9 @@
          ([ctx]
           (f (assoc env :axel-f.runtime/context ctx))))
        (update (meta f) :free-variables distinct)))))
+
+(defn suggest-fn
+  ([context] (suggest-fn context nil))
+  ([context extra-env]
+   (let [env (merge env extra-env)]
+     (autocomplete/suggest-fn env context))))

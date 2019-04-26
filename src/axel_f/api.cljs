@@ -27,6 +27,6 @@
                                             {:message (.-message e)
                                              :data (ex-data e)})))))))
 
-;; (defn ^:export autocomplete [incomplete-formula context]
-;;   (let [context (js->clj context)]
-;;     (clj->js (axel-f/suggestions incomplete-formula context))))
+(defn ^:export autocomplete [context]
+  (let [context (js->clj context)]
+    (axel-f/suggest-fn context)))
