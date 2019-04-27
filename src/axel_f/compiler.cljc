@@ -62,7 +62,9 @@
     (with-meta
       (fn [ctx]
         (fn [& args]
-          (body (apply assoc ctx (mapcat identity (zipmap arglist args))))))
+          (body (if-let [args (not-empty (mapcat identity (zipmap arglist args)))]
+                  (apply assoc ctx args)
+                  ctx))))
       {:free-variables (filter (fn [[v & _]]
                                  (not (contains? (set arglist) v)))
                                (:free-variables (meta body)))})))

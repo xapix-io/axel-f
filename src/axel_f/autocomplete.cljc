@@ -148,7 +148,7 @@
                             (and (= (map ->string (butlast p))
                                     (map ->string (butlast path)))
                                  (< (distance (->string (last path))
-                                              (->string (last p))) 2/3))))
+                                              (->string (last p))) (/ 2 3)))))
                       (concat index-env index-context)))
             (extract-paths [formula]
               (let [formula (lexer/read formula)
