@@ -86,7 +86,8 @@
 (def percent #'percent*)
 
 (defn range** [x y]
-  (range x y))
+  (range (coerce/excel-number x)
+         (coerce/excel-number y)))
 
 (def range* #'range**)
 

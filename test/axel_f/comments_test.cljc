@@ -17,9 +17,4 @@
                       ;; Line comment"))))
 
   (t/is (= 1
-           ((af/compile ";~ Block comment ~; 1"))))
-
-  (t/is (thrown-with-msg?
-         ExceptionInfo
-         #"Unclosed comment block"
-         ((af/compile "1 ;~ Unclosed comment block")))))
+           ((af/compile ";~ Block comment ~; 1")))))

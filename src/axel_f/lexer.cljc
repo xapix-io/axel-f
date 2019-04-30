@@ -24,6 +24,9 @@
 (defn- operator-literal? [{::keys [v]}]
   (contains? (set ":+-*/&=<>^!%") v))
 
+(defn- eof? [{::keys [v]}]
+  (nil? v))
+
 (defn- escape-char? [{::keys [v type]}]
   (= type ::escaped))
 
@@ -38,7 +41,7 @@
                          (punctuation-literal? e) ::punctuation-literal
                          (operator-literal? e) ::operator-literal
                          (comment-literal? e) ::comment
-                         (nil? e) ::eof
+                         (eof? e) ::eof
                          :otherwise ::symbol-literal)))
 
 (defmethod read-next* ::whitespace [ex]
@@ -82,26 +85,29 @@
                               part)]
         (if next-number-part
           (recur acc' ex' next-number-part)
-          [{::type ::number
-            ::value (edn/read-string (->> acc' (map ::v) (apply str)))
-            ::line l
-            ::col c
-            ::length (count acc')}
-           ex'])))))
+          (let [{ec ::c el ::l} (last acc')]
+            [{::type ::number
+              ::value (edn/read-string (->> acc' (map ::v) (apply str)))
+              ::begin {::line l
+                       ::col c}
+              ::end {::line el
+                     ::col ec}}
+             ex']))))))
 
 (defmethod read-next* ::string-literal [ex]
   (let [ex (if (= \# (-> ex first ::v)) (next ex) ex)
         {literal-t ::v
          line ::l
          col ::c} (first ex)]
-    (loop [acc [] {::keys [v] :as e} (second ex) ex (nnext ex)]
+    (loop [acc [] {::keys [v l c] :as e} (second ex) ex (nnext ex)]
       (if (and (= v literal-t)
                (not (escape-char? (last acc))))
         [{::type ::string
           ::value (->> acc (map ::v) escape-str)
-          ::line line
-          ::col col
-          ::length (+ 2 (count acc))}
+          ::begin {::line line
+                   ::col col}
+          ::end {::line l
+                 ::col c}}
          ex]
         (recur (conj acc (if (and (= \\ (::v e))
                                   (not (escape-char? (last acc))))
@@ -113,19 +119,22 @@
 (defmethod read-next* ::punctuation-literal [[{::keys [v l c]} & ex]]
   [{::type ::punct
     ::value (str v)
-    ::line l
-    ::col c
-    ::length 1}
+    ::begin {::line l
+             ::col c}
+    ::end {::line l
+           ::col c}}
    ex])
 
 (defmethod read-next* ::operator-literal [[{::keys [v l c]} & ex]]
   (let [compound? (contains? (set ["<=" ">=" "<>"]) (str v (::v (first ex))))
-        op (str v (when compound? (::v (first ex))))]
+        {v' ::v l' ::l c' ::c} (first ex)
+        op (str v (when compound? v'))]
     [{::type ::operator
       ::value op
-      ::line l
-      ::col c
-      ::length (count op)}
+      ::begin {::line l
+               ::col c}
+      ::end {::line (if compound? l' l)
+             ::col (if compound? c' c)}}
      (if compound? (next ex) ex)]))
 
 (defmethod read-next* ::symbol-literal [ex]
@@ -134,14 +143,17 @@
       (let [{::keys [v] :as e'} (first ex)]
         (if (and (or (empty? ex)
                      (whitespace? e')
-                     (contains? (set ",.[](){}") v))
+                     (contains? (set ",.[](){}") v)
+                     (eof? e'))
                  (not (escape-char? (last acc))))
-          [{::type ::symbol
-            ::value (->> acc (map ::v) escape-str)
-            ::line l
-            ::col c
-            ::length (count acc)}
-           ex]
+          (let [{l' ::l c' ::c} (last acc)]
+            [{::type ::symbol
+              ::value (->> acc (map ::v) escape-str)
+              ::begin {::line l
+                       ::col c}
+              ::end {::line l'
+                     ::col c'}}
+             ex])
           (recur (conj acc (if (and (= \\ (::v e'))
                                     (not (escape-char? (last acc))))
                              (assoc e' ::type ::escaped)
@@ -161,7 +173,7 @@
       (nnext ex)
 
       (not s)
-      (throw (ex-info "Unclosed comment block" (first ex)))
+      (throw (ex-info "Unclosed comment block" {:begin (first ex)}))
 
       :otherwise
       (recur (next ex)))))
@@ -172,20 +184,26 @@
            (drop-block-comment (next ex))
            (drop-inline-comment (next ex) l))]))
 
-(defmethod read-next* ::eof [ex]
-  [{::type ::eof} nil])
+(defmethod read-next* ::eof [[{::keys [l c]}]]
+  [{::type ::eof
+    ::begin {::line l
+             ::col c}
+    ::end {::line l
+           ::col c}} nil])
 
 (defn- str->stream
   ([s] (str->stream s 0 1))
   ([s col line]
    (lazy-seq
-    (when-let [e (first s)]
+    (if-let [e (first s)]
       (cons {::v e
              ::l line
              ::c (inc col)}
             (str->stream (next s)
                          (if (newline? e) 0 (inc col))
-                         (if (newline? e) (inc line) line)))))))
+                         (if (newline? e) (inc line) line)))
+      (list {::l line
+             ::c (inc col)})))))
 
 (defn- read-next [tokens]
   (lazy-seq
@@ -198,9 +216,7 @@
        (cons token (read-next tokens))
 
        :otherwise
-       (if (not-empty tokens)
-         (read-next tokens)
-         (list {::type ::eof}))))))
+       (read-next tokens)))))
 
 (defn read [s]
   (read-next (str->stream s)))

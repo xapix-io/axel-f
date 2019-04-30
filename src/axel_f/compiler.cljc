@@ -17,8 +17,7 @@
      (when (sequential? x)
        (reduced (cond
                   (= ::parser/select-all idx) x
-                  (number? idx) (nth x idx nil)
-                  :else (throw (ex-info "Index lookup failed."))))))
+                  (number? idx) (nth x idx nil)))))
    nil ctxs))
 
 (defn map-lookup [idx ctxs]
@@ -48,16 +47,26 @@
               "false" false
               "null" nil)
             value)]
-    (constantly v)))
+    (with-meta
+      (constantly v)
+      (select-keys ast [::lexer/begin ::lexer/end]))))
 
-(defn compile-operator [ast]
-  (let [op-sym (::lexer/value ast)]
+(defn compile-operator [{::lexer/keys [value begin] :as op-ast}]
+  (with-meta
     (fn [ctx]
-      (get ctx op-sym))))
+      (if-let [op (get ctx value)]
+        op
+        (throw (ex-info (str "Operator '" value "' doesn't have implementation.")
+                        {:begin begin}))))
+    (select-keys op-ast [::lexer/begin ::lexer/end])))
 
 (defn compile-fn [args]
   (let [body (compile (last args))
-        arglist (mapv #(first (::parser/parts %))
+        arglist (mapv (fn [{::parser/keys [parts] ::lexer/keys [begin] :as arg}]
+                        (if (> (count parts) 1)
+                          (throw (ex-info (str "Wrong argument symbol: `" (string/join "." parts) "`")
+                                          {:begin begin}))
+                          (first parts)))
                       (butlast args))]
     (with-meta
       (fn [ctx]
@@ -131,22 +140,28 @@
             (binding* ctx))))
       {:free-variables free-variables})))
 
-(defn compile-application [{::parser/keys [parts] :as f} args]
-  (case (string/join "." parts)
-    "FN" (compile-fn args)
-    "IF" (compile-if args)
-    "IFS" (compile-ifs args)
-    "WITH" (compile-with args)
+(defn compile-application [{{::parser/keys [parts] :as f} ::parser/function
+                            args ::parser/args
+                            :as ast}]
+  (let [f (case (string/join "." parts)
+            "FN" (compile-fn args)
+            "IF" (compile-if args)
+            "IFS" (compile-ifs args)
+            "WITH" (compile-with args)
 
-    (let [f (compile f)
-          args (mapv compile args)]
-      (with-meta
-        (fn [ctx]
-          (apply (f ctx)
-                 (for [x args]
-                   (x ctx))))
-        {:free-variables (mapcat #(:free-variables (meta %)) args)
-         :fn-name (:free-variables (meta f))}))))
+            (let [f (compile f)
+                  args (mapv compile args)]
+              (with-meta
+                (fn [ctx]
+                  (apply (f ctx)
+                         (for [x args]
+                           (x ctx))))
+                {:free-variables (mapcat #(:free-variables (meta %)) args)
+                 :fn-name (:free-variables (meta f))})))
+        fm (meta f)]
+    (with-meta
+      f
+      (merge fm (select-keys ast [::lexer/begin ::lexer/end])))))
 
 (defn compile-var-part [p]
   (cond
@@ -186,9 +201,10 @@
          ctx
          (for [x path-fs]
            (x ctx))))
-      {:free-variables (cons free-variable free-variables)})))
+      (merge {:free-variables (cons free-variable free-variables)}
+             (select-keys ast [::lexer/begin ::lexer/end])))))
 
-(defn compile-primary [{::parser/keys [args operator]}]
+(defn compile-primary [{::parser/keys [args operator] :as p}]
   (let [args (mapv compile args)
         op (compile operator)]
     (with-meta
@@ -196,15 +212,17 @@
         (apply (op ctx)
                (for [f args]
                  (f ctx))))
-      {:free-variables (mapcat #(:free-variables (meta %)) args)})))
+      (merge {:free-variables (mapcat #(:free-variables (meta %)) args)}
+             (select-keys p [::lexer/begin ::lexer/end])))))
 
-(defn compile-list [{::parser/keys [entries]}]
+(defn compile-list [{::parser/keys [entries] :as l}]
   (let [entries (mapv compile entries)]
     (with-meta
       (fn [ctx]
         (for [x entries]
           (x ctx)))
-      {:free-variables (mapcat #(:free-variables (meta %)) entries)})))
+      (merge {:free-variables (mapcat #(:free-variables (meta %)) entries)}
+             (select-keys l [::lexer/begin ::lexer/end])))))
 
 (defn compile [ast]
   (case (::parser/type ast)
@@ -218,9 +236,7 @@
     (compile-operator ast)
 
     ::parser/application
-    (compile-application
-     (::parser/function ast)
-     (::parser/args ast))
+    (compile-application ast)
 
     ::parser/var
     (compile-var ast)

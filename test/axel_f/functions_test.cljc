@@ -77,15 +77,36 @@
 (t/deftest references
 
   (t/is (= 1
-           ((af/compile "foo.'foo'" {"foo" {:foo 1}})) ))
+           ((af/compile "foo.'foo'") {"foo" {:foo 1}}) ))
 
   (t/is (= 1
-           ((af/compile ":foo/bar" {"foo/bar" 1})))))
+           ((af/compile ":foo/bar") {"foo/bar" 1})))
+
+  (t/is (= 1
+           ((af/compile "foo[bar]") {:foo [1 2 3]
+                                     :bar 0})))
+
+  (t/is (= 1
+           ((af/compile "foo[:bar]") {:foo [1 2 3]
+                                      :bar 0})))
+
+  (t/is (= 4
+           ((af/compile "foo[:bar + 2]") {:foo [1 2 3 4]
+                                          :bar 1})))
+
+  (t/is (= 3
+           ((af/compile "foo[1 + 1]") {:foo [1 2 3]})))
+
+  (t/is (= [1 2 3]
+           ((af/compile "foo[]") {:foo [1 2 3]}))))
 
 (t/deftest special-functions
 
   (t/is (= [1 2 3]
            ((af/compile "MAP(FN(x, x), {1,2,3})"))))
+
+  (t/is (= [1 1 1]
+           ((af/compile "MAP(FN(1), {1, 2, 3})"))))
 
   (t/is (= [2 3 4]
            ((af/compile "WITH(inc, FN(x, x + 1), MAP(inc, {1,2,3}))"))))
