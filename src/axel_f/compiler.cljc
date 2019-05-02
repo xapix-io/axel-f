@@ -60,101 +60,14 @@
                         {:begin begin}))))
     (select-keys op-ast [::lexer/begin ::lexer/end])))
 
-(defn compile-fn [args]
-  (let [body (compile (last args))
-        arglist (mapv (fn [{::parser/keys [parts] ::lexer/keys [begin] :as arg}]
-                        (if (> (count parts) 1)
-                          (throw (ex-info (str "Wrong argument symbol: `" (string/join "." parts) "`")
-                                          {:begin begin}))
-                          (first parts)))
-                      (butlast args))]
-    (with-meta
-      (fn [ctx]
-        (fn [& args]
-          (body (if-let [args (not-empty (mapcat identity (zipmap arglist args)))]
-                  (apply assoc ctx args)
-                  ctx))))
-      {:free-variables (filter (fn [[v & _]]
-                                 (not (contains? (set arglist) v)))
-                               (:free-variables (meta body)))
-       :fn-name '(("FN"))})))
-
-(defn compile-if [args]
-  (let [[test then else] args
-        test (compile test)
-        then (compile then)
-        else (if else (compile else) (constantly nil))]
-    (with-meta
-      (fn [ctx]
-        (if (test ctx)
-          (then ctx)
-          (else ctx)))
-      {:free-variables (mapcat #(:free-variables (meta %)) [test then else])
-       :fn-name '(("IF"))})))
-
-(defn compile-ifs [args]
-  (let [args (mapv compile args)]
-    (with-meta
-      (fn [ctx]
-        (loop [[[test then :as test-then] & clauses] (partition-all 2 2 args)]
-          (case (count test-then)
-            0 nil
-            1 (test ctx)
-            (if (test ctx)
-              (then ctx)
-              (recur clauses)))))
-      {:free-variables (mapcat #(:free-variables (meta %)) args)
-       :fn-name '(("IFS"))})))
-
-(defn compile-with [args]
-  (let [bindings
-        (loop [bindings []
-               binding-var (first args)
-               binding-form (second args)
-               args (nnext args)]
-          (if binding-form
-            (recur (conj bindings [(first (::parser/parts binding-var))
-                                   (compile binding-form)])
-                   (first args)
-                   (second args)
-                   (nnext args))
-            (conj bindings (compile binding-var))))
-        free-variables
-        (loop [free-vars [] closures []
-               binding* (first bindings)
-               bindings (next bindings)]
-          (if (vector? binding*)
-            (recur (concat free-vars (filter (fn [[v & _]]
-                                               (not (contains? (set closures) v)))
-                                             (:free-variables (meta (second binding*)))))
-                   (cons (first binding*) closures)
-                   (first bindings)
-                   (next bindings))
-            (concat free-vars (filter (fn [[v & _]]
-                                        (not (contains? (set closures) v)))
-                                      (:free-variables (meta binding*))))))]
-    (with-meta
-      (fn [ctx]
-        (loop [ctx ctx binding* (first bindings) bindings (next bindings)]
-          (if (vector? binding*)
-            (recur (assoc ctx (first binding*) ((second binding*) ctx))
-                   (first bindings)
-                   (next bindings))
-            (binding* ctx))))
-      {:free-variables free-variables
-       :fn-name '(("WITH"))})))
-
-(defn compile-application [{{::parser/keys [parts] :as f} ::parser/function
-                            args ::parser/args
-                            :as ast}]
-  (let [f (case (string/join "." parts)
-            "FN" (compile-fn args)
-            "IF" (compile-if args)
-            "IFS" (compile-ifs args)
-            "WITH" (compile-with args)
-
-            (let [f (compile f)
-                  args (mapv compile args)]
+(defn compile-application [env {{::parser/keys [parts] :as f} ::parser/function
+                                args ::parser/args
+                                :as ast}]
+  (let [f' (get env (apply str parts))
+        f (if f'
+            (f' args)
+            (let [f (compile env f)
+                  args (mapv (partial compile env) args)]
               (with-meta
                 (fn [ctx]
                   (apply (f ctx)
@@ -168,10 +81,10 @@
       (merge fm (select-keys ast [::lexer/begin ::lexer/end])
              {:args-count (count args)}))))
 
-(defn compile-var-part [p]
+(defn compile-var-part [env p]
   (cond
     (::parser/type p)
-    (let [path-f (compile p)]
+    (let [path-f (compile env p)]
       (with-meta
         path-f
         {:var-part ::dynamic
@@ -183,7 +96,7 @@
           path-f (if (or (= ::parser/select-all path-f)
                          (nil? (::parser/type path-f)))
                    (constantly path-f)
-                   (compile path-f))]
+                   (compile env path-f))]
       (with-meta
         (fn [ctx]
           [::parser/list-ref (path-f ctx)])
@@ -195,8 +108,8 @@
       (constantly p)
       {:var-part p})))
 
-(defn compile-var [ast]
-  (let [path-fs (mapv compile-var-part
+(defn compile-var [env ast]
+  (let [path-fs (mapv (partial compile-var-part env)
                       (::parser/parts ast))
         free-variables (mapcat #(:free-variables (meta %)) path-fs)
         free-variable (map #(:var-part (meta %)) path-fs)]
@@ -209,9 +122,9 @@
       (merge {:free-variables (cons free-variable free-variables)}
              (select-keys ast [::lexer/begin ::lexer/end])))))
 
-(defn compile-primary [{::parser/keys [args operator] :as p}]
-  (let [args (mapv compile args)
-        op (compile operator)]
+(defn compile-primary [env {::parser/keys [args operator] :as p}]
+  (let [args (mapv (partial compile env) args)
+        op (compile-operator operator)]
     (with-meta
       (fn [ctx]
         (apply (op ctx)
@@ -220,8 +133,8 @@
       (merge {:free-variables (mapcat #(:free-variables (meta %)) args)}
              (select-keys p [::lexer/begin ::lexer/end])))))
 
-(defn compile-list [{::parser/keys [entries] :as l}]
-  (let [entries (mapv compile entries)]
+(defn compile-list [env {::parser/keys [entries] :as l}]
+  (let [entries (mapv (partial compile env) entries)]
     (with-meta
       (fn [ctx]
         (for [x entries]
@@ -229,25 +142,27 @@
       (merge {:free-variables (mapcat #(:free-variables (meta %)) entries)}
              (select-keys l [::lexer/begin ::lexer/end])))))
 
-(defn compile [ast]
+(defn compile
+  "Compile ast to executable function
+
+  `env` is a compile time environment with implementation for special forms
+  `ast` abstract syntax tree"
+  [env ast]
   (case (::parser/type ast)
     ::parser/formula
-    (compile (::parser/body ast))
+    (compile env (::parser/body ast))
 
     ::parser/constant
     (compile-constant ast)
 
-    ::parser/operator
-    (compile-operator ast)
-
     ::parser/application
-    (compile-application ast)
+    (compile-application env ast)
 
     ::parser/var
-    (compile-var ast)
+    (compile-var env ast)
 
     ::parser/primary
-    (compile-primary ast)
+    (compile-primary env ast)
 
     ::parser/list
-    (compile-list ast)))
+    (compile-list env ast)))

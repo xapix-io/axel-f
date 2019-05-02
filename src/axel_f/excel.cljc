@@ -35,7 +35,7 @@
   ([formula] (compile formula nil))
   ([formula extra-env]
    (let [ast (-> formula lexer/read parser/parse)
-         f (compiler/compile ast)
+         f (compiler/compile special-forms/env ast)
          env (merge env extra-env)
          fname (gensym)]
      (with-meta
