@@ -26,7 +26,3 @@
       (throw (js/Error. (js/JSON.stringify (clj->js
                                             {:message (.-message e)
                                              :data (ex-data e)})))))))
-
-(defn ^:export autocomplete [context]
-  (let [context (js->clj context)]
-    (axel-f/suggest-fn context)))
