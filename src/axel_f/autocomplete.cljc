@@ -5,6 +5,24 @@
             [axel-f.parser :as parser]
             [axel-f.compiler :as compiler]))
 
+(defn arg->doc [arg opts]
+  (let [{:keys [doc]} (meta arg)]
+    (merge {:desc doc} opts)))
+
+(defn arglist->doc [arglist]
+  (loop [acc [] opts {} arg (first arglist) arglist (rest arglist)]
+    (if arg
+      (if (= arg '&)
+        (recur acc (assoc opts :opt true :repeatable true) (first arglist) (rest arglist))
+        (if (vector? arg)
+          (recur acc (dissoc opts :repeatable) (first arg) (concat (rest arg) (rest arglist)))
+          (recur (conj acc (arg->doc arg opts)) {} (first arglist) (rest arglist))))
+      acc)))
+
+(defn ref-meta->doc [{:keys [doc arglists]}]
+  {:desc doc
+   :args (arglist->doc (first arglists))})
+
 (defn- fl*
   ([xs] (fl* '() xs))
   ([acc [x & xs]]
@@ -22,6 +40,9 @@
      (map? m)
      (concat
       (list (vector pre (wrapper m)))
+      ;; (map (fn [[p v]]
+      ;;        (vector (concat pre p) v))
+      ;;      (wrapper m))
       (map (fn [[k v]]
              (flatten-map-entry wrapper v (concat pre (list k))))
            m))
@@ -29,6 +50,9 @@
      (vector? m)
      (concat
       (list (vector (concat pre (list "*")) (wrapper m)))
+      ;; (map (fn [[p v]]
+      ;;        (vector (concat pre p) v))
+      ;;      (wrapper m))
       (apply concat
              (map-indexed (fn [i m']
                             (let [x (flatten-map-entry wrapper m' (concat pre (list i)))]
@@ -43,38 +67,34 @@
                     x)))
               (filter map? m)))
 
+     (nil? m)
+     '()
+
      :else
      [pre (wrapper m)])))
-
-(defn suggestion-wrapper [v]
-  (cond
-    ((some-fn var? fn?) v)
-    (merge {:type :function}
-           (meta v))
-
-    (map? v)
-    v
-
-    :else
-    {:type :value
-     :value v}))
 
 (defn ->string [s]
   (if (keyword? s)
     (string/join "/" (filter identity ((juxt namespace name) s)))
     (str s)))
 
-(defn distance [s1 s2]
+(defn suggestion-wrapper [v]
   (cond
-    (empty? s2)
-    1
+    ((some-fn var? fn?) v)
+    (merge {:type :FNCALL}
+           (ref-meta->doc (meta v)))
 
-    (string/starts-with?
-     (string/lower-case s2)
-     (string/lower-case s1))
-    0
+    ;; (map? v)
+    ;; (map #(list (list (->string %)) {:type :REF :desc "Field in the context"})
+    ;;      (keys v))
 
-    :else (fuzzy/jaccard s1 s2)))
+    :else
+    {:type :REF
+     :desc "Field in the context"}))
+
+(defn distance [s1 s2]
+  (if (empty? s2)
+    1 (fuzzy/jaccard s1 s2)))
 
 (defn substract-var
   ([xs] (let [xs (reverse xs)]
@@ -138,21 +158,30 @@
        (substract-fncall (cons x acc) c (first xs) (rest xs)))
      nil)))
 
+(defn wrap-suggestion [[n sug]]
+  (assoc sug :value (last n)))
+
 (defn suggest-fn [env context]
   (let [indexer (partial flatten-map-entry suggestion-wrapper)
         index-env (indexer env)
         index-context (indexer context)]
-    (letfn [(match [path]
-              (filter (fn [[p _]]
-                        (or (= p path)
-                            (and (= (map ->string (butlast p))
-                                    (map ->string (butlast path)))
-                                 (< (distance (->string (last path))
-                                              (->string (last p))) (/ 2 3)))))
-                      (concat index-env index-context)))
+    (letfn [(dist [path [p _]]
+              (distance (->string (last path))
+                        (->string (last p))))
+            (match [path]
+              (sort-by (partial dist path)
+                       (filter (fn [[p _]]
+                                 (or (= p path)
+                                     (and (= (count p)
+                                             (inc (count path)))
+                                          (= path (butlast p)))
+                                     (and (= (map ->string (butlast p))
+                                             (map ->string (butlast path)))
+                                          (< (dist path [p nil]) 1))))
+                               (concat index-env index-context))))
             (extract-paths [formula]
               (let [formula (lexer/read formula)
-                    var-formula (substract-var formula)
+                    var-formula (remove-trailing-symbols (substract-var formula))
                     fncall-formula (concat (remove-trailing-symbols (substract-fncall formula))
                                            '({::lexer/type ::lexer/punct ::lexer/value ")"}
                                              {::lexer/type ::lexer/eof}))
@@ -164,12 +193,14 @@
                              (-> fncall-formula parser/parse compiler/compile)
                              (catch #?(:clj Throwable :cljs js/Error) _
                                nil))]
-                [(:fn-name (meta fncall)) (:free-variables (meta var))]))]
+                [(meta fncall) (meta var)]))]
       (fn [formula]
-        (let [[f v] (extract-paths formula)]
-          (merge (when-let [x (when-let [f (first f)]
-                                (match f))]
-                   {:fn x})
-                 (when-let [v (when (not-empty v)
-                                (mapcat #(match %) v))]
-                   {:var v})))))))
+        (let [[f v] (extract-paths formula)
+              f' (-> f :fn-name first)
+              v' (-> v :free-variables)]
+          (merge (when-let [x (when f' (match f'))]
+                   {:context (assoc (wrap-suggestion (first x))
+                                    :current-arg (:args-count f))})
+                 (when-let [v (when (not-empty v')
+                                (mapcat #(match %) v'))]
+                   {:suggestions (map wrap-suggestion v)})))))))

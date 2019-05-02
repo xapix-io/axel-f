@@ -76,7 +76,8 @@
                   ctx))))
       {:free-variables (filter (fn [[v & _]]
                                  (not (contains? (set arglist) v)))
-                               (:free-variables (meta body)))})))
+                               (:free-variables (meta body)))
+       :fn-name '(("FN"))})))
 
 (defn compile-if [args]
   (let [[test then else] args
@@ -88,7 +89,8 @@
         (if (test ctx)
           (then ctx)
           (else ctx)))
-      {:free-variables (mapcat #(:free-variables (meta %)) [test then else])})))
+      {:free-variables (mapcat #(:free-variables (meta %)) [test then else])
+       :fn-name '(("IF"))})))
 
 (defn compile-ifs [args]
   (let [args (mapv compile args)]
@@ -101,7 +103,8 @@
             (if (test ctx)
               (then ctx)
               (recur clauses)))))
-      {:free-variables (mapcat #(:free-variables (meta %)) args)})))
+      {:free-variables (mapcat #(:free-variables (meta %)) args)
+       :fn-name '(("IFS"))})))
 
 (defn compile-with [args]
   (let [bindings
@@ -138,7 +141,8 @@
                    (first bindings)
                    (next bindings))
             (binding* ctx))))
-      {:free-variables free-variables})))
+      {:free-variables free-variables
+       :fn-name '(("WITH"))})))
 
 (defn compile-application [{{::parser/keys [parts] :as f} ::parser/function
                             args ::parser/args
@@ -161,7 +165,8 @@
         fm (meta f)]
     (with-meta
       f
-      (merge fm (select-keys ast [::lexer/begin ::lexer/end])))))
+      (merge fm (select-keys ast [::lexer/begin ::lexer/end])
+             {:args-count (count args)}))))
 
 (defn compile-var-part [p]
   (cond

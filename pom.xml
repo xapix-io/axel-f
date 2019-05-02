@@ -7,9 +7,9 @@
     <name>axel-f</name>
     <dependencies>
         <dependency>
-            <groupId>org.clojure</groupId>
-            <artifactId>clojure</artifactId>
-            <version>1.9.0</version>
+            <groupId>clj-fuzzy</groupId>
+            <artifactId>clj-fuzzy</artifactId>
+            <version>0.4.1</version>
         </dependency>
         <dependency>
             <groupId>cheshire</groupId>
@@ -17,14 +17,9 @@
             <version>5.8.1</version>
         </dependency>
         <dependency>
-            <groupId>clj-fuzzy</groupId>
-            <artifactId>clj-fuzzy</artifactId>
-            <version>0.4.1</version>
-        </dependency>
-        <dependency>
             <groupId>digest</groupId>
             <artifactId>digest</artifactId>
-            <version>1.4.8</version>
+            <version>1.4.9</version>
         </dependency>
     </dependencies>
     <build>
@@ -38,11 +33,7 @@
     <repositories>
         <repository>
             <id>clojars</id>
-            <url>https://clojars.org/repo/</url>
-        </repository>
-        <repository>
-            <id>sonatype</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+            <url>https://repo.clojars.org/</url>
         </repository>
     </repositories>
     <distributionManagement>

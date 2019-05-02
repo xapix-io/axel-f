@@ -27,8 +27,9 @@
 
 (defn SUM*
   "Returns the sum of a series of numbers and/or references."
-  [& items]
-  (apply sum-fn items))
+  [^{:doc "The first number or range to add together."} number
+   & ^{:doc "Additional numbers or ranges to add to arg1."} numbers]
+  (apply (partial sum-fn number) numbers))
 
 (def SUM #'SUM*)
 

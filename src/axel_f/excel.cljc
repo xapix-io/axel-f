@@ -14,7 +14,8 @@
             [axel-f.excel.math :as math]
             [axel-f.excel.object :as object]
             [axel-f.excel.stat :as stat]
-            [axel-f.excel.text :as text]))
+            [axel-f.excel.text :as text]
+            [axel-f.excel.special-forms :as special-forms]))
 
 (def env
   (merge
@@ -28,7 +29,8 @@
    math/env
    object/env
    stat/env
-   text/env))
+   text/env
+   special-forms/env))
 
 (defn compile
   ([formula] (compile formula nil))
@@ -49,3 +51,9 @@
   ([context extra-env]
    (let [env (merge env extra-env)]
      (autocomplete/suggest-fn env context))))
+
+(defn ^:deprecated suggestions
+  ([incomplete-formula] (suggestions incomplete-formula nil))
+  ([incomplete-formula context]
+   (let [f (suggest-fn context)]
+     (f incomplete-formula))))
