@@ -14,7 +14,8 @@
             [axel-f.excel.object :as object]
             [axel-f.excel.stat :as stat]
             [axel-f.excel.text :as text]
-            [axel-f.excel.special-forms :as special-forms]))
+            [axel-f.excel.special-forms :as special-forms])
+  (:import [clojure.lang ExceptionInfo]))
 
 (def env
   (merge
@@ -44,3 +45,22 @@
          ([ctx]
           (f (assoc env :axel-f.runtime/context ctx))))
        (update (meta f) :free-variables distinct)))))
+
+(defn suggestions
+  ([incomplete-formula] (suggestions incomplete-formula nil))
+  ([incomplete-formula extra-env]
+   (let [store (atom {})
+         var-cb (fn [var]
+                  (when (not-empty var)
+                    (swap! store assoc :suggestions var)))
+         fncall-cb (fn [fn-name current-arg]
+                     (when (and (not-empty fn-name)
+                                current-arg)
+                       (swap! store assoc :context {:function fn-name
+                                                    :current-arg current-arg})))]
+     (try
+       (-> incomplete-formula
+           lexer/read
+           (parser/parse :var-cb var-cb :fncall-cb fncall-cb))
+       (catch #?(:clj ExceptionInfo :cljs js/Error) _
+         @store)))))

@@ -617,3 +617,54 @@ WITH(
                                 "dateTime" 1521105337000
                                 "height" 269.46667}}}]
     (t/is (= 0.0397927388 (f data)))))
+
+(comment
+
+  (def f "
+WITH(
+  starting-point, Position.GpsDataCompressed.gpsPoint,
+  normalized, WITH(
+                gps-delta, Position.GpsDataCompressed.gpsDelta,
+                normalize, FN(pos, WITH(
+                                     normalize, FN(x, IF(x > 2^15, 2^15 - x, x) / 600000),
+                                     latitude, normalize(pos.latitude),
+                                     longitude, normalize(pos.longitude),
+                                     OBJECT.MERGE(pos, OBJECT.NEW({{'latitude', latitude}, {'longitude', longitude}}))
+                                   )),
+                MAP(normalize, gps-delta)
+              ),
+  decompressor, FN(i, OBJECT.MERGE(normalized[i],
+                                   OBJECT.NEW({{'latitude', starting-point.latitude + SUM(MAP(FN(p, p.latitude), normalized[0:INC(i)]))},
+                                               {'longitude', starting-point.longitude + SUM(MAP(FN(p, p.longitude), normalized[0:INC(i)]))}}))),
+  into-point, FN(c, {c.latitude, c.longitude}),
+  decompressed, MAP(decompressor, 0:LENGTH(normalized)),
+  ROUND(GEO.DISTANCE({into-point(starting-point), into-point(decompressed[0])}) + GEO.DISTANCE(MAP(into-point, decompressed)), 10)
+)
+")
+
+  (def data {"Position" {"GpsDataCompressed" {"gpsDelta" [{"latitude" 9 "longitude" 32872 "time" 120}
+                                                          {"latitude" 32844 "longitude" 19 "time" 240}
+                                                          {"latitude" 64 "longitude" 37 "time" 180}]
+                                              "gpsPoint" {"latitude" 48.723717
+                                                          "longitude" 9.1222725
+                                                          "speed" 0.8791895
+                                                          "heading" 0
+                                                          "dateTime" 1521099587000}
+                                              "neglect" 0}
+                         "GpsPoint" {"latitude" 47.905552
+                                     "longitude" 16.274143
+                                     "speed" 0.62131244
+                                     "heading" 298.64
+                                     "dateTime" 1521105337000
+                                     "height" 269.46667}}})
+
+  (time
+   (dotimes [_ 1000]
+     (af/compile f)))
+
+  (let [f (af/compile f)]
+    (time
+     (dotimes [_ 1000]
+       (f data))))
+
+  )
