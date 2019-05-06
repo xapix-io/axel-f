@@ -3,6 +3,7 @@
   (:require [axel-f.lexer :as lexer]
             [axel-f.parser :as parser]
             [axel-f.compiler :as compiler]
+            [axel-f.autocomplete :as autocomplete]
             [axel-f.excel.operators :as operators]
             [axel-f.excel.collections :as collections]
             [axel-f.excel.base64 :as base64]
@@ -47,17 +48,26 @@
        (update (meta f) :free-variables distinct)))))
 
 (defn suggestions
-  ([incomplete-formula] (suggestions incomplete-formula nil))
-  ([incomplete-formula extra-env]
+  ([incomplete-formula context] (suggestions incomplete-formula context nil))
+  ([incomplete-formula context extra-env]
    (let [store (atom {})
+         index (autocomplete/index (assoc (merge env extra-env) :axel-f.runtime/context context))
          var-cb (fn [var]
+                  (prn var)
                   (when (not-empty var)
-                    (swap! store assoc :suggestions var)))
+                    (swap! store assoc :suggestions
+                           (autocomplete/search-index
+                            index
+                            (map #(if (vector? %)
+                                    (cond
+                                      (number? (second %)) (second %)
+                                      :else "*")
+                                    %) var)))))
          fncall-cb (fn [fn-name current-arg]
-                     (when (and (not-empty fn-name)
-                                current-arg)
-                       (swap! store assoc :context {:function fn-name
-                                                    :current-arg current-arg})))]
+                     (when-let [sug (and fn-name (first (autocomplete/search-index index fn-name)))]
+                       (swap! store assoc :context
+                              {:function sug
+                               :current-arg current-arg})))]
      (try
        (-> incomplete-formula
            lexer/read

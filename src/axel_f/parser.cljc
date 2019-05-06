@@ -244,14 +244,8 @@
                                                      (if-not (punctuation? (first tokens') "]")
                                                        (parse-expression tokens)
                                                        (update res 0 #(var* [%]))))))
-                                               (fn [tokens]
-                                                 (let [res (parse-operator tokens)]
-                                                   (when (first res)
-                                                     res)))
-                                               (fn [tokens]
-                                                 (let [res (parse-expression tokens)]
-                                                   (when (first res)
-                                                     res))))
+                                               parse-operator
+                                               parse-expression)
                                      (next tokens)))
                begin (::lexer/begin (first tokens))
                end (::lexer/end (first tokens'))]
@@ -333,14 +327,8 @@
                                                                      (or (eof? t)
                                                                          (empty? t)))
                                                                var-cb))))))))
-                      (fn [tokens]
-                        (let [res (parse-block tokens)]
-                          (when (first res)
-                            res)))
-                      (fn [tokens]
-                        (let [res (parse-curly-block tokens)]
-                          (when (first res)
-                            res)))
+                      parse-block
+                      parse-curly-block
                       (fn [tokens]
                         (let [res (parse-square-block tokens)]
                           (when (first res)
