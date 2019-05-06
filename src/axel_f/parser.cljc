@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [memoize])
   (:require [axel-f.lexer :as lexer]
             [clojure.string :as string])
-  (:import [clojure.lang ExceptionInfo]))
+  #?(:clj (:import [clojure.lang ExceptionInfo])))
 
 (defn- eof? [{::lexer/keys [type] :as token}]
   (= type ::lexer/eof))
