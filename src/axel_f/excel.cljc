@@ -57,10 +57,10 @@
                   (when (not-empty var)
                     (swap! store assoc :suggestions
                            (map (fn [[path desc]]
-                                  {:type :REF
-                                   :desc "Field in the context"
-                                   :value (autocomplete/->string (last path))
-                                   :position position})
+                                  (-> desc
+                                      (assoc :position position
+                                             :value (autocomplete/->string (last path)))
+                                      (dissoc :distance)))
                                 (autocomplete/search-index
                                  index
                                  (map (fn [x]

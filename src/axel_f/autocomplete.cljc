@@ -21,7 +21,8 @@
       acc)))
 
 (defn ref-meta->doc [{:keys [doc arglists]}]
-  {:desc doc
+  {:type :FNCALL
+   :desc doc
    :args (arglist->doc (first arglists))})
 
 (defn flatten
@@ -64,8 +65,20 @@
       acc
       (let [[path v] (first paths)]
         (recur
-         (if ((some-fn fn? var?) v)
+         (cond
+           ((some-fn fn? var?) v)
            (assoc acc path (ref-meta->doc (meta v)))
+
+           (map? v)
+           (reduce (fn [acc [p v]]
+                     (if (map? v)
+                       acc
+                       (assoc acc (list (string/join "." (concat path (list p))))
+                              (ref-meta->doc (meta v)))))
+                   acc
+                   v)
+
+           :else
            acc)
          (rest paths))))))
 
@@ -80,11 +93,13 @@
                    (case sub-type
                      nil
                      (assoc acc path {:type :REF
+                                      :desc "Field in the context"
                                       :sub-type :INDEX
                                       :value [value v]})
                      :INDEX
                      (update-in acc [path :value] conj v)))
                  (assoc acc path {:type :REF
+                                  :desc "Field in the context"
                                   :value v}))
                (rest paths))))))
 
