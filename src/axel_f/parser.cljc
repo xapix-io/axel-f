@@ -70,7 +70,7 @@
   ([var-parts] (var* var-parts nil))
   ([var-parts var-cb]
    (let [parts (map var-part var-parts)]
-     (when (fn? var-cb) (var-cb parts))
+     (when (fn? var-cb) (var-cb parts (select-keys (last var-parts) [::lexer/begin ::lexer/end])))
      {::type ::var
       ::parts parts
       ::lexer/begin (::lexer/begin (first var-parts))
@@ -170,8 +170,10 @@
                      (let [[arg-expr tokens'] (parse-expression tokens)]
                        (if arg-expr
                          (recur (conj acc arg-expr) tokens')
-                         (throw (ex-info "Can not extract expression."
-                                         {:begin (::lexer/begin (first tokens'))})))))))]
+                         (do
+                           (fncall-cb parts (count acc))
+                           (throw (ex-info "Can not extract expression."
+                                           {:begin (::lexer/begin (first tokens'))}))))))))]
          (let [[args tokens' end] (parse-arguments [] tokens)]
            [{::type ::application
              ::function fn-var
@@ -202,9 +204,19 @@
                      (parse-square-block tokens'))]
                (if var-part
                  (recur (conj acc var-part) tokens'')
-                 [(var* acc (when (or (eof? (first tokens'))
-                                      (empty? (first tokens')))
-                              var-cb))
+                 [(var*
+                   (if (punctuation? (first tokens') ".")
+                     (conj acc
+                           {::lexer/type ::lexer/symbol
+                            ::lexer/value ""
+                            ::lexer/begin (::lexer/begin (second tokens'))
+                            ::lexer/end (::lexer/begin (second tokens'))
+                            ::type ::symbol})
+                     acc)
+                   (when (or (eof? (first tokens'))
+                             (empty? (first tokens'))
+                             (punctuation? (first tokens') "."))
+                     var-cb))
                   tokens'])))))))))
 
 (defn block-parser [parsers]

@@ -15,7 +15,8 @@
             [axel-f.excel.object :as object]
             [axel-f.excel.stat :as stat]
             [axel-f.excel.text :as text]
-            [axel-f.excel.special-forms :as special-forms])
+            [axel-f.excel.special-forms :as special-forms]
+            [clojure.string :as string])
   #?(:clj (:import [clojure.lang ExceptionInfo])))
 
 (def env
@@ -52,25 +53,36 @@
   ([incomplete-formula context extra-env]
    (let [store (atom {})
          index (autocomplete/index (assoc (merge env extra-env) :axel-f.runtime/context context))
-         var-cb (fn [var]
-                  (prn var)
+         var-cb (fn [var position]
                   (when (not-empty var)
                     (swap! store assoc :suggestions
-                           (autocomplete/search-index
-                            index
-                            (map #(if (vector? %)
-                                    (cond
-                                      (number? (second %)) (second %)
-                                      :else "*")
-                                    %) var)))))
+                           (map (fn [[path desc]]
+                                  {:type :REF
+                                   :desc "Field in the context"
+                                   :value (autocomplete/->string (last path))
+                                   :position position})
+                                (autocomplete/search-index
+                                 index
+                                 (map (fn [x]
+                                        (if (vector? x)
+                                          (cond
+                                            (number? (second x)) (second x)
+                                            :else "*")
+                                          x))
+                                      var))))))
          fncall-cb (fn [fn-name current-arg]
                      (when-let [sug (and fn-name (first (autocomplete/search-index index fn-name)))]
                        (swap! store assoc :context
-                              {:function sug
-                               :current-arg current-arg})))]
+                              (-> (second sug)
+                                  (assoc :value (string/join "." (first sug))
+                                         :current-arg current-arg
+                                         :type :FNCALL)
+                                  (dissoc :distance)))))]
      (try
-       (-> incomplete-formula
-           lexer/read
-           (parser/parse :var-cb var-cb :fncall-cb fncall-cb))
-       (catch #?(:clj ExceptionInfo :cljs js/Error) _
+       (do
+         (-> incomplete-formula
+             lexer/read
+             (parser/parse :var-cb var-cb :fncall-cb fncall-cb))
+         @store)
+       (catch #?(:clj ExceptionInfo :cljs js/Error) e
          @store)))))

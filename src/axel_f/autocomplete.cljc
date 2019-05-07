@@ -100,8 +100,10 @@
     (str s)))
 
 (defn distance [s1 s2]
-  (if (empty? s2)
-    1 (fuzzy/jaccard s1 s2)))
+  (cond
+    (empty? s2) 1
+    (empty? s1) 0
+    :else (fuzzy/jaccard s1 s2)))
 
 (defn search-index [index path]
   (sort-by
