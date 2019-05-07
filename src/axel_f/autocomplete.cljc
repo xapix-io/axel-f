@@ -1,4 +1,5 @@
 (ns axel-f.autocomplete
+  (:refer-clojure :exclude [flatten])
   (:require [axel-f.lexer :as lexer]
             [axel-f.parser :as parser]
             [clj-fuzzy.metrics :as fuzzy]

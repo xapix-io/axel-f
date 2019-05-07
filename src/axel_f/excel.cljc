@@ -16,7 +16,7 @@
             [axel-f.excel.stat :as stat]
             [axel-f.excel.text :as text]
             [axel-f.excel.special-forms :as special-forms])
-  (:import [clojure.lang ExceptionInfo]))
+  #?(:clj (:import [clojure.lang ExceptionInfo])))
 
 (def env
   (merge
