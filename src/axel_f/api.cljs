@@ -29,4 +29,4 @@
 
 (defn ^:export autocomplete [incomplete-formula context]
   (let [context (js->clj context)]
-    (clj->js (axel-f/suggestions incomplete-formula context))))
+    (clj->js (excel/suggestions incomplete-formula context))))
