@@ -126,6 +126,7 @@
    ex])
 
 (defmethod read-next* ::operator-literal [[{::keys [v l c]} & ex]]
+  ;; TODO read keywords
   (let [compound? (contains? (set ["<=" ">=" "<>"]) (str v (::v (first ex))))
         {v' ::v l' ::l c' ::c} (first ex)
         op (str v (when compound? v'))]
@@ -143,7 +144,7 @@
       (let [{::keys [v] :as e'} (first ex)]
         (if (and (or (empty? ex)
                      (whitespace? e')
-                     (contains? (set ",.[](){}") v)
+                     (contains? (set ",.[](){}/") v)
                      (eof? e'))
                  (not (escape-char? (last acc))))
           (let [{l' ::l c' ::c} (last acc)]

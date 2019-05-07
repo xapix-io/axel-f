@@ -139,19 +139,28 @@
          [(symbol* token) tokens']
          [nil tokens])))))
 
+(defn wrap-kw [parts]
+  (let [kw (let [[ns-parts name-parts] (split-with #(not (operator? % "/")) (rest parts))
+                 ns (string/join "." (map ::lexer/value (filter #(not (punctuation? % ".")) ns-parts)))
+                 n (string/join "." (map ::lexer/value (filter #(not (punctuation? % ".")) (rest name-parts))))]
+             (apply keyword (filter identity [ns n])))]
+    {::lexer/type ::lexer/symbol
+     ::lexer/value kw
+     ::lexer/begin (::lexer/begin (first parts))
+     ::lexer/end (::lexer/end (last parts))
+     ::type ::keyword}))
+
 (defn keyword-parser []
   (memoize
    (fn [tokens]
      (let [{::lexer/keys [begin] :as op} (first tokens)
            {::lexer/keys [value length end]} (second tokens)]
        (if (operator? op ":")
-         (let [kw (string/split value #"/" 2)]
-           [{::lexer/type ::lexer/symbol
-             ::lexer/value (apply keyword (filter identity kw))
-             ::lexer/begin begin
-             ::lexer/end end
-             ::type ::keyword}
-            (nnext tokens)])
+         (loop [acc [op] tokens' (rest tokens)]
+           (let [token (first tokens')]
+             (if (operator? token "/")
+               [(wrap-kw (conj acc (first tokens') (second tokens'))) (nnext tokens')]
+               (recur (conj acc (first tokens')) (next tokens')))))
          [nil tokens])))))
 
 (defn application-parser [parsers fncall-cb]

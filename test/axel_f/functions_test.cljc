@@ -87,12 +87,12 @@
                                      :bar 0})))
 
   (t/is (= 1
-           ((af/compile "foo[:bar]") {:foo [1 2 3]
-                                      :bar 0})))
+           ((af/compile "foo[:foo/bar]") {:foo [1 2 3]
+                                          :foo/bar 0})))
 
   (t/is (= 4
-           ((af/compile "foo[:bar + 2]") {:foo [1 2 3 4]
-                                          :bar 1})))
+           ((af/compile "foo[:foo/bar + 2]") {:foo [1 2 3 4]
+                                              :foo/bar 1})))
 
   (t/is (= 3
            ((af/compile "foo[1 + 1]") {:foo [1 2 3]})))
