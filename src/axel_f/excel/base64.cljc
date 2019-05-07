@@ -21,7 +21,7 @@
 
 (defn base64-encode*
   "Creates a base-64 encoded ASCII string from a String"
-  [to-encode]
+  [^{:doc "String to encode"} to-encode]
   #?(:clj
      (.encodeToString (Base64/getEncoder) (.getBytes to-encode))
      :cljs
@@ -31,7 +31,7 @@
 
 (defn base64-decode*
   "Decodes a string of data which has been encoded using base-64 encoding"
-  [to-decode]
+  [^{:doc "String to decode"} to-decode]
   #?(:clj
      (String. (.decode (Base64/getDecoder) to-decode))
      :cljs

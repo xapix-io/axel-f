@@ -15,7 +15,7 @@
 
 (defn AVERAGE*
   "Returns the numerical average value in a dataset, ignoring text."
-  [& items]
+  [& ^{:doc "Dataset item"} items]
   (let [tr-flatten-numbers (flatten-numbers (map coerce/excel-number))
         items (sequence tr-flatten-numbers items)
         len (count items)]
@@ -27,7 +27,7 @@
 
 (defn COUNT*
   "Returns a count of the number of numeric values in a dataset."
-  [& items]
+  [& ^{:doc "Dataset item"} items]
   (let [tr-flatten-numbers (flatten-numbers (map (fn [x]
                                                    (try
                                                      (coerce/excel-number x)
@@ -40,14 +40,14 @@
 
 (defn LENGTH*
   "Returns the number of items in the collection."
-  [coll]
+  [^{:doc "Collection"} coll]
   (count coll))
 
 (def LENGTH #'LENGTH*)
 
 (defn MAX*
   "Returns the maximum value in a numeric dataset."
-  [& items]
+  [& ^{:doc "Dataset item"} items]
   (let [tr-coercer (map coerce/excel-number)
         tr-flatten-numbers (flatten-numbers tr-coercer)]
     (apply max (into [] tr-flatten-numbers items))))
@@ -56,7 +56,7 @@
 
 (defn MIN*
   "Returns the minimum value in a numeric dataset."
-  [& items]
+  [& ^{:doc "Dataset item"} items]
   (let [tr-coercer (map coerce/excel-number)
         tr-flatten-numbers (flatten-numbers tr-coercer)]
     (apply min (into [] tr-flatten-numbers items))))

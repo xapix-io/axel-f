@@ -3,7 +3,7 @@
 
 (defn json-encode*
   "Returns a JSON-encoding String for the given object."
-  [to-encode]
+  [^{:doc "Object to encode"} to-encode]
   #?(:clj
      (json/generate-string to-encode)
      :cljs
@@ -13,7 +13,7 @@
 
 (defn json-decode*
   "Returns an object corresponding to the given JSON-encoded string."
-  [to-decode]
+  [^{:doc "JSON-encoded string to decode"} to-decode]
   #?(:clj
      (json/parse-string to-decode)
      :cljs

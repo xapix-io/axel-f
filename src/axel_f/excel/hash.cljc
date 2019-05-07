@@ -26,7 +26,7 @@
 
 (defn sha256*
   "Calculates a sha-256 based digest from a String"
-  [msg]
+  [^{:doc "String to calculate sha256 digest"} msg]
   #?(:clj (sha-256 msg)
      :cljs (bytes->hex (hash-bytes msg))))
 

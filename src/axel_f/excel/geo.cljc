@@ -47,8 +47,10 @@
 
 (defn geo-distance*
   "Calculate the distance for the path described as a list of geo points. Each point must a tuple of two float numbers."
-  [points]
+  [& ^{:doc "Collection of coordinates"} points]
   (->> points
+       flatten
+       (partition 2)
        (partition 2 1)
        (reduce #(+ %1 (apply distance %2)) 0)))
 
