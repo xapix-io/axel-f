@@ -593,10 +593,10 @@ WITH(
                 MAP(normalize, gps-delta)
               ),
   decompressor, FN(i, OBJECT.MERGE(normalized[i],
-                                   OBJECT.NEW({{'latitude', starting-point.latitude + SUM(MAP(FN(p, p.latitude), normalized[0:INC(i)]))},
-                                               {'longitude', starting-point.longitude + SUM(MAP(FN(p, p.longitude), normalized[0:INC(i)]))}}))),
+                                   OBJECT.NEW({{'latitude', starting-point.latitude + SUM(MAP(FN(p, p.latitude), normalized[0 : INC(i)]))},
+                                               {'longitude', starting-point.longitude + SUM(MAP(FN(p, p.longitude), normalized[0 : INC(i)]))}}))),
   into-point, FN(c, {c.latitude, c.longitude}),
-  decompressed, MAP(decompressor, 0:LENGTH(normalized)),
+  decompressed, MAP(decompressor, 0 : LENGTH(normalized)),
   ROUND(GEO.DISTANCE({into-point(starting-point), into-point(decompressed[0])}) + GEO.DISTANCE(MAP(into-point, decompressed)), 10)
 )
 "
@@ -634,10 +634,10 @@ WITH(
                 MAP(normalize, gps-delta)
               ),
   decompressor, FN(i, OBJECT.MERGE(normalized[i],
-                                   OBJECT.NEW({{'latitude', starting-point.latitude + SUM(MAP(FN(p, p.latitude), normalized[0:INC(i)]))},
-                                               {'longitude', starting-point.longitude + SUM(MAP(FN(p, p.longitude), normalized[0:INC(i)]))}}))),
+                                   OBJECT.NEW({{'latitude', starting-point.latitude + SUM(MAP(FN(p, p.latitude), normalized[0 : INC(i)]))},
+                                               {'longitude', starting-point.longitude + SUM(MAP(FN(p, p.longitude), normalized[0 : INC(i)]))}}))),
   into-point, FN(c, {c.latitude, c.longitude}),
-  decompressed, MAP(decompressor, 0:LENGTH(normalized)),
+  decompressed, MAP(decompressor, 0 : LENGTH(normalized)),
   ROUND(GEO.DISTANCE({into-point(starting-point), into-point(decompressed[0])}) + GEO.DISTANCE(MAP(into-point, decompressed)), 10)
 )
 ")

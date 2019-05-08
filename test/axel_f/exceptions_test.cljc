@@ -161,3 +161,19 @@
       (let [d (ex-data e)]
         (t/is (= {:begin #:axel-f.lexer{:col 4 :line 1}}
                  d))))))
+
+(t/deftest invalid-namespaced-keyword
+
+  (t/is (thrown-with-msg?
+         ExceptionInfo
+         #"Namespaced keyword must have a name"
+         ((af/compile ":foo.bar/"))))
+
+  (try
+    ((af/compile ":foo.bar/"))
+    (catch #?(:clj ExceptionInfo
+              :cljs js/Error) e
+      (let [data (ex-data e)]
+        (t/is (= {:begin #:axel-f.lexer{:line 1, :col 1},
+                  :end #:axel-f.lexer{:line 1, :col 9}}
+                 data))))))

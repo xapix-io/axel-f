@@ -13,3 +13,13 @@
 (t/deftest reference-can-start-with-string
   (t/is (= 1
            ((af/compile "'foo'.bar") {:foo {:bar 1}}))))
+
+(t/deftest reference-with-keywords
+  (t/are [x] (t/is (= 1 ((af/compile (str "0 + " x " * 1")) {:foo 1
+                                                             :foo/bar 1
+                                                             :foo.bar/baz 1
+                                                             :foo.bar.baz/buz 1})))
+    :foo
+    :foo/bar
+    :foo.bar/baz
+    :foo.bar.baz/buz))

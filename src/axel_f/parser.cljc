@@ -59,7 +59,6 @@
 
 (defn- var-part [t]
   (case [(::lexer/type t) (::type t)]
-    [::lexer/symbol ::keyword] (::lexer/value t)
     [::lexer/symbol ::symbol] (if (= "_" (::lexer/value t))
                                 :axel-f.runtime/context
                                 (::lexer/value t))
@@ -139,30 +138,6 @@
          [(symbol* token) tokens']
          [nil tokens])))))
 
-(defn wrap-kw [parts]
-  (let [kw (let [[ns-parts name-parts] (split-with #(not (operator? % "/")) (rest parts))
-                 ns (string/join "." (map ::lexer/value (filter #(not (punctuation? % ".")) ns-parts)))
-                 n (string/join "." (map ::lexer/value (filter #(not (punctuation? % ".")) (rest name-parts))))]
-             (apply keyword (filter identity [ns n])))]
-    {::lexer/type ::lexer/symbol
-     ::lexer/value kw
-     ::lexer/begin (::lexer/begin (first parts))
-     ::lexer/end (::lexer/end (last parts))
-     ::type ::keyword}))
-
-(defn keyword-parser []
-  (memoize
-   (fn [tokens]
-     (let [{::lexer/keys [begin] :as op} (first tokens)
-           {::lexer/keys [value length end]} (second tokens)]
-       (if (operator? op ":")
-         (loop [acc [op] tokens' (rest tokens)]
-           (let [token (first tokens')]
-             (if (operator? token "/")
-               [(wrap-kw (conj acc (first tokens') (second tokens'))) (nnext tokens')]
-               (recur (conj acc (first tokens')) (next tokens')))))
-         [nil tokens])))))
-
 (defn application-parser [parsers fncall-cb]
   (memoize
    (fn [tokens]
@@ -197,7 +172,6 @@
      (let [{parse-application :application
             parse-symbol :symbol
             parse-square-block :square-block
-            parse-keyword :keyword
             parse-constant :constant} @parsers]
        (let [[root & tokens'] tokens]
          (loop [acc [root] tokens' tokens']
@@ -206,7 +180,9 @@
              (let [[var-part tokens'']
                    (cond
                      (punctuation? (first tokens') ".")
-                     ((first-of parse-symbol parse-square-block parse-keyword parse-constant)
+                     ((first-of parse-symbol
+                                parse-square-block
+                                parse-constant)
                       (next tokens'))
 
                      (punctuation? (first tokens') "[")
@@ -253,19 +229,12 @@
 (defn square-block-parser [parsers var-cb]
   (memoize
    (fn [tokens]
-     (let [{parse-keyword :keyword
-            parse-expression :expression
+     (let [{parse-expression :expression
             parse-operator :operator} @parsers]
        (if (punctuation? (first tokens) "[")
          (let [[parsed tokens'] (or (when (punctuation? (second tokens) "]")
                                       [nil (next tokens)])
-                                    ((first-of (fn [tokens]
-                                                 (let [[kw tokens' :as res] (parse-keyword tokens)]
-                                                   (when kw
-                                                     (if-not (punctuation? (first tokens') "]")
-                                                       (parse-expression tokens)
-                                                       (update res 0 #(var* [%]))))))
-                                               parse-operator
+                                    ((first-of parse-operator
                                                parse-expression)
                                      (next tokens)))
                begin (::lexer/begin (first tokens))
@@ -314,7 +283,6 @@
    (fn [tokens]
      (let [{parse-constant :constant
             parse-atom :atom
-            parse-keyword :keyword
             parse-var :var
             parse-symbol :symbol
             parse-block :block
@@ -327,10 +295,6 @@
                                      (punctuation? (first (second res)) #{"[" "." "("}))
                               (parse-atom (apply cons (update res 0 symbol*)))
                               res))))
-                      (fn [tokens]
-                        (let [res (parse-keyword tokens)]
-                          (when (first res)
-                            (parse-var (apply cons res)))))
                       (fn [tokens]
                         (let [res (parse-symbol tokens)]
                           (when (first res)
@@ -427,7 +391,6 @@
         (swap! parsers assoc
                :constant (constant-parser)
                :symbol (symbol-parser)
-               :keyword (keyword-parser)
                :operator (operator-parser)
                :var (var-parser parsers var-cb)
                :application (application-parser parsers fncall-cb)

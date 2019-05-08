@@ -125,18 +125,81 @@
            ::col c}}
    ex])
 
+(defn wrap-keyword [kw-parts begin]
+  (let [[ns [_ & n]] (split-with #(not= "/" (::value %))
+                                 kw-parts)]
+    (merge {::type ::symbol
+            ::end (::end (last kw-parts))
+            ::begin begin}
+           {::value (apply keyword
+                           (filter not-empty
+                                   (map (fn [n]
+                                          (string/join
+                                           "."
+                                           (sequence
+                                            (comp
+                                             (filter #(not= "." (::value %)))
+                                             (map ::value))
+                                            n)))
+                                        [ns n])))})))
+
+(defn read-keyword [[{::keys [v l c] :as e} & _ :as ex] begin]
+  (let [read-symbol (get-method read-next* ::symbol-literal)]
+    (loop [acc [] state [::namespace ::begin] ex ex]
+      (case state
+        [::namespace ::begin]
+        (let [[s ex'] (read-next* ex)]
+          (if (= ::symbol (::type s))
+            (recur (conj acc s) [::namespace ::sep] ex')
+            [nil ex]))
+
+        [::namespace ::symbol]
+        (let [[s ex'] (read-next* ex)]
+          (recur (conj acc s) [::namespace ::sep] ex'))
+
+        [::namespace ::sep]
+        (let [[p ex'] (read-next* ex)]
+          (cond
+            (and (= ::punct (::type p))
+                 (= "." (::value p)))
+            (recur (conj acc p) [::namespace ::symbol] ex')
+
+            (and (= ::operator (::type p))
+                 (= "/" (::value p)))
+            (recur (conj acc p) [::name ::symbol] ex')
+
+            :else
+            [(wrap-keyword acc begin) ex]))
+
+        [::name ::symbol]
+        (let [[s ex'] (read-next* ex)]
+          (if (= ::symbol (::type s))
+            [(wrap-keyword (conj acc s) begin) ex']
+            (throw (ex-info "Namespaced keyword must have a name" {:begin begin
+                                                                   :end (::end (last acc))}))))))))
+
 (defmethod read-next* ::operator-literal [[{::keys [v l c]} & ex]]
-  ;; TODO read keywords
-  (let [compound? (contains? (set ["<=" ">=" "<>"]) (str v (::v (first ex))))
-        {v' ::v l' ::l c' ::c} (first ex)
-        op (str v (when compound? v'))]
-    [{::type ::operator
-      ::value op
-      ::begin {::line l
-               ::col c}
-      ::end {::line (if compound? l' l)
-             ::col (if compound? c' c)}}
-     (if compound? (next ex) ex)]))
+  (if (= v \:)
+    (let [[kw ex'] (read-keyword ex {::line l ::col c})]
+      (if (some? kw)
+        [kw ex']
+        [{::type ::operator
+          ::value (str v)
+          ::begin {::line l
+                   ::col c}
+          ::end {::line l
+                 ::col c}}
+         ex]))
+    (let [compound? (contains? (set ["<=" ">=" "<>"]) (str v (::v (first ex))))
+          {v' ::v l' ::l c' ::c} (first ex)
+          op (str v (when compound? v'))]
+      [{::type ::operator
+        ::value op
+        ::begin {::line l
+                 ::col c}
+        ::end {::line (if compound? l' l)
+               ::col (if compound? c' c)}}
+       (if compound? (next ex) ex)])))
 
 (defmethod read-next* ::symbol-literal [ex]
   (let [{::keys [l c]} (first ex)]

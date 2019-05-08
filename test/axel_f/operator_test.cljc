@@ -5,13 +5,13 @@
 
 (t/deftest range-operator
   (t/is (= '(0 1 2)
-           ((af/compile "0:3"))))
+           ((af/compile "0 : 3"))))
 
   (t/is (= '(0 1 2)
-           ((af/compile "foo[0:3]") {:foo [0 1 2 3 4]})))
+           ((af/compile "foo[0 : 3]") {:foo [0 1 2 3 4]})))
 
   (t/is (= '((0 (1)) (1 (1 2)) (2 (1 2 3)))
-           ((af/compile "MAP(FN(x, {x, foo[0:INC(x)]}), 0:COUNT(foo))")
+           ((af/compile "MAP(FN(x, {x, foo[0 : INC(x)]}), 0 : COUNT(foo))")
             {:foo [1 2 3]}))))
 
 (t/deftest prefix
