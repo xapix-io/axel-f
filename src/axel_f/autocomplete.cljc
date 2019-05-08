@@ -92,13 +92,13 @@
                  (let [{:keys [sub-type value]} (get acc path)]
                    (case sub-type
                      nil
-                     (assoc acc path {:type :OBJREF
+                     (assoc acc path {:type :REF
                                       :desc "Field in the context"
                                       :sub-type :INDEX
                                       :value [value v]})
                      :INDEX
                      (update-in acc [path :value] conj v)))
-                 (assoc acc path {:type :OBJREF
+                 (assoc acc path {:type :REF
                                   :desc "Field in the context"
                                   :value v}))
                (rest paths))))))
@@ -135,6 +135,8 @@
                        (map ->lower-case-string (butlast path)))
                     (or (= (->lower-case-string (last path))
                            (->lower-case-string (last ik)))
+                        (string/starts-with? (->lower-case-string (last ik))
+                                             (->lower-case-string (last path)))
                         (> (/ 2 3) (distance (->lower-case-string (last path))
                                              (->lower-case-string (last ik))))))))
      (map (fn [[ik v]]
