@@ -590,3 +590,16 @@
               :position #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 15},
                                        :end #:axel-f.lexer{:line 1, :col 15}}}]}
            (sut/suggestions "SUM(1, 2, foo." {"foo" {"bar" 1 "baz" 2}}) )))
+
+(t/deftest lowercase
+
+  (t/is (= {:suggestions '({:args [{:desc "The first number or range to add together."}
+                                   {:desc "Additional numbers or ranges to add to arg1.",
+                                    :opt true,
+                                    :repeatable true}],
+                            :desc "Returns the sum of a series of numbers and/or references.",
+                            :position {:axel-f.lexer/begin {:axel-f.lexer/col 1, :axel-f.lexer/line 1},
+                                       :axel-f.lexer/end {:axel-f.lexer/col 2, :axel-f.lexer/line 1}},
+                            :type :FNCALL,
+                            :value "SUM"})}
+           (sut/suggestions "su" {"suspension" {"foo" 1}}))))

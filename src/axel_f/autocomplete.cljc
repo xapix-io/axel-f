@@ -114,6 +114,9 @@
     (string/join "/" (filter identity ((juxt namespace name) s)))
     (str s)))
 
+(def ->lower-case-string
+  (comp string/lower-case ->string))
+
 (defn distance [s1 s2]
   (cond
     (empty? s2) 1
@@ -128,9 +131,13 @@
     (comp
      (filter (fn [[ik _]]
                (and (= (count ik) (count path))
-                    (= (map ->string (butlast ik)) (map ->string (butlast path)))
-                    (or (= (->string (last path)) (->string (last ik)))
-                        (> (/ 2 3) (distance (->string (last path)) (->string (last ik))))))))
+                    (= (map ->lower-case-string (butlast ik))
+                       (map ->lower-case-string (butlast path)))
+                    (or (= (->lower-case-string (last path))
+                           (->lower-case-string (last ik)))
+                        (> (/ 2 3) (distance (->lower-case-string (last path))
+                                             (->lower-case-string (last ik))))))))
      (map (fn [[ik v]]
-            [ik (assoc v :distance (distance (->string (last path)) (->string (last ik))))])))
+            [ik (assoc v :distance (distance (->lower-case-string (last path))
+                                             (->lower-case-string (last ik))))])))
     index)))
