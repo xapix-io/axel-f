@@ -36,7 +36,12 @@
       (if (vector? p)
         (if (sequential? (second p))
           (map #(lookup (index-lookup % ctxs) path) (second p))
-          (lookup (index-lookup (second p) ctxs) path))
+          (if (= ::parser/select-all (second p))
+            (let [ctxs (index-lookup (second p) ctxs)]
+              (when (and (sequential? ctxs)
+                         (indexed? ctxs))
+                (map #(lookup % path) ctxs)))
+            (lookup (index-lookup (second p) ctxs) path)))
         (lookup (map-lookup p ctxs) path)))))
 
 (defn compile-constant [ast]
