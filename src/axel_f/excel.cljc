@@ -34,6 +34,12 @@
    text/env
    special-forms/env))
 
+(def base-env-index
+  (set (sequence
+        (comp
+         (map second))
+        (autocomplete/flatten env))))
+
 (defn compile
   ([formula] (compile formula nil))
   ([formula extra-env]
@@ -45,7 +51,9 @@
        (fn fname
          ([] (fname nil))
          ([ctx]
-          (f (assoc env :axel-f.runtime/context ctx))))
+          (let [res (f (assoc env :axel-f.runtime/context ctx))]
+            (when-not (contains? base-env-index res)
+              res))))
        (update (meta f) :free-variables distinct)))))
 
 (defn suggestions

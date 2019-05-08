@@ -28,3 +28,13 @@
     :foo/bar
     :foo.bar/baz
     :foo.bar.baz/buz))
+
+(t/deftest base-environment-not-returned
+  (t/is (= nil
+           ((af/compile "OBJECT"))))
+
+  (t/is (= nil
+           ((af/compile "MAP"))))
+
+  (t/is (= nil
+           ((af/compile "WITH(x, MAP, x)")))))
