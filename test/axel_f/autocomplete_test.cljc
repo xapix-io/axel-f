@@ -8,7 +8,7 @@
   (t/testing "incomplete reference"
 
     (t/is (= {:suggestions
-              [{:type :REF,
+              [{:type :OBJREF,
                 :value "foo",
                 :desc "Field in the context"
                 :position
@@ -17,11 +17,11 @@
              (sut/suggestions "foo" {"foo" {"bar" 1}})))
 
     (t/is (= {:suggestions
-              [{:type :REF, :desc "Field in the context", :value "baz"
+              [{:type :OBJREF, :desc "Field in the context", :value "baz"
                 :position
                 #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 5},
                                :end #:axel-f.lexer{:line 1, :col 5}}}
-               {:type :REF, :desc "Field in the context", :value "bar"
+               {:type :OBJREF, :desc "Field in the context", :value "bar"
                 :position
                 #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 5},
                                :end #:axel-f.lexer{:line 1, :col 5}}}]}
@@ -29,7 +29,7 @@
                                              "baz" 2}})))
 
     (t/is (= {:suggestions
-              [{:type :REF, :desc "Field in the context", :value "foo"
+              [{:type :OBJREF, :desc "Field in the context", :value "foo"
                 :position
                 #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 1},
                                :end #:axel-f.lexer{:line 1, :col 2}}}]}
@@ -518,13 +518,13 @@
                 :position
                 {:begin #:axel-f.lexer{:line 1, :column 1},
                  :end #:axel-f.lexer{:line 1, :column 1}}}
-               {:type :REF,
+               {:type :OBJREF,
                 :value "foo",
                 :desc "Field in the context",
                 :position
                 {:begin #:axel-f.lexer{:line 1, :column 1},
                  :end #:axel-f.lexer{:line 1, :column 1}}}
-               {:type :REF,
+               {:type :OBJREF,
                 :value "bar",
                 :desc "Field in the context",
                 :position
@@ -537,11 +537,11 @@
     (t/testing "array in suggestions"
 
       (t/is (= {:suggestions
-                [{:type :REF, :desc "Field in the context", :value "bar"
+                [{:type :OBJREF, :desc "Field in the context", :value "bar"
                   :position
                   #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 9},
                                  :end #:axel-f.lexer{:line 1, :col 10}}}
-                 {:type :REF, :desc "Field in the context", :value "baz"
+                 {:type :OBJREF, :desc "Field in the context", :value "baz"
                   :position
                   #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 9},
                                  :end #:axel-f.lexer{:line 1, :col 10}}}]}
@@ -562,7 +562,7 @@
                  :opt true,
                  :repeatable true}]}
               :suggestions
-              [{:type :REF
+              [{:type :OBJREF
                 :desc "Field in the context"
                 :value "bar"
                 :position
@@ -583,10 +583,10 @@
                :opt true,
                :repeatable true}]}
             :suggestions
-            [{:desc "Field in the context", :type :REF, :value "baz"
+            [{:desc "Field in the context", :type :OBJREF, :value "baz"
               :position #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 15},
                                        :end #:axel-f.lexer{:line 1, :col 15}}}
-             {:desc "Field in the context", :type :REF, :value "bar"
+             {:desc "Field in the context", :type :OBJREF, :value "bar"
               :position #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 15},
                                        :end #:axel-f.lexer{:line 1, :col 15}}}]}
            (sut/suggestions "SUM(1, 2, foo." {"foo" {"bar" 1 "baz" 2}}) )))
@@ -600,6 +600,6 @@
                             :desc "Returns the sum of a series of numbers and/or references.",
                             :position {:axel-f.lexer/begin {:axel-f.lexer/col 1, :axel-f.lexer/line 1},
                                        :axel-f.lexer/end {:axel-f.lexer/col 2, :axel-f.lexer/line 1}},
-                            :type :FNCALL,
+                            :type :FN,
                             :value "SUM"})}
            (sut/suggestions "su" {"suspension" {"foo" 1}}))))

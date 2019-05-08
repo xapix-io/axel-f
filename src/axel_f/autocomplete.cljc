@@ -21,7 +21,7 @@
       acc)))
 
 (defn ref-meta->doc [{:keys [doc arglists]}]
-  {:type :FNCALL
+  {:type :FN
    :desc doc
    :args (arglist->doc (first arglists))})
 
@@ -92,13 +92,13 @@
                  (let [{:keys [sub-type value]} (get acc path)]
                    (case sub-type
                      nil
-                     (assoc acc path {:type :REF
+                     (assoc acc path {:type :OBJREF
                                       :desc "Field in the context"
                                       :sub-type :INDEX
                                       :value [value v]})
                      :INDEX
                      (update-in acc [path :value] conj v)))
-                 (assoc acc path {:type :REF
+                 (assoc acc path {:type :OBJREF
                                   :desc "Field in the context"
                                   :value v}))
                (rest paths))))))
