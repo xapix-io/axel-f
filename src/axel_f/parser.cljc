@@ -406,7 +406,7 @@
       (let [[expr tokens'] (parse-expression tokens)]
         (if (or (empty? tokens') (eof? (first tokens')))
           (formula expr)
-          (throw (ex-info "Multiple expressions detected." {:begin (::lexer/begin (first tokens'))})))))))
+          (throw (ex-info "Unexpected token" {:begin (::lexer/begin (first tokens'))})))))))
 
 (defn parse [tokens & {:as opts}]
   ((parser opts) tokens))

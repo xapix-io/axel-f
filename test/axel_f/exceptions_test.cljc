@@ -119,7 +119,7 @@
 
   (t/is (thrown-with-msg?
          ExceptionInfo
-         #"Multiple expressions detected."
+         #"Unexpected token"
          ((af/compile "1 + 1 2 * 2"))))
 
   (try
