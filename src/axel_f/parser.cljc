@@ -264,8 +264,14 @@
          (letfn [(parse-multiple [acc tokens]
                    (let [tokens (if (punctuation? (first tokens) #{"," "{"})
                                   (next tokens) tokens)]
-                     (if (punctuation? (first tokens) "}")
+                     (cond
+                       (punctuation? (first tokens) "}")
                        [acc tokens]
+
+                       (eof? (first tokens))
+                       (throw (ex-info "Unexpected end of input" {:begin (::lexer/begin (first tokens))}))
+
+                       :else
                        (let [[entry-expr tokens'] (parse-expression tokens)]
                          (recur (conj acc entry-expr) tokens')))))]
            (let [[entries tokens'] (parse-multiple [] tokens)

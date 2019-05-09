@@ -116,6 +116,22 @@
                                         :col 27}}
                  d))))))
 
+(t/deftest unclosed-curly-block
+
+  (t/is (thrown-with-msg?
+         ExceptionInfo
+         #"Unexpected end of input"
+         ((af/compile "{1, 2, "))))
+
+  (try
+    ((af/compile "{1, 2, "))
+    (catch #?(:clj ExceptionInfo
+              :cljs js/Error) e
+      (let [d (ex-data e)]
+        (t/is (= {:begin #:axel-f.lexer{:line 1
+                                        :col 8}}
+                 d))))))
+
 (t/deftest eof-in-string
 
   (t/is (thrown-with-msg?
