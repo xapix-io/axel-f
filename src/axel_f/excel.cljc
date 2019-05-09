@@ -58,7 +58,8 @@
          (update (meta f) :free-variables distinct)))
      (catch #?(:clj ExceptionInfo
                :cljs js/Error) e
-       (throw (ex-info (.getMessage e)
+       (throw (ex-info (#?(:clj .getMessage
+                           :cljs .-message) e)
                        (assoc (ex-data e)
                               ::formula formula)))))))
 
