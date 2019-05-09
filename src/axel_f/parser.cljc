@@ -384,7 +384,7 @@
 (defn parser [{:keys [var-cb
                       fncall-cb]
                :or {var-cb (constantly nil)
-                    vncall-callback (constantly nil)}
+                    fncall-cb (constantly nil)}
                :as opts}]
   (let [parsers (atom {})
         {parse-expression :expression}
