@@ -38,3 +38,8 @@
 
   (t/is (= nil
            ((af/compile "WITH(x, MAP, x)")))))
+
+(t/deftest can-continue-fncalls-with-reference
+
+  (t/is (= 1
+           ((af/compile "FILTER(FN(x, x), {1, 2, 3})[0]")))))

@@ -142,7 +142,8 @@
   (memoize
    (fn [tokens]
      (let [[{::keys [parts] :as fn-var} & tokens] tokens
-           {parse-expression :expression} @parsers]
+           {parse-expression :expression
+            parse-var :var} @parsers]
        (letfn [(parse-arguments [acc tokens]
                  (let [tokens (if (punctuation? (first tokens) #{"," "("})
                                 (next tokens) tokens)]
@@ -158,13 +159,15 @@
                            (fncall-cb parts (count acc))
                            (throw (ex-info "Can not extract expression."
                                            {:begin (::lexer/begin (first tokens'))}))))))))]
-         (let [[args tokens' end] (parse-arguments [] tokens)]
-           [{::type ::application
-             ::function fn-var
-             ::args args
-             ::lexer/begin (::lexer/begin fn-var)
-             ::lexer/end (::lexer/end end)}
-            tokens']))))))
+         (let [[args tokens' end] (parse-arguments [] tokens)
+               fn-call {::type ::application
+                        ::function fn-var
+                        ::args args
+                        ::lexer/begin (::lexer/begin fn-var)
+                        ::lexer/end (::lexer/end end)}]
+           (if (punctuation? (first tokens') #{"." "["})
+             (parse-var (cons fn-call tokens'))
+             [fn-call tokens'])))))))
 
 (defn var-parser [parsers var-cb]
   (memoize

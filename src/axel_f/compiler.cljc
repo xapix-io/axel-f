@@ -90,10 +90,16 @@
   (cond
     (::parser/type p)
     (let [path-f (compile env p)]
-      (with-meta
-        path-f
-        {:var-part ::dynamic
-         :free-variables (:free-variables (meta path-f))}))
+      (if (= ::parser/constant (::parser/type p))
+        (let [var-part (path-f)]
+          (with-meta
+            (constantly var-part)
+            {:var-part var-part
+             :free-variables (list var-part)}))
+        (with-meta
+          path-f
+          {:var-part ::dynamic
+           :free-variables (:free-variables (meta path-f))})))
 
     (and (vector? p)
          (= ::parser/list-ref (first p)))
@@ -120,10 +126,14 @@
         free-variable (map #(:var-part (meta %)) path-fs)]
     (with-meta
       (fn [ctx]
-        (lookup
-         ctx
-         (for [x path-fs]
-           (x ctx))))
+        (if (= ::dynamic (:var-part (meta (first path-fs))))
+          (lookup ((first path-fs) ctx)
+                  (for [x (rest path-fs)]
+                    (x ctx)))
+          (lookup
+           ctx
+           (for [x path-fs]
+             (x ctx)))))
       (merge {:free-variables (cons free-variable free-variables)}
              (select-keys ast [::lexer/begin ::lexer/end])))))
 
