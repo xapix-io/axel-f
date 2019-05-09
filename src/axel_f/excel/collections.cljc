@@ -26,5 +26,5 @@
 
 (def env
   {"MAP"    MAP
-   "FILTER" FILTER
+   "KEEP" FILTER
    "SORT"   SORT})

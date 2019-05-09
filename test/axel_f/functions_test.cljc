@@ -115,7 +115,7 @@
            ((af/compile "FILTER(FN(x, x <> 2), {1,2,3})"))))
 
   (t/is (= [1 3]
-           ((af/compile "WITH(nottwo, FN(x, x <> 2), FILTER(nottwo, foo))" {:foo [1 2 3]}))))
+           ((af/compile "WITH(nottwo, FN(x, x <> 2), KEEP(nottwo, foo))" {:foo [1 2 3]}))))
 
   (t/is (= [{:foo 1} {:foo 2} {:foo 3}]
            ((af/compile "SORT(FN(x, x.foo), _)") [{:foo 3} {:foo 1} {:foo 2}])))

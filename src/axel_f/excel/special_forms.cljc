@@ -91,6 +91,20 @@
       {:free-variables free-variables
        :fn-name '(("WITH"))})))
 
+(defn FILTER [[pred-ast coll-ast]]
+  (let [coll (compiler/compile env coll-ast)
+        pred (if (and (= :axel-f.parser/application (:axel-f.parser/type pred-ast))
+                      (= '("FN") (-> pred-ast :axel-f.parser/function :axel-f.parser/parts)))
+               (compiler/compile env pred-ast)
+               (FN (cons {:axel-f.parser/parts '(:axel-f.runtime/context)
+                          :axel-f.parser/type :axel-f.parser/var}
+                         (list pred-ast))))]
+    (with-meta
+      (fn [ctx]
+        (filter (pred ctx) (coll ctx)))
+      {:free-variables (apply concat (map (comp :free-variables meta) [pred coll]))
+       :fn-name '(("FILTER"))})))
+
 (def env
   {"IF" (with-meta IF
           {:doc "Evaluates test. If not the singular values nil or false, evaluates and yields then, otherwise, evaluates and yields else. If else is not supplied it defaults to nil."
@@ -110,4 +124,8 @@
    "FN" (with-meta FN
           {:doc "Defines a function"
            :arglists '([& ^{:doc "Variable name."} var-name
-                        ^{:doc "Body expression."} body-expr])})})
+                        ^{:doc "Body expression."} body-expr])})
+   "FILTER" (with-meta FILTER
+              {:doc "Returns an array of elements that have been filtered based on a condition."
+               :arglists '([^{:doc "Condition predicate which will be applied to members of collection"} pred
+                            ^{:doc "Collection of elements"} coll])})})

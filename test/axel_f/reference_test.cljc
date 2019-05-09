@@ -43,3 +43,12 @@
 
   (t/is (= 1
            ((af/compile "FILTER(FN(x, x), {1, 2, 3})[0]")))))
+
+(t/deftest filter-function-legacy-support
+
+  (t/is (= '({:name "qwe", :legacy "true"})
+           ((af/compile "FILTER(_.legacy = 'true', systems)")
+            {:systems [{:name "HUD"
+                        :legacy "false"}
+                       {:name "qwe"
+                        :legacy "true"}]}))))
