@@ -43,18 +43,24 @@
 (defn compile
   ([formula] (compile formula nil))
   ([formula extra-env]
-   (let [ast (-> formula lexer/read parser/parse)
-         f (compiler/compile special-forms/env ast)
-         env (merge env extra-env)
-         fname (gensym)]
-     (with-meta
-       (fn fname
-         ([] (fname nil))
-         ([ctx]
-          (let [res (f (assoc env :axel-f.runtime/context ctx))]
-            (when-not (contains? base-env-index res)
-              res))))
-       (update (meta f) :free-variables distinct)))))
+   (try
+     (let [ast (-> formula lexer/read parser/parse)
+           f (compiler/compile special-forms/env ast)
+           env (merge env extra-env)
+           fname (gensym)]
+       (with-meta
+         (fn fname
+           ([] (fname nil))
+           ([ctx]
+            (let [res (f (assoc env :axel-f.runtime/context ctx))]
+              (when-not (contains? base-env-index res)
+                res))))
+         (update (meta f) :free-variables distinct)))
+     (catch #?(:clj ExceptionInfo
+               :cljs js/Error) e
+       (throw (ex-info (.getMessage e)
+                       (assoc (ex-data e)
+                              ::formula formula)))))))
 
 (defn suggestions
   ([incomplete-formula context] (suggestions incomplete-formula context nil))

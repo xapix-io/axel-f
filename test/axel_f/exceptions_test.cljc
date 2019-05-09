@@ -21,7 +21,8 @@
                                  :col 5}
                   :end
                   #:axel-f.lexer{:line 1
-                                 :col 6}}
+                                 :col 6}
+                  :axel-f.excel/formula "1 + ()"}
                  d))))))
 
 (t/deftest unclosed-round-bracket
@@ -41,7 +42,8 @@
                                  :col 5}
                   :end
                   #:axel-f.lexer{:line 1
-                                 :col 11}}
+                                 :col 11}
+                  :axel-f.excel/formula "2 * (2 + 2"}
                  d))))))
 
 (t/deftest multiple-expressions-inside-square-block
@@ -61,7 +63,8 @@
                                  :col 4}
                   :end
                   #:axel-f.lexer{:line 1
-                                 :col 11}}
+                                 :col 11}
+                  :axel-f.excel/formula "foo[1 + 1 2]"}
                  d))))))
 
 (t/deftest unclosed-square-block
@@ -81,7 +84,8 @@
                                  :col 4}
                   :end
                   #:axel-f.lexer{:line 1
-                                 :col 6}}
+                                 :col 6}
+                  :axel-f.excel/formula "foo[1"}
                  d))))))
 
 (t/deftest invalid-operator-in-square-block
@@ -97,7 +101,8 @@
               :cljs js/Error) e
       (let [d (ex-data e)]
         (t/is (= {:begin #:axel-f.lexer{:line 1
-                                        :col 5}}
+                                        :col 5}
+                  :axel-f.excel/formula "foo[-]"}
                  d))))))
 
 (t/deftest unclosed-comment-block
@@ -113,7 +118,8 @@
               :cljs js/Error) e
       (let [d (ex-data e)]
         (t/is (= {:begin #:axel-f.lexer{:line 1
-                                        :col 27}}
+                                        :col 27}
+                  :axel-f.excel/formula "1 ;~ Unclosed comment block"}
                  d))))))
 
 (t/deftest unclosed-curly-block
@@ -129,7 +135,8 @@
               :cljs js/Error) e
       (let [d (ex-data e)]
         (t/is (= {:begin #:axel-f.lexer{:line 1
-                                        :col 8}}
+                                        :col 8}
+                  :axel-f.excel/formula "{1, 2, "}
                  d))))))
 
 (t/deftest eof-in-string
@@ -145,7 +152,8 @@
               :cljs js/Error) e
       (let [d (ex-data e)]
         (t/is (= {:begin #:axel-f.lexer{:line 1
-                                        :col 10}}
+                                        :col 10}
+                  :axel-f.excel/formula "1 & ' asd"}
                  d)))))
 
   (t/is (thrown-with-msg?
@@ -159,7 +167,8 @@
               :cljs js/Error) e
       (let [d (ex-data e)]
         (t/is (= {:begin #:axel-f.lexer{:line 1
-                                        :col 10}}
+                                        :col 10}
+                  :axel-f.excel/formula "1 & \" asd"}
                  d))))))
 
 (t/deftest multiple-top-level-expressions
@@ -176,7 +185,8 @@
       (let [d (ex-data e)]
         (t/is (= {:begin
                   #:axel-f.lexer{:line 1
-                                 :col 7}}
+                                 :col 7}
+                  :axel-f.excel/formula "1 + 1 2 * 2"}
                  d))))))
 
 (t/deftest no-operator-implementation
@@ -206,7 +216,8 @@
     (catch #?(:clj ExceptionInfo
               :cljs js/Error) e
       (let [d (ex-data e)]
-        (t/is (= {:begin #:axel-f.lexer{:col 4 :line 1}}
+        (t/is (= {:begin #:axel-f.lexer{:col 4 :line 1}
+                  :axel-f.excel/formula "FN(x.y, 1)"}
                  d))))))
 
 (t/deftest invalid-namespaced-keyword
@@ -222,5 +233,6 @@
               :cljs js/Error) e
       (let [data (ex-data e)]
         (t/is (= {:begin #:axel-f.lexer{:line 1, :col 1},
-                  :end #:axel-f.lexer{:line 1, :col 9}}
+                  :end #:axel-f.lexer{:line 1, :col 9}
+                  :axel-f.excel/formula ":foo.bar/"}
                  data))))))
