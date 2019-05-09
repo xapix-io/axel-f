@@ -1,7 +1,8 @@
 (ns axel-f.lexer
   (:refer-clojure :exclude [read])
   (:require [clojure.edn :as edn]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.set :as set]))
 
 (defn- whitespace? [{::keys [v]}]
   (contains? #{\space \tab \newline} v))
@@ -109,12 +110,16 @@
           ::end {::line l
                  ::col c}}
          ex]
-        (recur (conj acc (if (and (= \\ (::v e))
-                                  (not (escape-char? (last acc))))
-                           (assoc e ::type ::escaped)
-                           e))
-               (first ex)
-               (next ex))))))
+        (if (eof? e)
+          (throw (ex-info "Unexpected end of string" {:begin (set/rename-keys (select-keys e [::l ::c])
+                                                                              {::l ::line
+                                                                               ::c ::col})}))
+          (recur (conj acc (if (and (= \\ (::v e))
+                                    (not (escape-char? (last acc))))
+                             (assoc e ::type ::escaped)
+                             e))
+                 (first ex)
+                 (next ex)))))))
 
 (defmethod read-next* ::punctuation-literal [[{::keys [v l c]} & ex]]
   [{::type ::punct
@@ -237,7 +242,12 @@
       (nnext ex)
 
       (not s)
-      (throw (ex-info "Unclosed comment block" {:begin (first ex)}))
+      (throw (ex-info "Unclosed comment block"
+                      {:begin (select-keys
+                               (set/rename-keys (first ex)
+                                                {::l ::line
+                                                 ::c ::col})
+                               [::line ::col])}))
 
       :otherwise
       (recur (next ex)))))

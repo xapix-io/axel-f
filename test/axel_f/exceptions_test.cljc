@@ -112,7 +112,38 @@
     (catch #?(:clj ExceptionInfo
               :cljs js/Error) e
       (let [d (ex-data e)]
-        (t/is (= {:begin #:axel-f.lexer{:v \k, :l 1, :c 27}}
+        (t/is (= {:begin #:axel-f.lexer{:line 1
+                                        :col 27}}
+                 d))))))
+
+(t/deftest eof-in-string
+
+  (t/is (thrown-with-msg?
+         ExceptionInfo
+         #"Unexpected end of string"
+         ((af/compile "1 & ' asd"))))
+
+  (try
+    ((af/compile "1 & ' asd"))
+    (catch #?(:clj ExceptionInfo
+              :cljs js/Error) e
+      (let [d (ex-data e)]
+        (t/is (= {:begin #:axel-f.lexer{:line 1
+                                        :col 10}}
+                 d)))))
+
+  (t/is (thrown-with-msg?
+         ExceptionInfo
+         #"Unexpected end of string"
+         ((af/compile "1 & \" asd"))))
+
+  (try
+    ((af/compile "1 & \" asd"))
+    (catch #?(:clj ExceptionInfo
+              :cljs js/Error) e
+      (let [d (ex-data e)]
+        (t/is (= {:begin #:axel-f.lexer{:line 1
+                                        :col 10}}
                  d))))))
 
 (t/deftest multiple-top-level-expressions
