@@ -212,7 +212,9 @@
       (let [{::keys [v] :as e'} (first ex)]
         (if (and (or (empty? ex)
                      (whitespace? e')
-                     (contains? (set ",.[](){}/") v)
+                     (punctuation-literal? e')
+                     (operator-literal? e')
+                     (comment-literal? e')
                      (eof? e'))
                  (not (escape-char? (last acc))))
           (let [{l' ::l c' ::c} (last acc)]

@@ -97,6 +97,9 @@
   (t/is (= 3
            ((af/compile "foo[1 + 1]") {:foo [1 2 3]})))
 
+  (t/is (= 2
+           ((af/compile "foo+1") {:foo 1})))
+
   (t/is (= [1 2 3]
            ((af/compile "foo[]") {:foo [1 2 3]}))))
 
