@@ -52,3 +52,8 @@
                         :legacy "false"}
                        {:name "qwe"
                         :legacy "true"}]}))))
+
+(t/deftest access-hashmap-vals-with-index-reference
+
+  (t/is (= 1
+           ((af/compile "WITH(foo, OBJECT.NEW({{'foo', 1}}), k, 'foo', foo[k])")))))

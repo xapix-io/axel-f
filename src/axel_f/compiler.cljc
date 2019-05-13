@@ -41,7 +41,9 @@
               (when (and (sequential? ctxs)
                          (indexed? ctxs))
                 (map #(lookup % path) ctxs)))
-            (lookup (index-lookup (second p) ctxs) path)))
+            (lookup (or (index-lookup (second p) ctxs)
+                        (map-lookup (second p) ctxs))
+                    path)))
         (lookup (map-lookup p ctxs) path)))))
 
 (defn compile-constant [ast]
