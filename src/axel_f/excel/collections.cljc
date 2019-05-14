@@ -24,7 +24,15 @@
 
 (def SORT #'SORT*)
 
+(defn CONCAT*
+  "Concatenates arrays"
+  [& ^{:doc "Arrays to concatenate"} colls]
+  (apply concat colls))
+
+(def CONCAT #'CONCAT*)
+
 (def env
   {"MAP"    MAP
-   "KEEP" FILTER
+   "KEEP"   FILTER
+   "CONCAT" CONCAT
    "SORT"   SORT})
