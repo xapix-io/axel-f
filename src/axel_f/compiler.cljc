@@ -96,8 +96,7 @@
         (let [var-part (path-f)]
           (with-meta
             (constantly var-part)
-            {:var-part var-part
-             :free-variables (list var-part)}))
+            {:var-part var-part}))
         (with-meta
           path-f
           {:var-part ::dynamic
