@@ -111,6 +111,9 @@
   (t/is (= [2 3 4]
            ((af/compile "WITH(inc, FN(x, x + 1), MAP(inc, {1,2,3}))"))))
 
+  (t/is (= [1 2 3 4]
+           ((af/compile "CONCAT({1,2}, {3,4})"))))
+
   (t/is (= [1 3]
            ((af/compile "FILTER(FN(x, x <> 2), {1,2,3})"))))
 
