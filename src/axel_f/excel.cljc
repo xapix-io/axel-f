@@ -15,6 +15,7 @@
             [axel-f.excel.object :as object]
             [axel-f.excel.stat :as stat]
             [axel-f.excel.text :as text]
+            [axel-f.excel.date :as date]
             [axel-f.excel.special-forms :as special-forms]
             [clojure.string :as string])
   #?(:clj (:import [clojure.lang ExceptionInfo])))
@@ -32,6 +33,7 @@
    object/env
    stat/env
    text/env
+   date/env
    special-forms/env))
 
 (def base-env-index
