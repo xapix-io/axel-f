@@ -276,7 +276,9 @@
 
                        :else
                        (let [[entry-expr tokens'] (parse-expression tokens)]
-                         (recur (conj acc entry-expr) tokens')))))]
+                         (if (empty? entry-expr)
+                           (throw (ex-info "Unexpected token" {:begin (::lexer/begin (first tokens'))}))
+                           (recur (conj acc entry-expr) tokens'))))))]
            (let [[entries tokens'] (parse-multiple [] tokens)
                  begin (::lexer/begin (first tokens))
                  end (::lexer/end (first tokens'))]
