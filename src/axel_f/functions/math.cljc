@@ -10,7 +10,7 @@
           res (/ (Math/round (* d factor)) factor)]
       (if (> precision 0)
         res
-        (int res)))))
+        (long res)))))
 
 (def round-meta
   {:desc "Rounds a number to a certain number of decimal places according to standard rules."
