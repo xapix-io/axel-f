@@ -19,7 +19,7 @@
           res (/ (Math/round (* value factor)) factor)]
       (if (> places 0)
         res
-        (int res)))))
+        (long res)))))
 
 (def ROUND #'ROUND*)
 
