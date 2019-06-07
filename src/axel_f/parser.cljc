@@ -306,6 +306,11 @@
                                      (punctuation? (first (second res)) #{"[" "." "("}))
                               (parse-atom (apply cons (update res 0 symbol*)))
                               res))))
+                      (fn [[token & tokens']]
+                        (when (punctuation? token #{"."})
+                          (let [res (parse-atom tokens')]
+                            (when (first res)
+                              (parse-var (apply cons res))))))
                       (fn [tokens]
                         (let [res (parse-symbol tokens)]
                           (when (first res)
