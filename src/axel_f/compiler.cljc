@@ -181,4 +181,6 @@
     (compile-primary env ast)
 
     ::parser/list
-    (compile-list env ast)))
+    (compile-list env ast)
+
+    nil (constantly nil)))
