@@ -10,17 +10,9 @@ In some applications, the lion's share of business logic is concentrated in dyna
 
 ## Clojure(Script)
 
-### Stable
-
-* **Leiningen** : `[io.xapix/axel-f "1.0.6"]`
-* **Boot**: `(set-env! :dependencies #(conj % [io.xapix/axel-f "1.0.6"]))`
-* **deps.edn**: `{:deps {io.xapix/axel-f {:mvn/version "1.0.6"}}}`
-
-### Develop
-
-* **Leiningen** : `[io.xapix/axel-f "2.0.0-SNAPSHOT"]`
-* **Boot**: `(set-env! :dependencies #(conj % [io.xapix/axel-f "2.0.0-SNAPSHOT"]))`
-* **deps.edn**: `{:deps {io.xapix/axel-f {:mvn/version "2.0.0-SNAPSHOT"}}}`
+* **Leiningen** : `[io.xapix/axel-f "2.0.0"]`
+* **Boot**: `(set-env! :dependencies #(conj % [io.xapix/axel-f "2.0.0"]))`
+* **deps.edn**: `{:deps {io.xapix/axel-f {:mvn/version "2.0.0"}}}`
 
 ## JavaScript
 
@@ -29,7 +21,7 @@ In some applications, the lion's share of business logic is concentrated in dyna
 # TL;DR
 
 ```clojure
-(require '[axel-f.core :as axel-f])
+(require '[axel-f.excel :as axel-f])
 
 ;; Compile Excel-like formula into executable function
 (def foo (axel-f/compile "AVERAGE({1, 2, 3})"))
@@ -44,29 +36,31 @@ In some applications, the lion's share of business logic is concentrated in dyna
                          {:x 8}]}})
 ;; => 29
 
-;; axel-f.core/analyze function returns used variables
-(axel-f/analyze "SUM(1, 2, AVERAGE({4,5,6}), foo.bar, foo.baz[*].x)")
-;; => {:vars (("foo" "bar") ("foo" "baz" "*" "x"))}
+;; metadata of compiled functions has information about used variables
+(meta (axel-f/compile "SUM(1, 2, AVERAGE({4,5,6}), foo.bar, foo.baz[*].x)"))
+;; => {:free-variables (("foo" "bar") ("foo" "baz" "*" "x")) ... }
 ```
 
 # Difference from Excel
 
 * No cell-references or reference operations.
+* Extra functions to work with lists such as `MAP`, `FILTER`, `SORT`, `LENGTH`, `CONCAT`
+* Lambda functions! `FN(x, y, x + y)` where all but last arguments are arglist, last - lambda's body with local bindings.
 
 # Object references
 
 In addition to a formula, the run function can accept execution context as a second argument. Context can be any valid Clojure(Script) object. In the formula you can select the data from context by using object reference operators:
 
 * Dot reference operator for access nested data: `foo.bar.baz`
+* Single string can be used as a reference by using dot character as a prefix `.'some string with spaces'`
 * Array reference operator for access data in vector: `foo[*].bar`
   * `foo[*][*]` we support nested vectors (vector of vectors of vectors ...)
   * and objects in vectors `foo[*].bar[*].baz`
   * it is possible to use indexes to get the data inside of arrays: `foo[1].bar`
   * index can be computed on the fly: `foo[SUM(x, 10)].bar`
-* `_` can be used as a self reference. When used in special functions (MAP, FILTER, SORT) will reference single item of collection.
 * field reference can have any character except space, single/double quote, dot, comma, opening/closing square/round brackets and operators
-  * fields with mentioned symbols inside must be quoted by wrapping into `#''` or just a string: `#'bar > baz'[0].foo` or `'foo -> bar'.baz`
-  * some functions such as `FILTER` or `SORT` possibly can return nested data structure and this data can be used as a root reference object: `FILTER(_.x = 1, _)[0].x` with context `[{:x 2} {:x 1} {:x 3}]` returns `1` as expected.
+  * fields with mentioned symbols inside must be quoted by wrapping into string literals: `'bar > baz'[0].foo` or `'foo -> bar'.baz`
+  * some functions such as `FILTER` or `SORT` possibly can return nested data structure and this data can be used as a root reference object: `FILTER(FN(item, item.x), _)[0].x` with context `[{:x 2} {:x 1} {:x 3}]` returns `1` as expected.
 
 # Data types
 
@@ -74,7 +68,7 @@ In addition to a formula, the run function can accept execution context as a sec
 - [x] Booleans as in Excel (TRUE/FALSE). In addition axel-f understands `True/False/true/false`
 - [x] Numbers (Integers, Floats, Exponential form)
 - [x] Strings in double or single quotes. (`'Some String'`, `"Some String"`)
-- [x] Arrays. Any data in curly brackets (`{1, 2 TRUE}`)
+- [x] Arrays. Any data in curly brackets (`{1, 2, TRUE}`)
 - [ ] Date
 - [x] Excel Error types
 - [ ] Geospatial Data
@@ -105,6 +99,44 @@ Any expression can be used as an operand for any operator. axel-f has the same o
 # Implemented functions
 
 Please check the [wiki page](https://github.com/xapix-io/axel-f/wiki)
+
+# Changes between 1.0.6 and 2.0.0
+
+## Namespaces (!BREAKING!)
+
+* axel-f.core => axle-f.excel , for ability to have separate (not just excel-like) extensions for axel-f core
+* axle-f.analyze was replaced by metadata attached to compiled AST
+
+## Working with collections (!BREAKING!)
+
+* `MAP`, `FILTER`, `SORT` no longer accept reference as a first argument. Use lambda function instead.
+* New function `CONCAT` to concatenate elements of multiple collections.
+
+## Extensions (!BREAKING!)
+
+To be more data-driven `def-excel-fn` was replaced by providing extra context to
+`compile` function. It must be a map of token -> fn pairs.
+
+## Local scope
+
+New special function `WITH` can be used to create local bindings.
+
+E.g.
+
+```
+WITH(x, 1,
+     y, 2,
+     x + y)
+=> 3
+```
+
+Lambdas also supported here
+
+```
+WITH(foo, FN(x, x + 2),
+     MAP(foo, {5, 6, 7}))
+=> [7, 8, 9]
+```
 
 # Copyright and License
 
