@@ -10,9 +10,9 @@ In some applications, the lion's share of business logic is concentrated in dyna
 
 ## Clojure(Script)
 
-* **Leiningen** : `[io.xapix/axel-f "2.0.0"]`
-* **Boot**: `(set-env! :dependencies #(conj % [io.xapix/axel-f "2.0.0"]))`
-* **deps.edn**: `{:deps {io.xapix/axel-f {:mvn/version "2.0.0"}}}`
+* **Leiningen** : `[io.xapix/axel-f "2.0.1"]`
+* **Boot**: `(set-env! :dependencies #(conj % [io.xapix/axel-f "2.0.1"]))`
+* **deps.edn**: `{:deps {io.xapix/axel-f {:mvn/version "2.0.1"}}}`
 
 ## JavaScript
 
