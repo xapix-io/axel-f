@@ -1,15 +1,8 @@
 (ns axel-f.json-test
-  #?@
-   (:clj
-    [(:require
-      [axel-f.core :as af]
-      [axel-f.functions.json :as sut]
-      [clojure.test :as t])]
-    :cljs
-    [(:require
-      [axel-f.core :as af]
-      [axel-f.functions.json :as sut]
-      [cljs.test :as t :include-macros true])]))
+   (:require #?(:clj [clojure.test :as t]
+                :cljs [cljs.test :as t :include-macros true])
+             [axel-f.excel :as af]
+             [axel-f.excel.json :as sut]))
 
 (t/deftest json
   (t/testing "Encode object"

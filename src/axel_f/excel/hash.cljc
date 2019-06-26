@@ -1,6 +1,5 @@
-(ns axel-f.functions.hash
-  (:require [axel-f.functions.core :refer [def-excel-fn]]
-            #?@(:clj [[digest :refer [sha-256]]]
+(ns axel-f.excel.hash
+  (:require #?@(:clj [[digest :refer [sha-256]]]
                 :cljs [[goog.crypt :as crypt]
                        [goog.crypt.Sha256 :as Sha256]])))
 
@@ -25,12 +24,13 @@
       (goog.crypt.Sha256.)
       (string->bytes s))))
 
-(defn sha256 [msg]
+(defn sha256*
+  "Calculates a sha-256 based digest from a String"
+  [^{:doc "String to calculate sha256 digest"} msg]
   #?(:clj (sha-256 msg)
      :cljs (bytes->hex (hash-bytes msg))))
 
-(def-excel-fn
-  "HASH.SHA256"
-  sha256
-  {:args [{:desc "String to calculate digest"}]
-   :desc "Calculates a sha-256 based digest from a String"})
+(def sha256 #'sha256*)
+
+(def env
+  {"HASH" {"SHA256" sha256}})

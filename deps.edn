@@ -1,13 +1,9 @@
-{:deps {org.clojure/clojure {:mvn/version "1.9.0"}
-        clj-fuzzy {:mvn/version "0.4.1"}
+{:deps {clj-fuzzy {:mvn/version "0.4.1"}
         cheshire {:mvn/version "5.8.1"}
-        digest {:mvn/version "1.4.8"}}
+        digest {:mvn/version "1.4.9"}
+        clojure.java-time {:mvn/version "0.3.2"}}
 
  :paths ["src"]
-
- :mvn/repos {"central"  {:url "https://repo1.maven.org/maven2/"}
-             "clojars"  {:url "https://clojars.org/repo/"}
-             "sonatype" {:url "https://oss.sonatype.org/content/repositories/snapshots/"}}
 
  :aliases
  {:cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "RELEASE"}}}

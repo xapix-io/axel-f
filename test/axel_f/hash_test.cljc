@@ -1,6 +1,6 @@
 (ns axel-f.hash-test
-  (:require [axel-f.core :as af]
-            [axel-f.functions.hash :as sut]
+  (:require [axel-f.excel :as af]
+            [axel-f.excel.hash :as sut]
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])))
 

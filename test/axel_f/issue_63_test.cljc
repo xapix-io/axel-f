@@ -1,7 +1,7 @@
 (ns axel-f.issue-63-test
   (:require #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])
-             [axel-f.core :as af]))
+             [axel-f.excel :as af]))
 
 (t/deftest issue-63
 

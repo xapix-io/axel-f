@@ -1,8 +1,8 @@
 (ns axel-f.geo-test
   (:require #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])
-            [axel-f.core :as af]
-            [axel-f.functions.geo :as sut]))
+            [axel-f.excel :as af]
+            [axel-f.excel.geo :as sut]))
 
 (t/deftest to-radians
   (t/are [deg rad] (= (sut/to-radians deg) rad)

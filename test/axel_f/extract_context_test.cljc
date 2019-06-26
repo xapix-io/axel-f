@@ -1,14 +1,13 @@
 (ns axel-f.extract-context-test
   (:require #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])
-            [axel-f.lexer :as l]
-            [axel-f.parser :as p]
-            [axel-f.core :as sut]))
+            [axel-f.excel :as sut]))
 
 (defn- get-context [formula]
   (-> formula
-      sut/analyze
-      :vars))
+      sut/compile
+      meta
+      :free-variables))
 
 (t/deftest derive-context
 
@@ -48,4 +47,13 @@
            (get-context "SUM(foo.bar, foo.bar)")))
 
   (t/is (= [["var" "in" "group"]]
-           (get-context "2 * (2 + var.in.group)"))))
+           (get-context "2 * (2 + var.in.group)")))
+
+  (t/is (= [["foo" "bar"] ["foo" "baz"]]
+           (get-context "MAP(FN(x, x + foo.bar), foo.baz)")))
+
+  (t/is (= [["foo" "bar" "*"] ["foo" "baz"]]
+           (get-context "WITH(x, 1, y, foo.bar[2] + x, SUM(foo.baz, x, y))")))
+
+  (t/is (= []
+           (get-context "IF(NULL, 1, True, 2, false, 3)"))))

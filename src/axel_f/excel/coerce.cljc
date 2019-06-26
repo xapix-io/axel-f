@@ -1,6 +1,5 @@
-(ns axel-f.functions.coercion
-  #?(:clj
-     (:require [clojure.edn :as edn])))
+(ns axel-f.excel.coerce
+  #?(:clj (:require [clojure.edn :as edn])))
 
 (defn excel-number [maybe-number]
   (cond
@@ -21,11 +20,7 @@
                         {:type :argument-type}))))
 
     (boolean? maybe-number)
-    (if maybe-number 1 0)
-
-    :otherwise
-    (throw (ex-info (str "Fail to coerce `" maybe-number "` to number.")
-                    {:type :argument-type}))))
+    (if maybe-number 1 0)))
 
 (defn excel-str [item]
   (case item

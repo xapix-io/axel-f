@@ -1,134 +1,145 @@
 (ns axel-f.autocomplete
-  (:require [axel-f.analyzer :as analyzer]
-            [axel-f.lexer :as lexer]
+  (:refer-clojure :exclude [flatten])
+  (:require [axel-f.lexer :as lexer]
             [axel-f.parser :as parser]
-            [axel-f.runtime :as runtime]
-            [axel-f.functions.core :as functions]
-            [clojure.string :as string]
-            [clj-fuzzy.metrics :as fuzzy])
+            [clj-fuzzy.metrics :as fuzzy]
+            [clojure.string :as string])
   #?(:clj (:import [clojure.lang ExceptionInfo])))
 
-(defn get-base-context [ref context]
-  (if ref
-    (case (runtime/type ref)
-      ::runtime/root-reference-expr context
-      ::runtime/reference-expr (runtime/eval* (::runtime/ctx-expr ref) context nil nil))
-    context))
+(defn arg->doc [arg opts]
+  (let [{:keys [doc]} (meta arg)]
+    (merge {:desc doc} opts)))
 
-(defn get-last-field [ref context]
-  (if ref
-    (runtime/eval* (::runtime/field-expr ref) context nil nil)
-    ""))
+(defn arglist->doc [arglist]
+  (loop [acc [] opts {} arg (first arglist) arglist (rest arglist)]
+    (if arg
+      (if (= arg '&)
+        (recur acc (assoc opts :opt true :repeatable true) (first arglist) (rest arglist))
+        (if (vector? arg)
+          (recur acc (dissoc opts :repeatable) (first arg) (concat (rest arg) (rest arglist)))
+          (recur (conj acc (arg->doc arg opts)) {} (first arglist) (rest arglist))))
+      acc)))
 
-(defn next-fields [context]
+(defn ref-meta->doc [{:keys [doc arglists]}]
+  {:type :FN
+   :desc doc
+   :args (arglist->doc (first arglists))})
+
+(defn flatten
+  "Transform a nested map into a seq of [keyseq leaf-val] pairs"
+  [m]
+  (when m
+    ((fn flatten-helper [keyseq m]
+       (when m
+         (cond
+           (map? m)
+           (concat
+            [[keyseq m]]
+            (mapcat
+             (fn [[k v]]
+               (flatten-helper (concat keyseq (list k)) v))
+             m))
+
+           (and (sequential? m)
+                (indexed? m))
+           (concat
+            [[(concat keyseq (list "*")) m]]
+            (mapcat
+             (fn [i v]
+               (concat
+                (flatten-helper (concat keyseq (list i)) v)
+                (when (or (map? v)
+                          (and (sequential? v)
+                               (indexed? v)))
+                  (flatten-helper (concat keyseq (list "*")) v))))
+             (range)
+             m))
+
+           :else
+           [[keyseq m]])))
+     '() m)))
+
+(defn env->index [env]
+  (loop [acc {} paths (flatten env)]
+    (if (empty? paths)
+      acc
+      (let [[path v] (first paths)]
+        (recur
+         (cond
+           ((some-fn fn? var?) v)
+           (assoc acc path (ref-meta->doc (meta v)))
+
+           (map? v)
+           (reduce (fn [acc [p v]]
+                     (if (map? v)
+                       acc
+                       (assoc acc (list (string/join "." (concat path (list p))))
+                              (ref-meta->doc (meta v)))))
+                   acc
+                   v)
+
+           :else
+           acc)
+         (rest paths))))))
+
+(defn context->index [context]
+  (loop [acc {} paths (flatten context)]
+    (if (empty? paths)
+      acc
+      (let [[path v] (first paths)
+            visited? (contains? acc path)]
+        (recur (if visited?
+                 (let [{:keys [sub-type value]} (get acc path)]
+                   (case sub-type
+                     nil
+                     (assoc acc path {:type :REF
+                                      :desc "Field in the context"
+                                      :sub-type :INDEX
+                                      :value [value v]})
+                     :INDEX
+                     (update-in acc [path :value] conj v)))
+                 (assoc acc path {:type :REF
+                                  :desc "Field in the context"
+                                  :value v}))
+               (rest paths))))))
+
+(defn index [obj]
+  (let [env (dissoc obj :axel-f.runtime/context)
+        context (:axel-f.runtime/context obj)]
+    (merge (env->index env)
+           (context->index context))))
+
+(defn ->string [s]
+  (if (keyword? s)
+    (string/join "/" (filter identity ((juxt namespace name) s)))
+    (str s)))
+
+(def ->lower-case-string
+  (comp string/lower-case ->string))
+
+(defn distance [s1 s2]
   (cond
-    (map? context)
-    (keys context)
+    (empty? s2) 1
+    (empty? s1) 0
+    :else (fuzzy/jaccard s1 s2)))
 
-    (sequential? context)
-    (distinct (mapcat keys context))))
-
-(defn get-function-name [ref]
-  (try
-    (runtime/function-name ref)
-    (catch ExceptionInfo e
-      nil)))
-
-(defn- ->string [x]
-  (if (keyword? x)
-    (str ":" (string/join "/" [(namespace x) (name x)]))
-    x))
-
-(defn- fuzzy-match? [ex dict]
-  (if ex
-    (let [ex (->string ex)
-          dict (map #(->string %) dict)]
-      (->> dict
-           (map #(hash-map :value %
-                           :distance (if (string/starts-with? (string/lower-case %)
-                                                              (string/lower-case ex))
-                                       0
-                                       (fuzzy/jaccard ex %))))
-           (filter #(< (:distance %) 0.6))
-           (sort-by :distance)
-           (map :value)))
-    dict))
-
-(defn get-similar-functions [fnname]
-  (map (fn [f]
-         (merge {:type :FN
-                 :value f}
-                (get-in @functions/*functions-store* [f :meta])))
-       (fuzzy-match? fnname (->> @functions/*functions-store*
-                                 (filter (fn [[_ {:keys [meta]}]] (not-empty meta)))
-                                 (map first)))))
-
-(defn get-similar-fields [field context]
-  (map (fn [f]
-         {:type :REF
-          :value f
-          :desc "Field in the context"})
-       (fuzzy-match? field (next-fields context))))
-
-(defn analyze-ref [ref context]
-  (let [context (get-base-context ref context)
-        field (get-last-field ref context)
-        fnname (get-function-name ref)
-        position (runtime/position (::runtime/field-expr ref))]
-    (map #(assoc % :position position)
-         (concat
-          (when-not (and (sequential? context)
-                         (nil? fnname))
-            (get-similar-functions fnname))
-          (get-similar-fields field context)))))
-
-(defn subs-ref [tokens depth]
-  (loop [acc [] [t & tokens'] tokens]
-    (if (and t
-             (or (lexer/punctuation-literal? t ["."])
-                 (lexer/symbol-literal? t)
-                 (lexer/bracket-literal? t ["[" "]"])
-                 (lexer/operator-literal? t [":" "/"])
-                 (> (::lexer/depth t) depth)
-                 (lexer/end-of-input? t)))
-      (recur (cons t acc) tokens')
-      (let [acc' (if (lexer/end-of-input? (last acc))
-                   (butlast acc)
-                   acc)
-            acc' (if (or (nil? (last acc'))
-                         (lexer/punctuation-literal? (last acc') ["."]))
-                   (concat acc' [#::lexer{:type ::lexer/symbol
-                                          :value ""
-                                          :depth (::lexer/depth (last acc))
-                                          :begin (::lexer/end (last acc))
-                                          :end (::lexer/end (last acc))}])
-                   acc')]
-        (first (parser/parse-primary acc'))))))
-
-(defn analyze-fncall [f current-arg]
-  (when-let [fnname (not-empty (get-function-name f))]
-    (merge {:current-arg current-arg
-            :type :FNCALL
-            :value fnname}
-           (get-in @functions/*functions-store* [fnname :meta]))))
-
-(defn subs-fncall [tokens depth]
-  (let [[args tokens'] (loop [acc [] [t & tokens'] tokens]
-                         (if (or (not t)
-                                 (and (lexer/bracket-literal? t ["("])
-                                      (= (::lexer/depth t) (dec depth))))
-                           [acc (drop (count acc) tokens)]
-                           (recur (cons t acc) tokens')))
-        current-arg (count (filter #(and (lexer/punctuation-literal? % [","])
-                                         (= (::lexer/depth %) depth))
-                                   args))
-        fn-ref (subs-ref (next tokens') (dec depth))]
-    [fn-ref current-arg]))
-
-(defn suggestions [term context]
-  (let [tokens (reverse (lexer/read-formula term false))
-        depth (::lexer/depth (first tokens))]
-    (let [ref (subs-ref tokens depth)
-          fncall (subs-fncall tokens depth)]
-      {:suggestions (analyze-ref ref context)
-       :context (apply analyze-fncall fncall)})))
+(defn search-index [index path]
+  (sort-by
+   (fn [[_ {:keys [distance]}]]
+     distance)
+   (sequence
+    (comp
+     (filter (fn [[ik _]]
+               (and (= (count ik) (count path))
+                    (= (map ->lower-case-string (butlast ik))
+                       (map ->lower-case-string (butlast path)))
+                    (or (= (->lower-case-string (last path))
+                           (->lower-case-string (last ik)))
+                        (string/starts-with? (->lower-case-string (last ik))
+                                             (->lower-case-string (last path)))
+                        (> (/ 2 3) (distance (->lower-case-string (last path))
+                                             (->lower-case-string (last ik))))))))
+     (map (fn [[ik v]]
+            [ik (assoc v :distance (distance (->lower-case-string (last path))
+                                             (->lower-case-string (last ik))))])))
+    index)))

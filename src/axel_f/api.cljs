@@ -1,9 +1,9 @@
 (ns axel-f.api
-  (:require [axel-f.core :as axel-f]))
+  (:require [axel-f.excel :as excel]))
 
 (defn ^:export compile [formula-str]
   (try
-    (let [f (axel-f/compile formula-str)]
+    (let [f (excel/compile formula-str)]
       (fn [ctx]
         (try
           (clj->js (f (js->clj ctx)))
@@ -16,10 +16,12 @@
                                             {:message (.-message e)
                                              :data (ex-data e)})))))))
 
-(defn ^:export context [formula-str]
+(defn ^:export context [formula]
   (try
-    (let [{:keys [vars]} (axel-f/analyze formula-str)]
-      (clj->js vars))
+    (let [{:keys [free-variables]} (meta (if (fn? formula)
+                                           formula
+                                           (excel/compile formula)))]
+      (clj->js free-variables))
     (catch ExceptionInfo e
       (throw (js/Error. (js/JSON.stringify (clj->js
                                             {:message (.-message e)
@@ -27,4 +29,4 @@
 
 (defn ^:export autocomplete [incomplete-formula context]
   (let [context (js->clj context)]
-    (clj->js (axel-f/suggestions incomplete-formula context))))
+    (clj->js (excel/suggestions incomplete-formula context))))

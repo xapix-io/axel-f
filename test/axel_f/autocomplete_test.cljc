@@ -1,6 +1,5 @@
 (ns axel-f.autocomplete-test
-  (:require [axel-f.core :as af]
-            [axel-f.autocomplete :as sut]
+  (:require [axel-f.excel :as sut]
             #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])))
 
@@ -10,40 +9,31 @@
 
     (t/is (= {:suggestions
               [{:type :REF,
-                :value "bar",
-                :desc "Field in the context",
+                :value "foo",
+                :desc "Field in the context"
                 :position
-                {:begin #:axel-f.lexer{:line 1, :column 5},
-                 :end #:axel-f.lexer{:line 1, :column 7}}}],
-              :context nil}
-             (sut/suggestions "foo.bar" {"foo" {"bar" 1}})))
+                #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 1},
+                               :end #:axel-f.lexer{:line 1, :col 3}}}]}
+             (sut/suggestions "foo" {"foo" {"bar" 1}})))
 
     (t/is (= {:suggestions
-              [{:type :REF,
-                :value "bar",
-                :desc "Field in the context",
+              [{:type :REF, :desc "Field in the context", :value "baz"
                 :position
-                {:begin #:axel-f.lexer{:line 1, :column 5},
-                 :end #:axel-f.lexer{:line 1, :column 5}}}
-               {:type :REF,
-                :value "baz",
-                :desc "Field in the context",
+                #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 5},
+                               :end #:axel-f.lexer{:line 1, :col 5}}}
+               {:type :REF, :desc "Field in the context", :value "bar"
                 :position
-                {:begin #:axel-f.lexer{:line 1, :column 5},
-                 :end #:axel-f.lexer{:line 1, :column 5}}}],
-              :context nil}
+                #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 5},
+                               :end #:axel-f.lexer{:line 1, :col 5}}}]}
              (sut/suggestions "foo." {"foo" {"bar" 1
                                              "baz" 2}})))
 
     (t/is (= {:suggestions
-              [{:type :REF,
-                :value "foo",
-                :desc "Field in the context",
+              [{:type :REF, :desc "Field in the context", :value "foo"
                 :position
-                {:begin #:axel-f.lexer{:line 1, :column 1},
-                 :end #:axel-f.lexer{:line 1, :column 2}}}],
-              :context nil}
-             (sut/suggestions "fo" {"foo" {"bar" 1}})))
+                #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 1},
+                               :end #:axel-f.lexer{:line 1, :col 2}}}]}
+             (sut/suggestions "fo" {"foo" {"bar" 1}}) ))
 
     #_(t/is (= {:suggestions
               [{:type :FN,
@@ -544,50 +534,25 @@
              (sut/suggestions "" {"foo" 1
                                   "bar" 2})))
 
-    (t/testing "keywords in references"
-
-      (t/is (= {:suggestions
-                [{:type :REF,
-                  :value ":/baz",
-                  :desc "Field in the context",
-                  :position
-                  {:begin #:axel-f.lexer{:line 1, :column 10},
-                   :end #:axel-f.lexer{:line 1, :column 13}}}
-                 {:type :REF,
-                  :value ":/bav",
-                  :desc "Field in the context",
-                  :position
-                  {:begin #:axel-f.lexer{:line 1, :column 10},
-                   :end #:axel-f.lexer{:line 1, :column 13}}}],
-                :context nil}
-               (sut/suggestions ":foo/bar.:/ba" {:foo/bar {:baz 1
-                                                           :bav 2}}))))
-
     (t/testing "array in suggestions"
 
       (t/is (= {:suggestions
-                [{:type :REF,
-                  :value "bar",
-                  :desc "Field in the context",
+                [{:type :REF, :desc "Field in the context", :value "bar"
                   :position
-                  {:begin #:axel-f.lexer{:line 1, :column 9},
-                   :end #:axel-f.lexer{:line 1, :column 10}}}
-                 {:type :REF,
-                  :value "baz",
-                  :desc "Field in the context",
+                  #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 9},
+                                 :end #:axel-f.lexer{:line 1, :col 10}}}
+                 {:type :REF, :desc "Field in the context", :value "baz"
                   :position
-                  {:begin #:axel-f.lexer{:line 1, :column 9},
-                   :end #:axel-f.lexer{:line 1, :column 10}}}],
-                :context nil}
+                  #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 9},
+                                 :end #:axel-f.lexer{:line 1, :col 10}}}]}
                (sut/suggestions "foo.[*].ba" {"foo" [{"bar" 1} {"baz" 2}]}))))))
 
 (t/deftest function-call-test
 
   (t/testing "incomplete arguments list"
 
-    (t/is (= {:suggestions [],
-              :context
-              {:current-arg 2,
+    (t/is (= {:context
+              {:current-arg 3
                :type :FNCALL,
                :value "SUM",
                :desc "Returns the sum of a series of numbers and/or references.",
@@ -595,14 +560,20 @@
                [{:desc "The first number or range to add together."}
                 {:desc "Additional numbers or ranges to add to arg1.",
                  :opt true,
-                 :repeatable true}]}}
-             (sut/suggestions "SUM(1, 2, foo." {})))))
+                 :repeatable true}]}
+              :suggestions
+              [{:type :REF
+                :desc "Field in the context"
+                :value "bar"
+                :position
+                #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 15},
+                               :end #:axel-f.lexer{:line 1, :col 16}}}]}
+             (sut/suggestions "SUM(1, 2, foo.ba" {:foo {:bar 3}})))))
 
 (t/deftest core-test
 
-  (t/is (= {:suggestions [],
-            :context
-            {:current-arg 2,
+  (t/is (= {:context
+            {:current-arg 3,
              :type :FNCALL,
              :value "SUM",
              :desc "Returns the sum of a series of numbers and/or references.",
@@ -610,18 +581,41 @@
              [{:desc "The first number or range to add together."}
               {:desc "Additional numbers or ranges to add to arg1.",
                :opt true,
-               :repeatable true}]}}
-           (af/suggestions "SUM(1, 2, foo." {})))
+               :repeatable true}]}
+            :suggestions
+            [{:desc "Field in the context", :type :REF, :value "baz"
+              :position #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 15},
+                                       :end #:axel-f.lexer{:line 1, :col 15}}}
+             {:desc "Field in the context", :type :REF, :value "bar"
+              :position #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 15},
+                                       :end #:axel-f.lexer{:line 1, :col 15}}}]}
+           (sut/suggestions "SUM(1, 2, foo." {"foo" {"bar" 1 "baz" 2}}) )))
 
-  (t/is (= {:suggestions [],
-            :context
-            {:current-arg 2,
-             :type :FNCALL,
-             :value "SUM",
-             :desc "Returns the sum of a series of numbers and/or references.",
-             :args
-             [{:desc "The first number or range to add together."}
-              {:desc "Additional numbers or ranges to add to arg1.",
-               :opt true,
-               :repeatable true}]}}
-           (af/suggestions "SUM(1, 2, foo."))))
+(t/deftest lowercase
+
+  (t/is (= {:suggestions
+            '({:type :FN,
+               :desc "Returns the sum of a series of numbers and/or references.",
+               :args
+               [{:desc "The first number or range to add together."}
+                {:desc "Additional numbers or ranges to add to arg1.",
+                 :opt true,
+                 :repeatable true}],
+               :position
+               #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 1},
+                              :end #:axel-f.lexer{:line 1, :col 2}},
+               :value "SUM"}
+              {:type :FN,
+               :desc "Replaces existing text with new text in a string.",
+               :args [{:desc nil} {:desc nil} {:desc nil} {:desc nil, :opt true}],
+               :position
+               #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 1},
+                              :end #:axel-f.lexer{:line 1, :col 2}},
+               :value "SUBSTITUTE"}
+              {:type :REF,
+               :desc "Field in the context",
+               :value "suspension",
+               :position
+               #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 1},
+                              :end #:axel-f.lexer{:line 1, :col 2}}})}
+           (sut/suggestions "su" {"suspension" {"foo" 1}}))))
