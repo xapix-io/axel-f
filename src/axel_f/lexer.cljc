@@ -28,13 +28,13 @@
 (defn- eof? [{::keys [v]}]
   (nil? v))
 
-(defn- escape-char? [{::keys [v type]}]
+(defn- escape-char? [{::keys [type]}]
   (= type ::escaped))
 
 (defn- escape-str [args]
   (string/replace (apply str args) #"\\(.)" "$1"))
 
-(defmulti read-next* (fn [[e & ex]]
+(defmulti read-next* (fn [[e & _]]
                        (cond
                          (whitespace? e) ::whitespace
                          (number-literal? e) ::number-literal
@@ -43,7 +43,7 @@
                          (operator-literal? e) ::operator-literal
                          (comment-literal? e) ::comment
                          (eof? e) ::eof
-                         :otherwise ::symbol-literal)))
+                         :else ::symbol-literal)))
 
 (defmethod read-next* ::whitespace [ex]
   (loop [e (first ex) ex ex]

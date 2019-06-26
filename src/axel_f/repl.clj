@@ -1,5 +1,4 @@
-(ns axel-f.repl
-  (:require [clojure.string :as string]))
+(ns axel-f.repl)
 
 (defn run
   "start read eval print loop"
@@ -20,11 +19,11 @@
               (println res))
             (recur (if ctx-var (assoc ctx ctx-var res) ctx)))
           (let [f (try (compile-fn formula)
-                       (catch #?(:clj Throwable :cljs js/Error) e
+                       (catch #?(:clj Throwable :cljs js/Error) _
                          (println "formula read error\n")))
                 res (if f
                       (try (f ctx)
-                           (catch #?(:clj Throwable :cljs js/Error) e
+                           (catch #?(:clj Throwable :cljs js/Error) _
                              (println "formula eval error\n")
                              ::fail))
                       ::fail)]

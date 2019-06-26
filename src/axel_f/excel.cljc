@@ -48,8 +48,7 @@
    (try
      (let [ast (-> formula lexer/read parser/parse)
            f (compiler/compile special-forms/env ast)
-           env (merge env extra-env)
-           fname (gensym)]
+           env (merge env extra-env)]
        (with-meta
          (fn fname
            ([] (fname nil))
@@ -96,10 +95,9 @@
                                          :type :FNCALL)
                                   (dissoc :distance)))))]
      (try
-       (do
-         (-> incomplete-formula
-             lexer/read
-             (parser/parse :var-cb var-cb :fncall-cb fncall-cb))
-         @store)
-       (catch #?(:clj ExceptionInfo :cljs js/Error) e
+       (-> incomplete-formula
+           lexer/read
+           (parser/parse :var-cb var-cb :fncall-cb fncall-cb))
+       @store
+       (catch #?(:clj ExceptionInfo :cljs js/Error) _
          @store)))))

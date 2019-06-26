@@ -1,8 +1,6 @@
 (ns axel-f.autocomplete
   (:refer-clojure :exclude [flatten])
-  (:require [axel-f.lexer :as lexer]
-            [axel-f.parser :as parser]
-            [clj-fuzzy.metrics :as fuzzy]
+  (:require [clj-fuzzy.metrics :as fuzzy]
             [clojure.string :as string])
   #?(:clj (:import [clojure.lang ExceptionInfo])))
 

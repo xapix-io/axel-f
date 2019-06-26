@@ -29,7 +29,7 @@
          (reduced v))))
    nil ctxs))
 
-(defn lookup [ctx [p & path :as px]]
+(defn lookup [ctx [p & path]]
   (if-not p
     ctx
     (let [ctxs (filter identity (list ctx (:axel-f.runtime/context ctx)))]
