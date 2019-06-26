@@ -1,6 +1,6 @@
 (ns axel-f.lexer
   (:refer-clojure :exclude [read])
-  (:require [clojure.edn :as edn]
+  (:require #?(:clj [clojure.edn :as edn])
             [clojure.string :as string]
             [clojure.set :as set]))
 
@@ -88,7 +88,9 @@
           (recur acc' ex' next-number-part)
           (let [{ec ::c el ::l} (last acc')]
             [{::type ::number
-              ::value (edn/read-string (->> acc' (map ::v) (apply str)))
+              ::value (#?(:clj edn/read-string
+                          :cljs js/parseFloat)
+                       (->> acc' (map ::v) (apply str)))
               ::begin {::line l
                        ::col c}
               ::end {::line el
