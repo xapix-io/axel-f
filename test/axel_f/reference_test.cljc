@@ -61,3 +61,7 @@
 
   (t/is (= 1
            ((af/compile "WITH(foo, OBJECT.NEW({{'foo', 1}}), k, 'foo', foo[k])")))))
+
+(t/deftest reference-can-start-with-number
+  (t/is (= 1
+           ((af/compile "1to1.foo") {"1to1" {:foo 1}}))))

@@ -1,7 +1,6 @@
 (ns axel-f.parser
   (:refer-clojure :exclude [memoize])
-  (:require [axel-f.lexer :as lexer]
-            [clojure.string :as string])
+  (:require [axel-f.lexer :as lexer])
   #?(:clj (:import [clojure.lang ExceptionInfo])))
 
 (defn- eof? [{::lexer/keys [type] :as token}]
