@@ -59,7 +59,8 @@
       [acc ex''])))
 
 (defmethod read-next* ::number-literal [ex]
-  (let [{::keys [l c]} (first ex)]
+  (let [{::keys [l c]} (first ex)
+        origin-ex ex]
     (loop [acc [] ex ex part ::natural]
       (let [[acc' ex']
             (update-in
@@ -86,16 +87,22 @@
                               part)]
         (if next-number-part
           (recur acc' ex' next-number-part)
-          (let [{ec ::c el ::l} (last acc')]
-            [{::type ::number
-              ::value (#?(:clj edn/read-string
-                          :cljs js/parseFloat)
-                       (->> acc' (map ::v) (apply str)))
-              ::begin {::line l
-                       ::col c}
-              ::end {::line el
-                     ::col ec}}
-             ex']))))))
+          (let [{ec ::c el ::l} (last acc')
+                next-el (first ex')]
+            (if (or (punctuation-literal? next-el)
+                    (whitespace? next-el)
+                    (eof? next-el)
+                    (operator-literal? next-el))
+              [{::type ::number
+                ::value (#?(:clj edn/read-string
+                            :cljs js/parseFloat)
+                         (->> acc' (map ::v) (apply str)))
+                ::begin {::line l
+                         ::col c}
+                ::end {::line el
+                       ::col ec}}
+               ex']
+              ((get-method read-next* ::symbol-literal) origin-ex))))))))
 
 (defmethod read-next* ::string-literal [ex]
   (let [ex (if (= \# (-> ex first ::v)) (next ex) ex)
