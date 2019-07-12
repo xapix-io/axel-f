@@ -345,11 +345,16 @@
      ([tokens lexpr prec]
       (let [{parse-operator :operator
              parse-atom :atom
-             parse-binary :binary} @parsers
+             parse-binary :binary
+             parse-prefix :prefix
+             parse-postfix :postfix} @parsers
             [operator tokens'] (parse-operator tokens)]
         (if (or (empty? operator) (< (precedence operator) prec))
           [lexpr tokens]
-          (let [[rexpr tokens''] (parse-atom tokens')
+          (let [[rexpr tokens''] ((first-of parse-prefix
+                                            parse-postfix
+                                            parse-atom)
+                                  tokens')
                 [rexpr tokens''] (parse-binary tokens'' rexpr (precedence operator))]
             (parse-binary tokens'' (primary ::infix operator [lexpr rexpr]) prec))))))))
 
@@ -368,10 +373,14 @@
   (memoize
    (fn [tokens]
      (let [{parse-operator :operator
-            parse-expression :expression} @parsers
+            parse-prefix :prefix
+            parse-postfix :postfix
+            parse-atom :atom} @parsers
            [operator tokens'] (parse-operator tokens)
            [operand tokens'] (when (and operator (prefix? operator))
-                               (or ((first-of parse-expression)
+                               (or ((first-of parse-prefix
+                                              parse-postfix
+                                              parse-atom)
                                     tokens')
                                    [nil tokens']))]
        (if operand
