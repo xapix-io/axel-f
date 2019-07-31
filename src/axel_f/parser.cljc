@@ -309,7 +309,11 @@
                         (when (punctuation? token #{"."})
                           (let [res (parse-atom tokens')]
                             (when (first res)
-                              (parse-var (apply cons res))))))
+                              (case (::type (first res))
+                                ::constant [(first (parse-var (update (vector (first res)) 0 symbol*)))
+                                            (second res)]
+                                ::var res
+                                (parse-var (apply cons res)))))))
                       (fn [tokens]
                         (let [res (parse-symbol tokens)]
                           (when (first res)
