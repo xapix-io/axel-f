@@ -23,6 +23,10 @@
   (t/is (= 1
            ((af/compile ".'foo'") {"foo" 1}))))
 
+(t/deftest single-array-ref
+  (t/is (= 1
+           ((af/compile ".[0]") [1]))))
+
 (t/deftest reference-with-keywords
   (t/are [x] (t/is (= 1 ((af/compile (str "0 + " x " * 1")) {:foo 1
                                                              :foo/bar 1
