@@ -65,14 +65,20 @@
         (recur
          (cond
            ((some-fn fn? var?) v)
-           (assoc acc path (ref-meta->doc (meta v)))
+           (let [m (meta v)]
+             (if (:deprecated m)
+               acc
+               (assoc acc path (ref-meta->doc m))))
 
            (map? v)
            (reduce (fn [acc [p v]]
                      (if (map? v)
                        acc
-                       (assoc acc (list (string/join "." (concat path (list p))))
-                              (ref-meta->doc (meta v)))))
+                       (let [m (meta v)]
+                         (if (:deprecated m)
+                           acc
+                           (assoc acc (list (string/join "." (concat path (list p))))
+                                  (ref-meta->doc m))))))
                    acc
                    v)
 
