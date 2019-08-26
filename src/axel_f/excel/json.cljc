@@ -22,7 +22,7 @@
 (def json-decode #'json-decode*)
 
 (def env
-  {"JSONENCODE" json-encode
-   "JSONDECODE" json-decode
+  {"JSONENCODE" (with-meta json-encode* (merge {:deprecated true} (meta #'json-encode*)))
+   "JSONDECODE" (with-meta json-decode* (merge {:deprecated true} (meta #'json-decode*)))
    "JSON" {"ENCODE" json-encode
            "DECODE" json-decode}})

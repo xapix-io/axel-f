@@ -40,7 +40,7 @@
 (def base64-decode #'base64-decode*)
 
 (def env
-  {"BASE64ENCODE" base64-encode
-   "BASE64DECODE" base64-decode
+  {"BASE64ENCODE" (with-meta base64-encode* (merge {:deprecated true} (meta #'base64-encode*)))
+   "BASE64DECODE" (with-meta base64-decode* (merge {:deprecated true} (meta #'base64-decode*)))
    "BASE64" {"ENCODE" base64-encode
              "DECODE" base64-decode}})
