@@ -8,9 +8,10 @@
 
     (string? maybe-number)
     (try
-      (let [n (#?(:clj edn/read-string
-                  :cljs js/parseFloat) maybe-number)]
-        (if (and (number? n) #?(:cljs (not (js/isNaN n))))
+      (let [n (when (not-empty maybe-number)
+                (#?(:clj edn/read-string
+                    :cljs js/Number) maybe-number))]
+        (if (and (number? n) #?@(:cljs [(not (js/isNaN n)) (not= js/Infinity n) (not= (* -1 js/Infinity) n)]))
           n
           (throw (ex-info (str "Fail to coerce `" maybe-number "` to number.")
                           {:type :argument-type}))))
@@ -42,8 +43,9 @@
     (if (number? obj)
       (long obj)
       #?(:clj (Long/parseLong obj)
-         :cljs (let [n (js/parseFloat obj)]
-                 (if (or (js/isNaN n) (not= 0 (rem n 1)))
+         :cljs (let [n (when (not-empty obj)
+                         (js/Number obj))]
+                 (if (or (js/isNaN n) (= js/Infinity n) (= (* -1 js/Infinity) n) (not= 0 (rem n 1)))
                    nil
                    n))))
     (catch #?(:clj java.lang.NumberFormatException
@@ -59,8 +61,9 @@
     (if (float? obj)
       (double obj)
       #?(:clj (Double/parseDouble obj)
-         :cljs (let [n (js/parseFloat obj)]
-                 (if (or (js/isNaN n) (= 0 (rem n 1)))
+         :cljs (let [n (when (not-empty obj)
+                         (js/Number obj))]
+                 (if (or (js/isNaN n) (= js/Infinity n) (= (* -1 js/Infinity) n) (= 0 (rem n 1)))
                    nil
                    n))))
     (catch #?(:clj java.lang.NumberFormatException
