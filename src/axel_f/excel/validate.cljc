@@ -1,7 +1,7 @@
 (ns axel-f.excel.validate)
 
 (defn presence*
-  "Validate and return if not null given value and throw an Exception with given message (default is 'Argument is required')."
+  "Validate and return given value if not null, and throw an exception with given message (default is 'Argument is required')."
   [^{:doc "Object to check for presence."} x
    & [^{:doc "Optional message to be thrown."} msg]]
   (let [msg (or msg "Argument required")]
@@ -11,7 +11,7 @@
 (def presence #'presence*)
 
 (defn not-empty**
-  "Validate and return if not empty given value and throw an Exception with given message (default is 'Argument can not be empty'). "
+  "Validate and return given value if not empty collection, and throw an exception with given message (default is 'Argument can not be empty'). "
   [^{:doc "Object to check for emptiness."} x
    & [^{:doc "Optional message to be thrown."} msg]]
   (let [msg (or msg "Argument can not be empty")]
