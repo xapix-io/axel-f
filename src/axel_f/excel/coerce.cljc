@@ -37,7 +37,7 @@
 (def to-string #'to-string*)
 
 (defn to-integer*
-  "Tries to coerce given value to an integer type. Returns null for empty or not reducible to an integer type value."
+  "Tries to coerce given value to an integer type. Returns null for empty value or values not reducible to integer."
   [^{:doc "Any object to coerce to an integer."} obj]
   (try
     (if (number? obj)
@@ -55,7 +55,7 @@
 (def to-integer #'to-integer*)
 
 (defn to-float*
-  "Tries to coerce given value to float type. Returns null for empty or not reducible to a float type value."
+  "Tries to coerce given value to float type. Returns null for empty value or values not reducible to float."
   [^{:doc "Any object to coerce to a float."} obj]
   (try
     (if (float? obj)
@@ -73,7 +73,7 @@
 (def to-float #'to-float*)
 
 (defn to-boolean*
-  "Tries to coerce given value to a boolean type. Returns null for empty or not reducible to a boolean type value."
+  "Tries to coerce given value to a boolean type. Returns null for empty value or values not reducible to boolean."
   [^{:doc "Any object to coerce to a boolean type."} obj]
   (case obj
     "true" true
