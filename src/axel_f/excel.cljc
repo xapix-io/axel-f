@@ -4,6 +4,7 @@
             [axel-f.parser :as parser]
             [axel-f.compiler :as compiler]
             [axel-f.autocomplete :as autocomplete]
+            [axel-f.excel.coerce :as coerce]
             [axel-f.excel.operators :as operators]
             [axel-f.excel.collections :as collections]
             [axel-f.excel.base64 :as base64]
@@ -17,6 +18,8 @@
             [axel-f.excel.text :as text]
             [axel-f.excel.date :as date]
             [axel-f.excel.special-forms :as special-forms]
+            [axel-f.excel.validate :as validate]
+            [axel-f.excel.fn :as fn]
             [clojure.string :as string])
   #?(:clj (:import [clojure.lang ExceptionInfo])))
 
@@ -34,7 +37,10 @@
    stat/env
    text/env
    date/env
-   special-forms/env))
+   special-forms/env
+   coerce/env
+   validate/env
+   fn/env))
 
 (def base-env-index
   (set (sequence

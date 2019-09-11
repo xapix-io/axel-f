@@ -1,4 +1,5 @@
-(ns axel-f.excel.collections)
+(ns axel-f.excel.collections
+  (:require [axel-f.excel.utils :as ut]))
 
 (defn MAP*
   "Applies partialy defined formula to every element in a collection and returns an array."
@@ -31,8 +32,18 @@
 
 (def CONCAT #'CONCAT*)
 
+(defn- walk
+  ([f data] (walk f -1 data))
+  ([f level data]
+   (cond
+     (= 0 level) (f data)
+     (sequential? data) (map (partial walk f (dec level)) data)
+     (map? data) (ut/map-vals (partial walk f (dec level)) data)
+     :else (f data))))
+
 (def env
   {"MAP"    MAP
    "KEEP"   FILTER
    "CONCAT" CONCAT
-   "SORT"   SORT})
+   "SORT"   SORT
+   "walk"   walk})
