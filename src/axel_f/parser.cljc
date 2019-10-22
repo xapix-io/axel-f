@@ -3,14 +3,14 @@
   (:require [axel-f.lexer :as lexer])
   #?(:clj (:import [clojure.lang ExceptionInfo])))
 
-(defn- eof? [{::lexer/keys [type] :as token}]
+(defn- eof? [{::lexer/keys [type]}]
   (= type ::lexer/eof))
 
-(defn- postfix? [{::lexer/keys [value] ::keys [type parts] :as token}]
+(defn- postfix? [{::lexer/keys [value] ::keys [type parts]}]
   (let [value (or value (and (= type ::var) (= 1 (count parts)) (::lexer/value (first parts))))]
     (= "%" value)))
 
-(defn- prefix? [{::lexer/keys [value] ::keys [type parts] :as op}]
+(defn- prefix? [{::lexer/keys [value] ::keys [type parts]}]
   (let [value (or value (and (= type ::var) (= 1 (count parts)) (::lexer/value (first parts))))]
     (contains? (set ["!" "+" "-"]) value)))
 
@@ -20,14 +20,6 @@
   [{::lexer/keys [type value]} desired]
   (let [desired (if (set? desired) desired (set [desired]))]
     (and (= type ::lexer/punct)
-         (contains? desired value))))
-
-(defn- operator?
-  "Check if token matches desired symbol and has operator type
-  Possible values: `[\":\" \"+\" \"-\" \"!\" \"*\" \"/\" \"&\" \"=\" \"<\" \">\" \"<=\" \">=\" \"<>\" \"^\" \"%\"]`"
-  [{::lexer/keys [type value]} desired]
-  (let [desired (if (set? desired) desired (set [desired]))]
-    (and (= type ::lexer/operator)
          (contains? desired value))))
 
 (defn- precedence [{::lexer/keys [value] ::keys [parts]}]
@@ -98,7 +90,7 @@
 (defn memoize [f]
   (let [store (atom {})]
     (fn [& args]
-      (let [[token & tokens' :as tokens] (first args)]
+      (let [[token & _ :as tokens] (first args)]
         (if-let [res (get @store (cons token (rest args)))]
           res
           (let [res (apply f (cons tokens (rest args)))]
@@ -174,37 +166,37 @@
      (let [{parse-application :application
             parse-symbol :symbol
             parse-square-block :square-block
-            parse-constant :constant} @parsers]
-       (let [[root & tokens'] tokens]
-         (loop [acc [root] tokens' tokens']
-           (if (punctuation? (first tokens') "(")
-             (parse-application (cons (var* acc) tokens'))
-             (let [[var-part tokens'']
-                   (cond
-                     (punctuation? (first tokens') ".")
-                     ((first-of parse-symbol
-                                parse-square-block
-                                parse-constant)
-                      (next tokens'))
+            parse-constant :constant} @parsers
+           [root & tokens'] tokens]
+       (loop [acc [root] tokens' tokens']
+         (if (punctuation? (first tokens') "(")
+           (parse-application (cons (var* acc) tokens'))
+           (let [[var-part tokens'']
+                 (cond
+                   (punctuation? (first tokens') ".")
+                   ((first-of parse-symbol
+                              parse-square-block
+                              parse-constant)
+                    (next tokens'))
 
-                     (punctuation? (first tokens') "[")
-                     (parse-square-block tokens'))]
-               (if var-part
-                 (recur (conj acc var-part) tokens'')
-                 [(var*
-                   (if (punctuation? (first tokens') ".")
-                     (conj acc
-                           {::lexer/type ::lexer/symbol
-                            ::lexer/value ""
-                            ::lexer/begin (::lexer/begin (second tokens'))
-                            ::lexer/end (::lexer/begin (second tokens'))
-                            ::type ::symbol})
-                     acc)
-                   (when (or (eof? (first tokens'))
-                             (empty? (first tokens'))
-                             (punctuation? (first tokens') "."))
-                     var-cb))
-                  tokens'])))))))))
+                   (punctuation? (first tokens') "[")
+                   (parse-square-block tokens'))]
+             (if var-part
+               (recur (conj acc var-part) tokens'')
+               [(var*
+                 (if (punctuation? (first tokens') ".")
+                   (conj acc
+                         {::lexer/type ::lexer/symbol
+                          ::lexer/value ""
+                          ::lexer/begin (::lexer/begin (second tokens'))
+                          ::lexer/end (::lexer/begin (second tokens'))
+                          ::type ::symbol})
+                   acc)
+                 (when (or (eof? (first tokens'))
+                           (empty? (first tokens'))
+                           (punctuation? (first tokens') "."))
+                   var-cb))
+                tokens']))))))))
 
 (defn block-parser [parsers]
   (memoize
@@ -228,7 +220,7 @@
                                                           :end end})))))
          [nil tokens])))))
 
-(defn square-block-parser [parsers var-cb]
+(defn square-block-parser [parsers]
   (memoize
    (fn [tokens]
      (let [{parse-expression :expression
@@ -325,7 +317,7 @@
                                          (::lexer/value (first res)))
                               (update res 0 constant)
 
-                              :otherwise
+                              :else
                               (update-in res [0] (fn [x]
                                                    (var* [x] (when (let [t (-> res second first)]
                                                                      (or (eof? t)
@@ -359,6 +351,10 @@
                                             parse-postfix
                                             parse-atom)
                                   tokens')
+                _ (when (empty? rexpr)
+                    (throw (ex-info "Second argument for binary operator can not be parsed"
+                                    {:begin (or (::lexer/begin (first tokens''))
+                                                (::lexer/end operator))})))
                 [rexpr tokens''] (parse-binary tokens'' rexpr (precedence operator))]
             (parse-binary tokens'' (primary ::infix operator [lexpr rexpr]) prec))))))))
 
@@ -412,8 +408,7 @@
 (defn parser [{:keys [var-cb
                       fncall-cb]
                :or {var-cb (constantly nil)
-                    fncall-cb (constantly nil)}
-               :as opts}]
+                    fncall-cb (constantly nil)}}]
   (let [parsers (atom {})
         {parse-expression :expression}
         (swap! parsers assoc
@@ -423,7 +418,7 @@
                :var (var-parser parsers var-cb)
                :application (application-parser parsers fncall-cb)
                :block (block-parser parsers)
-               :square-block (square-block-parser parsers var-cb)
+               :square-block (square-block-parser parsers)
                :curly-block (curly-block-parser parsers)
                :atom (atom-parser parsers var-cb)
                :binary (binary-parser parsers)

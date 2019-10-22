@@ -16,7 +16,7 @@
           (throw (ex-info (str "Fail to coerce `" maybe-number "` to number.")
                           {:type :argument-type}))))
       (catch #?(:clj Throwable
-                :cljs js/Error) e
+                :cljs js/Error) _
         (throw (ex-info (str "Fail to coerce `" maybe-number "` to number.")
                         {:type :argument-type}))))
 

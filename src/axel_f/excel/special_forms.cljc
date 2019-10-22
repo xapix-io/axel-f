@@ -9,7 +9,7 @@
 
 (defn FN [args]
   (let [body (compiler/compile env (last args))
-        arglist (mapv (fn [{::parser/keys [parts] ::lexer/keys [begin] :as arg}]
+        arglist (mapv (fn [{::parser/keys [parts] ::lexer/keys [begin]}]
                         (if (> (count parts) 1)
                           (throw (ex-info (str "Wrong argument symbol: `" (string/join "." parts) "`")
                                           {:begin begin}))

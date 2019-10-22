@@ -1,7 +1,7 @@
 (ns axel-f.excel.hash
   (:require #?@(:clj [[digest :refer [sha-256]]]
                 :cljs [[goog.crypt :as crypt]
-                       [goog.crypt.Sha256 :as Sha256]])))
+                       [goog.crypt.Sha256]])))
 
 #?(:cljs
    (defn string->bytes [s]

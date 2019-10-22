@@ -1,9 +1,8 @@
 (ns axel-f.date-test
   (:require [axel-f.excel :as af]
             [axel-f.excel.date :as sut]
-            #?@(:clj [[clojure.test :as t]
-                      [java-time :as jt]]
-                :cljs [[cljs.test :as t :include-macros true]])))
+            #?(:clj [clojure.test :as t]
+               :cljs [cljs.test :as t :include-macros true])))
 
 (t/deftest now
   (t/testing "current date time"

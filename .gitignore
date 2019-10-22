@@ -11,6 +11,7 @@
 /cljs-test-runner-out/
 /.cljs_node_repl/
 /.cpcache/
+/.clj-kondo/.cache
 /out/
 /test-results/
 .nrepl-port

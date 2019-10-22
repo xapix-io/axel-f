@@ -157,8 +157,8 @@
                                             n)))
                                         [ns n])))})))
 
-(defn read-keyword [[{::keys [v l c] :as e} & _ :as ex] begin]
-  (let [read-symbol (get-method read-next* ::symbol-literal)]
+(defn read-keyword [[_ & _ :as ex] begin]
+  (let [_ (get-method read-next* ::symbol-literal)]
     (loop [acc [] state [::namespace ::begin] ex ex]
       (case state
         [::namespace ::begin]
@@ -258,7 +258,7 @@
                                                  ::c ::col})
                                [::line ::col])}))
 
-      :otherwise
+      :else
       (recur (next ex)))))
 
 (defmethod read-next* ::comment [[{::keys [l]} & ex]]
@@ -298,7 +298,7 @@
        token
        (cons token (read-next tokens))
 
-       :otherwise
+       :else
        (read-next tokens)))))
 
 (defn read [s]
