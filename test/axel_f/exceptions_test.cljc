@@ -236,3 +236,19 @@
                   :end #:axel-f.lexer{:line 1, :col 9}
                   :axel-f.excel/formula ":foo.bar/"}
                  data))))))
+
+(t/deftest missing-argument-for-binary-expression
+
+  (t/is (thrown-with-msg?
+         ExceptionInfo
+         #"Second argument for binary operator can not be parsed"
+         ((af/compile "foo + ,"))))
+
+  (try
+    ((af/compile "foo + "))
+    (catch #?(:clj ExceptionInfo
+              :cljs js/Error) e
+      (let [data (ex-data e)]
+        (t/is (= {:begin #:axel-f.lexer{:line 1, :col 5},
+                  :axel-f.excel/formula "foo + "}
+                 data))))))
