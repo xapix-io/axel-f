@@ -8,7 +8,7 @@
                    (sequential? %) (not-empty %)
                    (boolean? %)    [%]
                    (number? %)     [%]
-                   :otherwise      nil))
+                   :else nil))
         (filter identity)
         tr-coercer
         (filter number?)))
@@ -32,7 +32,7 @@
                                                    (try
                                                      (coerce/excel-number x)
                                                      (catch #?(:clj Throwable
-                                                               :cljs js/Error) e
+                                                               :cljs js/Error) _
                                                        nil)))))]
     (count (sequence tr-flatten-numbers items))))
 

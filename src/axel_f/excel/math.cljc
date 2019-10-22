@@ -14,12 +14,12 @@
   [^{:doc "The value to round to places number of places."} value
    & [^{:doc "The number of decimal places to which to round. (zero by default)"} places]]
   (let [places (coerce/excel-number (or places 0))
-        value (coerce/excel-number value)]
-    (let [factor (Math/pow 10 places)
-          res (/ (Math/round (* value factor)) factor)]
-      (if (> places 0)
-        res
-        (long res)))))
+        value (coerce/excel-number value)
+        factor (Math/pow 10 places)
+        res (/ (Math/round (* value factor)) factor)]
+    (if (> places 0)
+      res
+      (long res))))
 
 (def ROUND #'ROUND*)
 

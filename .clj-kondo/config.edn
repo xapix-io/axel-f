@@ -1,0 +1,2 @@
+{:lint-as
+ {axel-f.excel.utils/for-map clojure.core/for}}

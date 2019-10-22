@@ -17,10 +17,10 @@
 
   :kaocha {:extra-paths ["test"]
            :extra-deps {org.clojure/test.check {:mvn/version "RELEASE"}
-                        lambdaisland/kaocha {:mvn/version "0.0-529"}
+                        lambdaisland/kaocha {:mvn/version "0.0-554"}
                         lambdaisland/kaocha-junit-xml {:mvn/version "0.0-70"}
-                        lambdaisland/kaocha-cloverage {:mvn/version "0.0-32"}
-                        lambdaisland/kaocha-cljs {:mvn/version "0.0-40"}}}
+                        lambdaisland/kaocha-cloverage {:mvn/version "0.0-41"}
+                        lambdaisland/kaocha-cljs {:mvn/version "0.0-59"}}}
 
   :unit {:main-opts ["-m" "kaocha.runner" "unit"]}
 

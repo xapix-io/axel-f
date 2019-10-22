@@ -62,10 +62,11 @@
 (defn CODE*
   "Returns the numeric Unicode map value of the first character in the string provided."
   [text]
-  (let [text (coerce/excel-str text)]
-    #?(:clj (some-> text first int)
-       :cljs (let [res (.charCodeAt text 0)]
-               (when-not (js/isNaN res) res)))))
+  (let [text (coerce/excel-str text)
+        res #?(:clj (some-> text first int)
+               :cljs (.charCodeAt text 0))]
+    #?(:clj res
+       :cljs (when-not (js/isNaN res) res))))
 
 (def CODE #'CODE*)
 
@@ -185,7 +186,7 @@
     (cond
       (string? res) res
       (vector? res) (second res)
-      :otherwise res)))
+      :else res)))
 
 (def REGEXEXTRACT #'REGEXEXTRACT*)
 
@@ -296,7 +297,7 @@
   [text old-text new-text & [occurrence]]
   (let [occurrence (cond
                      (nil? occurrence) :all
-                     :otherwise (coerce/excel-number occurrence))]
+                     :else (coerce/excel-number occurrence))]
     (substitute-fn* (coerce/excel-str text)
                     (coerce/excel-str old-text)
                     (coerce/excel-str new-text)
