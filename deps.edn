@@ -1,12 +1,16 @@
 {:deps {clj-fuzzy {:mvn/version "0.4.1"}
         cheshire {:mvn/version "5.8.1"}
         digest {:mvn/version "1.4.9"}
-        clojure.java-time {:mvn/version "0.3.2"}}
+        clojure.java-time {:mvn/version "0.3.2"}
+        buddy/buddy-sign {:mvn/version "3.1.0"}}
 
  :paths ["src"]
 
  :aliases
  {:cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "RELEASE"}}}
+
+  :cljs-repl {:extra-deps {com.bhauman/figwheel-main {:mvn/version "0.2.3"}}
+              :extra-paths ["target"]}
 
   :bench {:extra-deps {criterium          {:mvn/version "0.4.5"}
                        com.taoensso/tufte {:mvn/version "2.1.0-RC4"}}}
