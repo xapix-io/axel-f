@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        clojure: [ 1.9, 1.10 ]
+        clojure: [ 1.9, 1.10.1 ]
     steps:
     - uses: actions/setup-java@v1
       with:
