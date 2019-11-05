@@ -16,6 +16,7 @@
 /test-results/
 .nrepl-port
 .tern-port
+**/.DS_Store
 
 
 # End of https://www.gitignore.io/api/clojure
