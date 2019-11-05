@@ -7,13 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        clojure: [ 1.9, 1.10.1 ]
+        clojure: [ 1.9, latest ]
     steps:
     - uses: actions/setup-java@v1
       with:
         java-version: 1.8
     - uses: actions/setup-node@v1
-      if: matrix.clojure == 1.10.1
+      if: matrix.clojure == 'latest'
       with:
         node-version: '10.x'
     - uses: DeLaGuardo/setup-clojure@2.0
@@ -21,17 +21,17 @@ jobs:
         tools-deps: latest
     - uses: actions/checkout@v1
     - name: Prepare npm modules for tests
-      if: matrix.clojure == 1.10.1
+      if: matrix.clojure == 'latest'
       run: |
         npm install ws isomorphic-ws
     - name: Run tests
       run: |
         clojure -A:${{ matrix.clojure }}:kaocha:unit
     - name: Upload test coverage results
-      if: matrix.clojure == 1.10.1
+      if: matrix.clojure == 'latest'
       run: |
         bash <(curl -s https://codecov.io/bash)
     - name: Run JS tests
-      if: matrix.clojure == 1.10.1
+      if: matrix.clojure == 'latest'
       run: |
         clojure -A:${{ matrix.clojure }}:kaocha:unit-cljs
