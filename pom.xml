@@ -7,6 +7,11 @@
     <name>axel-f</name>
     <dependencies>
         <dependency>
+            <groupId>org.clojure</groupId>
+            <artifactId>clojure</artifactId>
+            <version>1.10.1</version>
+        </dependency>
+        <dependency>
             <groupId>clj-fuzzy</groupId>
             <artifactId>clj-fuzzy</artifactId>
             <version>0.4.1</version>
@@ -25,6 +30,11 @@
             <groupId>clojure.java-time</groupId>
             <artifactId>clojure.java-time</artifactId>
             <version>0.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>buddy</groupId>
+            <artifactId>buddy-sign</artifactId>
+            <version>3.1.0</version>
         </dependency>
     </dependencies>
     <build>
