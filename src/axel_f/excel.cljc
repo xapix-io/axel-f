@@ -20,6 +20,8 @@
             [axel-f.excel.special-forms :as special-forms]
             [axel-f.excel.validate :as validate]
             [axel-f.excel.fn :as fn]
+            [axel-f.excel.jws :as jws]
+            [axel-f.excel.jwt :as jwt]
             [clojure.string :as string])
   #?(:clj (:import [clojure.lang ExceptionInfo])))
 
@@ -40,7 +42,9 @@
    special-forms/env
    coerce/env
    validate/env
-   fn/env))
+   fn/env
+   jws/env
+   jwt/env))
 
 (def base-env-index
   (set (sequence
