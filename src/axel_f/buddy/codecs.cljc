@@ -35,21 +35,6 @@
   (#?(:clj (Hex/decodeHex (.toCharArray data))
       :cljs (crypt/hexToByteArray data))))
 
-#?(:clj
-   (defn long->bytes
-     [^Long input]
-     (let [buffer (ByteBuffer/allocate (/ Long/SIZE 8))]
-       (.putLong buffer input)
-       (.array buffer))))
-
-#?(:clj
-   (defn bytes->long
-     [^bytes input]
-     (let [buffer (ByteBuffer/allocate (/ Long/SIZE 8))]
-       (.put buffer input)
-       (.flip buffer)
-       (.getLong buffer))))
-
 (defprotocol IByteArray
   "Facility for convert input parameters
   to bytes array with default implementation

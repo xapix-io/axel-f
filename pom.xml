@@ -22,11 +22,6 @@
             <version>5.8.1</version>
         </dependency>
         <dependency>
-            <groupId>digest</groupId>
-            <artifactId>digest</artifactId>
-            <version>1.4.9</version>
-        </dependency>
-        <dependency>
             <groupId>clojure.java-time</groupId>
             <artifactId>clojure.java-time</artifactId>
             <version>0.3.2</version>

@@ -1,102 +1,19 @@
 (ns axel-f.buddy.jws
   (:require [axel-f.buddy.codecs.base64 :as b64]
+            #?(:clj [cheshire.core :as json]
+               :cljs [axel-f.buddy.codecs.json :as json])
             [axel-f.buddy.codecs :as codecs]
-            [clojure.string :as string]
-            #?@(:clj [[buddy.core.mac :as mac]
-                      [cheshire.core :as json]])
-            #?@(:cljs [[goog.crypt :as crypt]
-                       [goog.crypt.Hmac]
-                       [goog.crypt.Sha256]
-                       [goog.crypt.Sha384]
-                       [goog.crypt.Sha512]
-                       [goog.crypt.base64]
-                       [axel-f.buddy.codecs.json :as json]])))
-
-#?(:cljs
-   (defmulti hasher identity))
-
-#?(:cljs
-   (defmethod hasher :sha256 [_]
-     (goog.crypt.Sha256.)))
-
-#?(:cljs
-   (defmethod hasher :sha384 [_]
-     (goog.crypt.Sha384.)))
-
-#?(:cljs
-   (defmethod hasher :sha512 [_]
-     (goog.crypt.Sha512.)))
-
-#?(:cljs
-   (defn- sign-fn [hasher]
-     (fn [authdata key]
-       (let [hmac (goog.crypt.Hmac. hasher (crypt/stringToByteArray key))]
-         (.getHmac hmac authdata)))))
-
-#?(:cljs
-   (defmulti mac-hash (fn [_authdata {:keys [alg]}] alg)))
-
-#?(:cljs
-   (defmethod mac-hash :hmac+sha256 [authdata {:keys [key]}]
-     (let [hasher (hasher :sha256)]
-       ((sign-fn hasher) authdata key))))
-
-#?(:cljs
-   (defmethod mac-hash :hmac+sha384 [authdata {:keys [key]}]
-     (let [hasher (hasher :sha384)]
-       ((sign-fn hasher) authdata key))))
-
-#?(:cljs
-   (defmethod mac-hash :hmac+sha512 [authdata {:keys [key]}]
-     (let [hasher (hasher :sha512)]
-       ((sign-fn hasher) authdata key))))
-
-#?(:cljs
-   (defn equals?
-     "Test whether two sequences of characters or bytes are equal in a way that
-      protects against timing attacks. Note that this does not prevent an attacker
-      from discovering the *length* of the data being compared."
-     [a b]
-     (let [a (map int a), b (map int b)]
-       (if (and a b (= (count a) (count b)))
-         (zero? (reduce bit-or 0 (map bit-xor a b)))
-         false))))
-
-#?(:cljs
-   (defn- verify-fn [hasher]
-     (fn [input signature key]
-       (let [hmac (goog.crypt.Hmac. hasher (crypt/stringToByteArray key))
-             input (codecs/to-bytes input)]
-         (.reset hmac)
-         (.update hmac (codecs/to-bytes input) (count input))
-         (equals? (.digest hmac) signature)))))
-
-#?(:cljs
-   (defmulti mac-verify (fn [_ _ {:keys [alg]}] alg)))
-
-#?(:cljs
-   (defmethod mac-verify :hmac+sha256 [input signature {:keys [key]}]
-     (let [hasher (hasher :sha256)]
-       ((verify-fn hasher) input signature key))))
-
-#?(:cljs
-   (defmethod mac-verify :hmac+sha384 [input signature {:keys [key]}]
-     (let [hasher (hasher :sha384)]
-       ((verify-fn hasher) input signature key))))
-
-#?(:cljs
-   (defmethod mac-verify :hmac+sha512 [input signature {:keys [key]}]
-     (let [hasher (hasher :sha512)]
-       ((verify-fn hasher) input signature key))))
+            [axel-f.buddy.mac :as mac]
+            [clojure.string :as string]))
 
 (def +signers-map+
   "Supported algorithms"
-  {:hs256 {:signer   #(#?(:clj mac/hash :cljs mac-hash) %1 {:alg :hmac+sha256 :key %2})
-           :verifier #(#?(:clj mac/verify :cljs mac-verify) %1 %2 {:alg :hmac+sha256 :key %3})}
-   :hs384 {:signer   #(#?(:clj mac/hash :cljs mac-hash) %1 {:alg :hmac+sha384 :key %2})
-           :verifier #(#?(:clj mac/verify :cljs mac-verify) %1 %2 {:alg :hmac+sha384 :key %3})}
-   :hs512 {:signer   #(#?(:clj mac/hash :cljs mac-hash) %1 {:alg :hmac+sha512 :key %2})
-           :verifier #(#?(:clj mac/verify :cljs mac-verify) %1 %2 {:alg :hmac+sha512 :key %3})}})
+  {:hs256 {:signer   #(mac/hash %1 {:alg :hmac+sha256 :key %2})
+           :verifier #(mac/verify %1 %2 {:alg :hmac+sha256 :key %3})}
+   :hs384 {:signer   #(mac/hash %1 {:alg :hmac+sha384 :key %2})
+           :verifier #(mac/verify %1 %2 {:alg :hmac+sha384 :key %3})}
+   :hs512 {:signer   #(mac/hash %1 {:alg :hmac+sha512 :key %2})
+           :verifier #(mac/verify %1 %2 {:alg :hmac+sha512 :key %3})}})
 
 ;; --- Implementation
 
@@ -131,6 +48,8 @@
 (defn- decode-payload
   [payload]
   (b64/decode payload))
+
+#?(:cljs (enable-console-print!))
 
 (defn- calculate-signature
   "Given the bunch of bytes, a private key and algorithm,

@@ -14,16 +14,6 @@
   (let [f (af/compile "HASH.SHA256('foo')")]
     (t/is (= "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae" (f)))))
 
-(t/deftest sha224
-  (t/testing "Digest string"
-
-    (t/is (= "0808f64e60d58979fcb676c96ec938270dea42445aeefcd3a4e6f8db"
-             (sut/sha224 "foo")))))
-
-(t/deftest hash-sha224
-  (let [f (af/compile "HASH.SHA224('foo')")]
-    (t/is (= "0808f64e60d58979fcb676c96ec938270dea42445aeefcd3a4e6f8db" (f)))))
-
 (t/deftest sha384
   (t/testing "Digest string"
 
