@@ -27,9 +27,9 @@
             <version>0.3.2</version>
         </dependency>
         <dependency>
-            <groupId>buddy</groupId>
-            <artifactId>buddy-sign</artifactId>
-            <version>3.1.0</version>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.62</version>
         </dependency>
     </dependencies>
     <build>
