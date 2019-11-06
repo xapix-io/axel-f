@@ -3,8 +3,7 @@
   level abstractions."
   (:refer-clojure :exclude [update reset! #?(:cljs -reset)])
   (:require [axel-f.buddy.codecs :as codecs]
-            #?@(:clj [[clojure.java.io :as io]]
-                :cljs [[goog.crypt.Sha256]
+            #?@(:cljs [[goog.crypt.Sha256]
                        [goog.crypt.Sha224]
                        [goog.crypt.Sha384]
                        [goog.crypt.Sha512]

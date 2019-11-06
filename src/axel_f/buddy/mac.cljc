@@ -67,19 +67,19 @@
          buffer))))
 
 (defmethod engine :hmac+sha256
-  [options]
+  [#?(:clj _options :cljs options)]
   (let [digest (h/resolve-digest-engine :sha256)]
     #?(:clj (HMac. digest)
        :cljs (goog.crypt.Hmac. digest (codecs/str->bytes (:key options))))))
 
 (defmethod engine :hmac+sha384
-  [options]
+  [#?(:clj _options :cljs options)]
   (let [digest (h/resolve-digest-engine :sha384)]
     #?(:clj (HMac. digest)
        :cljs (goog.crypt.Hmac. digest (codecs/to-bytes (:key options))))))
 
 (defmethod engine :hmac+sha512
-  [options]
+  [#?(:clj _options :cljs options)]
   (let [digest (h/resolve-digest-engine :sha512)]
     #?(:clj (HMac. digest)
        :cljs (goog.crypt.Hmac. digest (codecs/to-bytes (:key options))))))
