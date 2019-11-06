@@ -139,18 +139,6 @@
   (-update engine input 0 (count input))
   (-end engine))
 
-#?(:clj
-   (defn- hash-stream-data
-     [^java.io.InputStream input engine]
-     (-reset engine)
-     (let [buffer (byte-array 5120)]
-       (loop []
-         (let [readed (.read input buffer 0 5120)]
-           (when-not (= readed -1)
-             (-update engine buffer 0 readed)
-             (recur))))
-       (-end engine))))
-
 (extend-protocol IDigest
   #?(:clj (Class/forName "[B")
      :cljs array)
@@ -160,25 +148,7 @@
   #?(:clj String
      :cljs string)
   (-digest [^String input engine]
-    (hash-plain-data (codecs/str->bytes input) engine))
-
-  #?@(:clj
-      [java.io.InputStream
-       (-digest [^java.io.InputStream input engine]
-                (hash-stream-data input engine))
-
-       java.io.File
-       (-digest [^java.io.File input engine]
-                (with-open [is (io/input-stream input)]
-                  (hash-stream-data is engine)))
-
-       java.net.URL
-       (-digest [^java.net.URL input engine]
-                (hash-stream-data (io/input-stream input) engine))
-
-       java.net.URI
-       (-digest [^java.net.URI input engine]
-                (hash-stream-data (io/input-stream input) engine))]))
+    (hash-plain-data (codecs/str->bytes input) engine)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; High level public api.

@@ -66,14 +66,6 @@
          (.reset it)
          buffer))))
 
-(defmethod engine :hmac
-  [options]
-  (let [digest (h/resolve-digest-engine
-                (:digest options :sha256))]
-    (assert digest "Invalid digest engine.")
-    #?(:clj (HMac. digest)
-       :cljs (goog.crypt.Hmac. digest (codecs/to-bytes (:key options))))))
-
 (defmethod engine :hmac+sha256
   [options]
   (let [digest (h/resolve-digest-engine :sha256)]

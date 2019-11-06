@@ -87,7 +87,7 @@
 (defn sign
   "Sign arbitrary length string/byte array using
   json web token/signature."
-  [payload pkey & [{:keys [alg header] :or {alg :hs256}}]]
+  [payload pkey & {:keys [alg header] :or {alg :hs256}}]
   {:pre [payload]}
   (let [header (-> (merge {:alg alg} header)
                    (encode-header))
@@ -98,26 +98,44 @@
                                         :payload payload})]
     (string/join "." [header payload signature])))
 
-(defn unsign
+(defn verify
+  [input pkey & {:keys [alg] :or {alg :hs256}}]
+  (let [[header payload signature] (split-jws-message input)
+        header-data (parse-header header)]
+    (cond
+      (not= alg (:alg header-data))
+      {:error {:type 0
+               :message "Algorithm missmatch"}}
+      (not (verify-signature {:key pkey
+                              :signature signature
+                              :alg alg
+                              :header header
+                              :payload payload}))
+      {:error {:type 1
+               :message "Message seems corrupt or modified"}}
+
+      ;; TODO check exp
+
+      :else
+      {:payload (decode-payload payload)})))
+
+(defn extract
   "Given a signed message, verify it and return
   the decoded payload."
-  ([input pkey] (unsign input pkey nil))
-  ([input pkey {:keys [alg] :or {alg :hs256}}]
-   (let [[header payload signature] (split-jws-message input)
-         ;; header-data (parse-header header)
-         ]
-     (when-not
-       (try
-         (verify-signature {:key       pkey #_(util/resolve-key pkey header-data)
-                            :signature signature
-                            :alg       alg
-                            :header    header
-                            :payload   payload})
-         (catch #?(:clj java.security.SignatureException
-                   :cljs js/Error) se
-           (throw (ex-info "Message seems corrupt or manipulated."
-                           {:type :validation :cause :signature}
-                           se))))
-       (throw (ex-info "Message seems corrupt or manipulated."
-                       {:type :validation :cause :signature})))
-     (decode-payload payload))))
+  [input pkey & {:keys [alg] :or {alg :hs256}}]
+  (let [[header payload signature] (split-jws-message input)]
+    (when-not
+        (try
+          (verify-signature {:key       pkey
+                             :signature signature
+                             :alg       alg
+                             :header    header
+                             :payload   payload})
+          (catch #?(:clj java.security.SignatureException
+                    :cljs js/Error) se
+            (throw (ex-info "Message seems corrupt or manipulated."
+                            {:type :validation :cause :signature}
+                            se))))
+      (throw (ex-info "Message seems corrupt or manipulated."
+                      {:type :validation :cause :signature})))
+    (decode-payload payload)))

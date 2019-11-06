@@ -8,24 +8,40 @@
     (t/is (= "eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0"
              ((af/compile "JWT.SIGN('HS256', OBJECT.NEW({{\"foo\", 1}, {\"bar\", {4, 5, 'qwe'}}}), 'password')")))))
 
-  (t/testing "Unsign payload using HS256"
+  (t/testing "Extract payload using HS256"
     (t/is (= {"foo" 1 "bar" [4 5 "qwe"]}
-             ((af/compile "JWT.UNSIGN('HS256', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0', 'password')"))))))
+             ((af/compile "JWT.EXTRACT('HS256', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0', 'password')"))))))
 
 (t/deftest jwt-hs384
   (t/testing "Sign payload using HS384"
     (t/is (= "eyJhbGciOiJIUzM4NCJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.-zGxO2ktyYtuodycQbEE8tHGv24aBZc8o5O--pvARuuIHFhw4fZBU-u_npx7hNvb"
              ((af/compile "JWT.SIGN('HS384', OBJECT.NEW({{\"foo\", 1}, {\"bar\", {4, 5, 'qwe'}}}), 'password')")))))
 
-  (t/testing "Unsign payload using HS384"
+  (t/testing "Extract payload using HS384"
     (t/is (= {"foo" 1 "bar" [4 5 "qwe"]}
-             ((af/compile "JWT.UNSIGN('HS384', 'eyJhbGciOiJIUzM4NCJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.-zGxO2ktyYtuodycQbEE8tHGv24aBZc8o5O--pvARuuIHFhw4fZBU-u_npx7hNvb', 'password')"))))))
+             ((af/compile "JWT.EXTRACT('HS384', 'eyJhbGciOiJIUzM4NCJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.-zGxO2ktyYtuodycQbEE8tHGv24aBZc8o5O--pvARuuIHFhw4fZBU-u_npx7hNvb', 'password')"))))))
 
 (t/deftest jwt-hs512
   (t/testing "Sign payload using HS512"
     (t/is (= "eyJhbGciOiJIUzUxMiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.guAH0rsu-o6AJsUvilGRxbi74g0xhDxOP9SCxuTUooPiAdWK0Vl2WKsb9S-5dJ0n2qgol7uZJQWmFp6R4uskcg"
              ((af/compile "JWT.SIGN('HS512', OBJECT.NEW({{\"foo\", 1}, {\"bar\", {4, 5, 'qwe'}}}), 'password')")))))
 
-  (t/testing "Unsign payload using HS512"
+  (t/testing "Extract payload using HS512"
     (t/is (= {"foo" 1 "bar" [4 5 "qwe"]}
-             ((af/compile "JWT.UNSIGN('HS512', 'eyJhbGciOiJIUzUxMiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.guAH0rsu-o6AJsUvilGRxbi74g0xhDxOP9SCxuTUooPiAdWK0Vl2WKsb9S-5dJ0n2qgol7uZJQWmFp6R4uskcg', 'password')"))))))
+             ((af/compile "JWT.EXTRACT('HS512', 'eyJhbGciOiJIUzUxMiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.guAH0rsu-o6AJsUvilGRxbi74g0xhDxOP9SCxuTUooPiAdWK0Vl2WKsb9S-5dJ0n2qgol7uZJQWmFp6R4uskcg', 'password')"))))))
+
+(t/deftest errors
+  (t/testing "missmatch algorithms"
+    (t/is (= {:error {:type 0, :message "Algorithm missmatch"}}
+             ((af/compile "JWT.VERIFY('HS384', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0', 'password')")))))
+
+  (t/testing "wrong signature"
+    (t/is (= {:error {:type 1, :message "Message seems corrupt or modified"}}
+             ((af/compile "JWT.VERIFY('HS256', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FCs5l-O1', 'password')"))))
+
+    (t/is (= {:error {:type 1, :message "Message seems corrupt or modified"}}
+             ((af/compile "JWT.VERIFY('HS256', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0', 'passwor')")))))
+
+  (t/testing "not a json"
+    (t/is (= {:error {:type 3, :message "Payload can not be parsed as json"}}
+             ((af/compile "JWT.VERIFY('HS256', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0', 'password')"))))))

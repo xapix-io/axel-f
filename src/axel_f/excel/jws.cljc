@@ -1,21 +1,25 @@
 (ns axel-f.excel.jws
   (:require [axel-f.buddy.jws :as jws]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [axel-f.buddy.codecs :as codecs]))
 
 (defn jws-sign* [alg payload & opts]
-  (cond
-    (#{"HS256" "HS384" "HS512"} alg)
-    (jws/sign payload (first opts) {:alg (keyword (string/lower-case alg))})))
+  (jws/sign payload (first opts) :alg (keyword (string/lower-case alg))))
 
 (def jws-sign #'jws-sign*)
 
-(defn jws-unsign* [alg payload & opts]
-  (cond
-    (#{"HS256" "HS384" "HS512"} alg)
-    (jws/unsign payload (first opts) {:alg (keyword (string/lower-case alg))})))
+(defn jws-extract* [alg payload & opts]
+  (codecs/to-string (jws/extract payload (first opts) :alg (keyword (string/lower-case alg)))))
 
-(def jws-unsign #'jws-unsign*)
+(def jws-extract #'jws-extract*)
+
+(defn jws-verify* [alg payload & opts]
+  (let [{:keys [error] :as res} (jws/verify payload (first opts) :alg (keyword (string/lower-case alg)))]
+    (if error res (update res :payload codecs/to-string))))
+
+(def jws-verify #'jws-verify*)
 
 (def env
   {"JWS" {"SIGN" jws-sign
-          "UNSIGN" jws-unsign}})
+          "EXTRACT" jws-extract
+          "VERIFY" jws-verify}})
