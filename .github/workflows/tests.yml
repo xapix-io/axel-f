@@ -16,14 +16,14 @@ jobs:
       if: matrix.clojure == 'latest'
       with:
         node-version: '10.x'
-    - name: Prepare npm modules for tests
-      if: matrix.clojure == 'latest'
-      run: |
-        npm install ws isomorphic-ws
     - uses: DeLaGuardo/setup-clojure@2.0
       with:
         tools-deps: latest
     - uses: actions/checkout@v1
+    - name: Prepare npm modules for tests
+      if: matrix.clojure == 'latest'
+      run: |
+        npm install ws isomorphic-ws
     - name: Cache clojure dependencies
       uses: actions/cache@v1
       with:
@@ -33,7 +33,7 @@ jobs:
           ${{ matrix.clojure }}-clojure-
     - name: Run tests
       run: |
-        clojure -A:${{ matrix.clojure }}:kaocha:unit
+        clojure -A:${{ matrix.clojure }}:kaocha:unit --plugin cloverage
     - name: Upload test coverage results
       uses: codecov/codecov-action@v1.0.3
       if: matrix.clojure == 'latest'
