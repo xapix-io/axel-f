@@ -77,6 +77,16 @@
          (.reset it)
          buffer))
 
+     goog.crypt.Sha2_64bit
+     (-reset [it]
+       (.reset it))
+     (-update [it input offset length]
+       (.update it input))
+     (-end [it]
+       (let [buffer (.digest it)]
+         (.reset it)
+         buffer))
+
      goog.crypt.Md5
      (-reset [it]
        (.reset it))
