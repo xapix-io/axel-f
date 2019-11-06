@@ -16,14 +16,21 @@ jobs:
       if: matrix.clojure == 'latest'
       with:
         node-version: '10.x'
-    - uses: DeLaGuardo/setup-clojure@2.0
-      with:
-        tools-deps: latest
-    - uses: actions/checkout@v1
     - name: Prepare npm modules for tests
       if: matrix.clojure == 'latest'
       run: |
         npm install ws isomorphic-ws
+    - uses: DeLaGuardo/setup-clojure@2.0
+      with:
+        tools-deps: latest
+    - uses: actions/checkout@v1
+    - name: Cache clojure dependencies
+      uses: actions/cache@v1
+      with:
+        path: ~/.m2/repository
+        key: ${{ matrix.clojure }}-clojure-${{ hashFiles('**/deps.edn') }}
+        restore-keys: |
+          ${{ matrix.clojure }}-clojure-
     - name: Run tests
       run: |
         clojure -A:${{ matrix.clojure }}:kaocha:unit
