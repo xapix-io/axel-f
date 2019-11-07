@@ -65,5 +65,6 @@
     <url>https://github.com/xapix-io/axel-f</url>
     <connection>scm:git:git://github.com/xapix-io/axel-f.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/xapix-io/axel-f.git</developerConnection>
+    <tag/>
   </scm>
 </project>
