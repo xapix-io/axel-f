@@ -5,9 +5,11 @@ on: [push]
 jobs:
   tests:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         clojure: [ 1.9, latest ]
+
     steps:
     - uses: actions/setup-java@v1
       with:
@@ -24,6 +26,7 @@ jobs:
       if: matrix.clojure == 'latest'
       run: |
         npm install ws isomorphic-ws
+
     - name: Cache clojure dependencies
       uses: actions/cache@v1
       with:
@@ -31,15 +34,17 @@ jobs:
         key: ${{ matrix.clojure }}-clojure-${{ hashFiles('**/deps.edn') }}
         restore-keys: |
           ${{ matrix.clojure }}-clojure-
+
     - name: Run tests
       run: |
         clojure -A:${{ matrix.clojure }}:kaocha:unit --plugin cloverage
+    - name: Run JS tests
+      if: matrix.clojure == 'latest'
+      run: |
+        clojure -A:${{ matrix.clojure }}:kaocha:unit-cljs
+
     - name: Upload test coverage results
       uses: codecov/codecov-action@v1.0.3
       if: matrix.clojure == 'latest'
       with:
         token: ${{secrets.CODECOV_TOKEN}}
-    - name: Run JS tests
-      if: matrix.clojure == 'latest'
-      run: |
-        clojure -A:${{ matrix.clojure }}:kaocha:unit-cljs
