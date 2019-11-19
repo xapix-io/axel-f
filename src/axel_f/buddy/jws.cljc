@@ -49,8 +49,6 @@
   [payload]
   (b64/decode payload))
 
-#?(:cljs (enable-console-print!))
-
 (defn- calculate-signature
   "Given the bunch of bytes, a private key and algorithm,
   return a calculated signature as byte array."
