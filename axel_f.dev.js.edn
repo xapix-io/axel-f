@@ -1,7 +1,7 @@
 {:output-to "js/dev/axel_f.dev.js"
  :output-dir "js/dev/out"
  :optimizations :none
- :main "axel_f.v2.parser"
+ :main "axel_f.api"
  :source-map true
  :source-map-path "js/dev/axel_f.dev.js.map"
  :aot-cache true

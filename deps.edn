@@ -8,8 +8,10 @@
  :aliases
  {:cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "RELEASE"}}}
 
-  :cljs-repl {:extra-deps {com.bhauman/figwheel-main {:mvn/version "0.2.3"}}
-              :extra-paths ["target"]}
+  :cljs-repl {:extra-deps {com.bhauman/figwheel-main {:mvn/version "0.2.3"}
+                           com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}}
+              :extra-paths ["dev" "target"]
+              :main-opts ["-m" "figwheel.main" "-b" "dev" "-r"]}
 
   :bench {:extra-deps {criterium          {:mvn/version "0.4.5"}
                        com.taoensso/tufte {:mvn/version "2.1.0-RC4"}}}
