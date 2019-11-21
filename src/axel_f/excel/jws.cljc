@@ -14,8 +14,8 @@
 (def jws-extract #'jws-extract*)
 
 (defn jws-verify* [alg payload & opts]
-  (let [{:keys [error] :as res} (jws/verify payload (first opts) :alg (keyword (string/lower-case alg)))]
-    (if error res (update res :payload codecs/to-string))))
+  (let [{:strs [error] :as res} (jws/verify payload (first opts) :alg (keyword (string/lower-case alg)))]
+    (if error res (update res "payload" codecs/to-string))))
 
 (def jws-verify #'jws-verify*)
 

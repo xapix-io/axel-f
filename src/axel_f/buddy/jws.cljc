@@ -1,7 +1,6 @@
 (ns axel-f.buddy.jws
   (:require [axel-f.buddy.codecs.base64 :as b64]
-            #?(:clj [cheshire.core :as json]
-               :cljs [axel-f.buddy.codecs.json :as json])
+            [axel-f.buddy.codecs.json :as json]
             [axel-f.buddy.codecs :as codecs]
             [axel-f.buddy.mac :as mac]
             [clojure.string :as string]))
@@ -102,20 +101,20 @@
         header-data (parse-header header)]
     (cond
       (not= alg (:alg header-data))
-      {:error {:type 0
-               :message "Algorithm missmatch"}}
+      {"error" {"type" 0
+                "message" "Algorithm missmatch"}}
       (not (verify-signature {:key pkey
                               :signature signature
                               :alg alg
                               :header header
                               :payload payload}))
-      {:error {:type 1
-               :message "Message seems corrupt or modified"}}
+      {"error" {"type" 1
+                "message" "Message seems corrupt or modified"}}
 
       ;; TODO check exp
 
       :else
-      {:payload (decode-payload payload)})))
+      {"payload" (decode-payload payload)})))
 
 (defn extract
   "Given a signed message, verify it and return
