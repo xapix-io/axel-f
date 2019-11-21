@@ -102,7 +102,7 @@
     (cond
       (not= alg (:alg header-data))
       {"error" {"type" 0
-                "message" "Algorithm missmatch"}}
+                "message" "Algorithm mismatch"}}
       (not (verify-signature {:key pkey
                               :signature signature
                               :alg alg

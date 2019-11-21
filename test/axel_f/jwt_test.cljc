@@ -43,8 +43,8 @@
              ((af/compile "JWT.VERIFY('HS512', 'eyJhbGciOiJIUzUxMiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.guAH0rsu-o6AJsUvilGRxbi74g0xhDxOP9SCxuTUooPiAdWK0Vl2WKsb9S-5dJ0n2qgol7uZJQWmFp6R4uskcg', 'password')"))))))
 
 (t/deftest errors
-  (t/testing "missmatch algorithms"
-    (t/is (= {"error" {"type" 0 "message" "Algorithm missmatch"}}
+  (t/testing "mismatch algorithms"
+    (t/is (= {"error" {"type" 0 "message" "Algorithm mismatch"}}
              ((af/compile "JWT.VERIFY('HS384', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0', 'password')")))))
 
   (t/testing "wrong signature"
