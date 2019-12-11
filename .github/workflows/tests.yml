@@ -1,6 +1,9 @@
 name: Run tests for all environments
 
-on: [push]
+on:
+  push:
+    tags-ignore:
+      - '*'
 
 jobs:
   tests:
