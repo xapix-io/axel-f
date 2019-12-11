@@ -104,6 +104,7 @@ jobs:
       run: |
         mkdir -p npm-package
         cp js/min/axel_f.min.js npm-package/axel_f.js
+        cp js/min/axel_f.min.js.map npm-package/axel_f.js.map
         cp LICENSE npm-package/LICENSE
         cp release-js/* npm-package/
 
