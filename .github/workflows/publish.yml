@@ -64,6 +64,27 @@ jobs:
   npm-publish:
     runs-on: ubuntu-latest
     steps:
+      # useful for Continuous Deployment developing
+    - name: validate if it is refs/tags/
+      if: startsWith(github.ref,'refs/tags/') != true
+      run: exit 1
+
+    - name: checkout
+      uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+
+    - name: Cache maven dependencies
+      uses: actions/cache@v1
+      with:
+        path: ~/.m2/repository
+        key: npm-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          npm-
+
+    - name: Set TAG value from refs/tags/TAG
+      run: echo ::set-env name=GIT_TAG::${GITHUB_REF#refs/tags/}
+
     - name: Install java
       uses: actions/setup-java@v1
       with:
@@ -78,14 +99,6 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 12.13.x
-
-    - name: Cache clojure dependencies
-      uses: actions/cache@v1
-      with:
-        path: ~/.m2/repository
-        key: publish-clojure-${{ hashFiles('**/deps.edn') }}
-        restore-keys: |
-          publish-clojure-
 
     - name: Build JS
       run: |
