@@ -115,5 +115,5 @@ jobs:
         npm install -g npm-snapshot
         echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
         cd npm-package
-        BUILD_TAG=$(if [ -z ${GIT_TAG+x} ]; then npm-snapshot $GITHUB_ACTION; else echo "latest"; fi)
+        BUILD_TAG=$(if [[ $GIT_TAG == *SNAPSHOT ]]; then npm-snapshot $GITHUB_ACTION; else echo "latest"; fi)
         npm publish --tag $BUILD_TAG
