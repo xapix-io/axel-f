@@ -3,8 +3,8 @@
             [axel-f.buddy.codecs.json :as json]
             [axel-f.buddy.codecs :as codecs]
             [axel-f.buddy.mac :as mac]
-            #?@(:clj [[axel-f.buddy.util.ecdsa :refer [transcode-to-der transcode-to-concat]]
-                      [axel-f.buddy.dsa :as dsa]])
+            [axel-f.buddy.dsa :as dsa]
+            #?(:clj [axel-f.buddy.util.ecdsa :refer [transcode-to-der transcode-to-concat]])
             [clojure.string :as string]))
 
 (def +signers-map+
