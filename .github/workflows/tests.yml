@@ -36,7 +36,8 @@ jobs:
           ${{ matrix.clojure }}-clojure-
 
     - name: Compile java classes
-      run: javac **/*.java
+      run: |
+        javac **/*.java
 
     - name: Run tests
       run: |

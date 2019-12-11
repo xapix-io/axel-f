@@ -46,7 +46,8 @@ jobs:
         sed -i 's;<tag/>;<tag>${{ github.sha }}</tag>;' pom.xml
 
     - name: Compile java classes
-      run: javac **/*.java
+      run: |
+        javac **/*.java
 
     - name: Update pom.xml
       run: clojure -Srepro -Spom
