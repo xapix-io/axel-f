@@ -1,4 +1,4 @@
-name: clojars
+name: Publish
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
     - '*'
 
 jobs:
-  clojars-deploy:
+  clojars-publish:
     runs-on: ubuntu-latest
     steps:
       # useful for Continuous Deployment developing
@@ -55,3 +55,42 @@ jobs:
         CLOJARS_USERNAME: ${{ secrets.CLOJARS_USERNAME }}
         CLOJARS_PASSWORD: ${{ secrets.CLOJARS_PASSWORD }}
       run: mvn -s .m2/settings.xml deploy
+
+  npm-publish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install java
+      uses: actions/setup-java@v1
+      with:
+        java-version: '13.0.1'
+
+    - name: Install clojure
+      uses: DeLaGuardo/setup-clojure@2.0
+      with:
+        tools-deps: 'latest'
+
+    - name: Install NodeJS
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.13.x
+
+    - name: Build JS
+      run: |
+        clojure -A:1.10:cljs -m cljs.main -co axel_f.min.js.edn --compile
+
+    - name: Prepare package
+      run: |
+        mkdir -p npm-package
+        cp js/min/axel_f.min.js npm-package/axel_f.js
+        cp LICENSE npm-package/LICENSE
+        cp release-js/* npm-package/
+
+    - name: NPM deploy
+      env:
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      run: |
+        npm install -g npm-snapshot
+        echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+        cd npm-package
+        BUILD_TAG=$(if [ -z ${GIT_TAG+x} ]; then npm-snapshot $GITHUB_ACTION; else echo "latest"; fi)
+        npm publish --tag $BUILD_TAG

@@ -22,6 +22,7 @@
             [axel-f.excel.fn :as fn]
             [axel-f.excel.jws :as jws]
             [axel-f.excel.jwt :as jwt]
+            [axel-f.excel.key :as key]
             [clojure.string :as string])
   #?(:clj (:import [clojure.lang ExceptionInfo])))
 
@@ -44,7 +45,8 @@
    validate/env
    fn/env
    jws/env
-   jwt/env))
+   jwt/env
+   key/env))
 
 (def base-env-index
   (set (sequence

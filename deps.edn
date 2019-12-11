@@ -1,7 +1,8 @@
 {:deps {clj-fuzzy {:mvn/version "0.4.1"}
         cheshire {:mvn/version "5.8.1"}
         clojure.java-time {:mvn/version "0.3.2"}
-        org.bouncycastle/bcprov-jdk15on {:mvn/version "1.62"}}
+        org.bouncycastle/bcprov-jdk15on {:mvn/version "1.62"}
+        buddy/buddy-core {:mvn/version "1.6.0"}}
 
  :paths ["src"]
 

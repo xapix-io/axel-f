@@ -1,8 +1,6 @@
 (ns axel-f.buddy.codecs
   #?(:cljs (:require [goog.crypt :as crypt])
-     :clj (:import org.apache.commons.codec.binary.Base64
-                   org.apache.commons.codec.binary.Hex
-                   java.nio.ByteBuffer)))
+     :clj (:import org.apache.commons.codec.binary.Hex)))
 
 (defn str->bytes
   "Convert string to byte array."

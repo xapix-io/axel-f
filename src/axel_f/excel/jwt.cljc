@@ -18,6 +18,5 @@
 (def jwt-verify #'jwt-verify*)
 
 (def env
-  {"JWT" {"SIGN" jwt-sign
-          "EXTRACT" jwt-extract
+  {"JWT" {"EXTRACT" jwt-extract
           "VERIFY" jwt-verify}})

@@ -26,6 +26,5 @@
 (def jws-verify #'jws-verify*)
 
 (def env
-  {"JWS" {"SIGN" jws-sign
-          "EXTRACT" jws-extract
+  {"JWS" {"EXTRACT" jws-extract
           "VERIFY" jws-verify}})

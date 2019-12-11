@@ -3,6 +3,8 @@
             [axel-f.buddy.codecs.json :as json]
             [axel-f.buddy.codecs :as codecs]
             [axel-f.buddy.mac :as mac]
+            #?@(:clj [[buddy.util.ecdsa :refer [transcode-to-der transcode-to-concat]]
+                      [axel-f.buddy.dsa :as dsa]])
             [clojure.string :as string]))
 
 (def +signers-map+
@@ -12,7 +14,20 @@
    :hs384 {:signer   #(mac/hash %1 {:alg :hmac+sha384 :key %2})
            :verifier #(mac/verify %1 %2 {:alg :hmac+sha384 :key %3})}
    :hs512 {:signer   #(mac/hash %1 {:alg :hmac+sha512 :key %2})
-           :verifier #(mac/verify %1 %2 {:alg :hmac+sha512 :key %3})}})
+           :verifier #(mac/verify %1 %2 {:alg :hmac+sha512 :key %3})}
+
+   :es256 {:signer   #?(:clj #(-> (dsa/sign %1 {:alg :ecdsa+sha256 :key %2}) (transcode-to-concat 64))
+                        :cljs (fn [& _args] "signing+not+yet+implemented"))
+           :verifier #?(:clj #(dsa/verify %1 (transcode-to-der %2) {:alg :ecdsa+sha256 :key %3})
+                        :cljs (fn [& _args] true))}
+   :es384 {:signer   #?(:clj #(-> (dsa/sign %1 {:alg :ecdsa+sha384 :key %2}) (transcode-to-concat 96))
+                        :cljs (fn [& _args] "signing+not+yet+implemented"))
+           :verifier #?(:clj #(dsa/verify %1 (transcode-to-der %2) {:alg :ecdsa+sha384 :key %3})
+                        :cljs (fn [& _args] true))}
+   :es512 {:signer   #?(:clj #(-> (dsa/sign %1 {:alg :ecdsa+sha512 :key %2}) (transcode-to-concat 132))
+                        :cljs (fn [& _args] "signing+not+yet+implemented"))
+           :verifier #?(:clj #(dsa/verify %1 (transcode-to-der %2) {:alg :ecdsa+sha512 :key %3})
+                        :cljs (fn [& _args] true))}})
 
 ;; --- Implementation
 
