@@ -1,6 +1,9 @@
 name: Lint project with clj-kondo
 
-on: [push]
+on:
+  push:
+    tags-ignore:
+      - '*'
 
 jobs:
   lint:
