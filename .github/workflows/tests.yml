@@ -14,14 +14,18 @@ jobs:
     - uses: actions/setup-java@v1
       with:
         java-version: '13.0.1'
+
     - uses: actions/setup-node@v1
       if: matrix.clojure == 'latest'
       with:
         node-version: '10.x'
+
     - uses: DeLaGuardo/setup-clojure@2.0
       with:
         tools-deps: latest
+
     - uses: actions/checkout@v1
+
     - name: Prepare npm modules for tests
       if: matrix.clojure == 'latest'
       run: |
@@ -37,7 +41,7 @@ jobs:
 
     - name: Compile java classes
       run: |
-        javac **/*.java
+        javac ./**/*.java
 
     - name: Run tests
       run: |

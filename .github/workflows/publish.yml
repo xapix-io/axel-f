@@ -47,7 +47,7 @@ jobs:
 
     - name: Compile java classes
       run: |
-        javac **/*.java
+        javac ./**/*.java
 
     - name: Update pom.xml
       run: clojure -Srepro -Spom
