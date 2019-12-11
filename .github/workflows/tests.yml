@@ -41,7 +41,7 @@ jobs:
 
     - name: Compile java classes
       run: |
-        javac ./**/*.java
+        javac $(find . -name '*.java' -type f)
 
     - name: Run tests
       run: |
