@@ -21,38 +21,39 @@
   (-verify [input signature engine] "Verify signature."))
 
 #?(:cljs
-   (deftype ECDSASignature [alg ^:mutable data ^:mutable public-key ^:mutable private-key]
+   (deftype StubEngine [alg]
      IEngine
-     (-init [it {:keys [key verify]}]
-       (if verify
-         (set! (.-public-key it)
-               (js/crypto.subtle.importKey "spki" key alg false ["verify"]))
-         (set! (.-private-key it)
-               (js/crypto.subtle.importKey "pkcs8" key alg false ["sign"]))))
-     (-update [it input _offset _length]
-       (set! (.-data it) input))
+     (-init [it {:keys [key verify]}])
+     (-update [it input _offset _length])
      (-end [it signature?]
        (if signature?
-         (js/crypto.subtle.verify alg public-key signature? data)
-         (js/crypto.subtle.sign alg private-key data)))))
+         (do
+           (js/console.warn (str "Signing for algorithm " (name alg) " is not yet implemented and will return fixed string"))
+           "signing+not+yet+implemented")
+         (do
+           (js/console.warn (str "Verifying for algorithm " (name alg) " is not yet implemented and will pass"))
+           true)))))
 
 (def ^:no-doc
   +algorithms+
-  {:ecdsa+sha256 #?(:clj #(Signature/getInstance "SHA256withECDSA" "BC")
-                    :cljs #(ECDSASignature. #js {"name" "ECDSA"
-                                                 "hash" {"name" "SHA-256"}
-                                                 "namedCurve" "P-256"}
-                                            nil nil nil))
-   :ecdsa+sha384 #?(:clj #(Signature/getInstance "SHA384withECDSA" "BC")
-                    :cljs #(ECDSASignature. #js {"name" "ECDSA"
-                                                 "hash" {"name" "SHA-384"}
-                                                 "namedCurve" "P-384"}
-                                            nil nil nil))
-   :ecdsa+sha512 #?(:clj #(Signature/getInstance "SHA512withECDSA" "BC")
-                    :cljs #(ECDSASignature. #js {"name" "ECDSA"
-                                                 "hash" {"name" "SHA-512"}
-                                                 "namedCurve" "P-512"}
-                                            nil nil nil))})
+  {:ecdsa+sha256         #?(:clj #(Signature/getInstance "SHA256withECDSA" "BC")
+                            :cljs #(StubEngine. :ecdsa+sha256))
+   :ecdsa+sha384         #?(:clj #(Signature/getInstance "SHA384withECDSA" "BC")
+                            :cljs #(StubEngine. :ecdsa+sha384))
+   :ecdsa+sha512         #?(:clj #(Signature/getInstance "SHA512withECDSA" "BC")
+                            :cljs #(StubEngine. :ecdsa+sha512))
+   :rsassa-pss+sha256    #?(:clj #(Signature/getInstance "SHA256withRSAandMGF1" "BC")
+                            :cljs #(StubEngine. :rsassa-pss+sha256))
+   :rsassa-pss+sha384    #?(:clj #(Signature/getInstance "SHA384withRSAandMGF1" "BC")
+                            :cljs #(StubEngine. :rsassa-pss+sha384))
+   :rsassa-pss+sha512    #?(:clj #(Signature/getInstance "SHA512withRSAandMGF1" "BC")
+                            :cljs #(StubEngine. :rsassa-pss+sha512))
+   :rsassa-pkcs15+sha256 #?(:clj #(Signature/getInstance "SHA256withRSA" "BC")
+                            :cljs #(StubEngine. :rsassa-pkcs15+sha256))
+   :rsassa-pkcs15+sha384 #?(:clj #(Signature/getInstance "SHA384withRSA" "BC")
+                            :cljs #(StubEngine. :rsassa-pkcs15+sha384))
+   :rsassa-pkcs15+sha512 #?(:clj #(Signature/getInstance "SHA512withRSA" "BC")
+                            :cljs #(SrubEngine. :rsassa-pkcs15+sha512))})
 
 (defn- resolve
   "Given dynamic type engine, try resolve it to
