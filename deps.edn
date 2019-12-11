@@ -2,7 +2,8 @@
         cheshire {:mvn/version "5.8.1"}
         clojure.java-time {:mvn/version "0.3.2"}
         org.bouncycastle/bcprov-jdk15on {:mvn/version "1.62"}
-        buddy/buddy-core {:mvn/version "1.6.0"}}
+        org.bouncycastle/bcpkix-jdk15on {:mvn/version "1.62"}
+        commons-codec/commons-codec {:mvn/version "1.12"}}
 
  :paths ["src"]
 

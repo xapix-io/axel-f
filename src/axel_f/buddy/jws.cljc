@@ -3,7 +3,7 @@
             [axel-f.buddy.codecs.json :as json]
             [axel-f.buddy.codecs :as codecs]
             [axel-f.buddy.mac :as mac]
-            #?@(:clj [[buddy.util.ecdsa :refer [transcode-to-der transcode-to-concat]]
+            #?@(:clj [[axel-f.buddy.util.ecdsa :refer [transcode-to-der transcode-to-concat]]
                       [axel-f.buddy.dsa :as dsa]])
             [clojure.string :as string]))
 
