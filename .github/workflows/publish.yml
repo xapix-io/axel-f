@@ -74,6 +74,14 @@ jobs:
       with:
         node-version: 12.13.x
 
+    - name: Cache clojure dependencies
+      uses: actions/cache@v1
+      with:
+        path: ~/.m2/repository
+        key: publish-clojure-${{ hashFiles('**/deps.edn') }}
+        restore-keys: |
+          publish-clojure-
+
     - name: Build JS
       run: |
         clojure -A:1.10:cljs -m cljs.main -co axel_f.min.js.edn --compile
