@@ -1,4 +1,4 @@
-(ns axel-f.excel.key
+(ns axel-f.excel.keys
   (:require #?@(:cljs [[axel-f.buddy.hash :as hash]
                        [axel-f.buddy.codecs :as codecs]
                        [axel-f.buddy.codecs.base64 :as base64]])
