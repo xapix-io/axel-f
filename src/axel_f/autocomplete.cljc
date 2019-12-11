@@ -1,8 +1,7 @@
 (ns axel-f.autocomplete
   (:refer-clojure :exclude [flatten])
   (:require [clj-fuzzy.metrics :as fuzzy]
-            [clojure.string :as string])
-  #?(:clj (:import [clojure.lang ExceptionInfo])))
+            [clojure.string :as string]))
 
 (defn arg->doc [arg opts]
   (let [{:keys [doc]} (meta arg)]

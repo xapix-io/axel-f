@@ -2,8 +2,7 @@
   (:require #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])
             [axel-f.excel :as af]
-            [clojure.string :as string])
-  #?(:clj (:import [clojure.lang ExceptionInfo])))
+            [clojure.string :as string]))
 
 (t/deftest object-references-could-be-anything
 

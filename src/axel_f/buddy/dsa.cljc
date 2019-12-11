@@ -2,9 +2,7 @@
   "Digital Signature Algorithms."
   (:refer-clojure :exclude [resolve])
   (:require [axel-f.buddy.codecs :as codecs])
-  #?(:clj (:import java.security.PublicKey
-                   java.security.PrivateKey
-                   java.security.Signature
+  #?(:clj (:import java.security.Signature
                    java.security.Security)))
 
 #?(:clj

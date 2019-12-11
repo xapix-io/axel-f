@@ -1,8 +1,7 @@
 (ns axel-f.comments-test
   (:require [axel-f.excel :as af]
             #?(:clj [clojure.test :as t]
-               :cljs [cljs.test :as t :include-macros true]))
-  #?(:clj (:import [clojure.lang ExceptionInfo])))
+               :cljs [cljs.test :as t :include-macros true])))
 
 (t/deftest comments
   (t/is (= 1
