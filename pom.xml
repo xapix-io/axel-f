@@ -4,33 +4,8 @@
   <groupId>io.xapix</groupId>
   <artifactId>axel-f</artifactId>
   <name>axel-f</name>
-  <version>2.0.9-SNAPSHOT</version>
+  <version/>
   <dependencies>
-    <dependency>
-      <groupId>org.clojure</groupId>
-      <artifactId>clojure</artifactId>
-      <version>1.10.1</version>
-    </dependency>
-    <dependency>
-      <groupId>clj-fuzzy</groupId>
-      <artifactId>clj-fuzzy</artifactId>
-      <version>0.4.1</version>
-    </dependency>
-    <dependency>
-      <groupId>cheshire</groupId>
-      <artifactId>cheshire</artifactId>
-      <version>5.8.1</version>
-    </dependency>
-    <dependency>
-      <groupId>clojure.java-time</groupId>
-      <artifactId>clojure.java-time</artifactId>
-      <version>0.3.2</version>
-    </dependency>
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
-      <version>1.62</version>
-    </dependency>
   </dependencies>
   <build>
     <sourceDirectory>src</sourceDirectory>
