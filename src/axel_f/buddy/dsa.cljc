@@ -53,7 +53,7 @@
    :rsassa-pkcs15+sha384 #?(:clj #(Signature/getInstance "SHA384withRSA" "BC")
                             :cljs #(StubEngine. :rsassa-pkcs15+sha384))
    :rsassa-pkcs15+sha512 #?(:clj #(Signature/getInstance "SHA512withRSA" "BC")
-                            :cljs #(SrubEngine. :rsassa-pkcs15+sha512))})
+                            :cljs #(StubEngine. :rsassa-pkcs15+sha512))})
 
 (defn- resolve
   "Given dynamic type engine, try resolve it to
