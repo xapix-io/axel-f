@@ -48,10 +48,10 @@
              ((af/compile "JWT.VERIFY('HS384', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0', 'password')")))))
 
   (t/testing "wrong signature"
-    (t/is (= {"error" {"type" 1 "message" "Message seems corrupt or modified"}}
+    (t/is (= {"error" {"type" 1 "message" "Message seems corrupt or manipulated."}}
              ((af/compile "JWT.VERIFY('HS256', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FCs5l-O1', 'password')"))))
 
-    (t/is (= {"error" {"type" 1 "message" "Message seems corrupt or modified"}}
+    (t/is (= {"error" {"type" 1 "message" "Message seems corrupt or manipulated."}}
              ((af/compile "JWT.VERIFY('HS256', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0', 'passwor')")))))
 
   (t/testing "not a json"
