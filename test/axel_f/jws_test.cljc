@@ -72,8 +72,12 @@ fTN6I2ChVc6gci6XL0s4d50i+/pmvEGr8DQAPKeCsTr1jZ4x8K8KJo1uJA==
              ((af/compile "JWS.VERIFY('HS384', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0', 'password')")))))
 
   (t/testing "wrong signature"
-    (t/is (= {"error" {"type" 1 "message" "Message seems corrupt or modified"}}
+    (t/is (= {"error" {"type" 1 "message" "Message seems corrupt or manipulated."}}
              ((af/compile "JWS.VERIFY('HS256', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FCs5l-O1', 'password')"))))
 
-    (t/is (= {"error" {"type" 1 "message" "Message seems corrupt or modified"}}
-             ((af/compile "JWS.VERIFY('HS256', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0', 'passwor')"))))))
+    (t/is (= {"error" {"type" 1 "message" "Message seems corrupt or manipulated."}}
+             ((af/compile "JWS.VERIFY('HS256', 'eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0', 'passwor')")))))
+
+  (t/testing "corrupted headers."
+    (t/is (= {"error" {"type" 1 "message" "Message seems corrupt or manipulated. Headers can not be extracted."}}
+             ((af/compile "JWS.VERIFY('ES256', 'QyJhbGciOiJFUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.SOuE2pNPBLJHBct8cBcJAZ0euu-RTskg4yaOXMGtSdrBaaSIbMnJKproJOb63ngQKwtuv4W7fUCuEHpARAOq-Q', KEY.PUB(keys.pub))") {"keys" {"pub" pubkey}})))))

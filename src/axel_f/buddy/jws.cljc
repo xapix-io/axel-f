@@ -127,18 +127,27 @@
 (defn verify
   [input pkey & {:keys [alg] :or {alg :hs256}}]
   (let [[header payload signature] (split-jws-message input)
-        header-data (parse-header header)]
+        header-data (try
+                      (parse-header header)
+                      (catch #?(:clj Throwable
+                                :cljs js/Error) _
+                        {}))]
     (cond
+      (empty? header-data)
+      {"error" {"type" 1
+                "message" "Message seems corrupt or manipulated. Headers can not be extracted."}}
+
       (not= alg (:alg header-data))
       {"error" {"type" 0
                 "message" "Algorithm mismatch"}}
+
       (not (verify-signature {:key pkey
                               :signature signature
                               :alg alg
                               :header header
                               :payload payload}))
       {"error" {"type" 1
-                "message" "Message seems corrupt or modified"}}
+                "message" "Message seems corrupt or manipulated."}}
 
       ;; TODO check exp
 
