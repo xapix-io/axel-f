@@ -1,12 +1,19 @@
 {:deps {clj-fuzzy {:mvn/version "0.4.1"}
         cheshire {:mvn/version "5.8.1"}
-        digest {:mvn/version "1.4.9"}
-        clojure.java-time {:mvn/version "0.3.2"}}
+        clojure.java-time {:mvn/version "0.3.2"}
+        org.bouncycastle/bcprov-jdk15on {:mvn/version "1.62"}
+        org.bouncycastle/bcpkix-jdk15on {:mvn/version "1.62"}
+        commons-codec/commons-codec {:mvn/version "1.12"}}
 
  :paths ["src"]
 
  :aliases
  {:cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "RELEASE"}}}
+
+  :cljs-repl {:extra-deps {com.bhauman/figwheel-main {:mvn/version "0.2.3"}
+                           com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}}
+              :extra-paths ["dev" "target"]
+              :main-opts ["-m" "figwheel.main" "-b" "dev" "-r"]}
 
   :bench {:extra-deps {criterium          {:mvn/version "0.4.5"}
                        com.taoensso/tufte {:mvn/version "2.1.0-RC4"}}}
@@ -15,10 +22,10 @@
 
   :1.10 {:override-deps {org.clojure/clojure {:mvn/version "1.10.1"}}}
 
+  :latest {:override-deps {org.clojure/clojure {:mvn/version "1.10.1"}}}
+
   :kaocha {:extra-paths ["test"]
-           :extra-deps {org.clojure/test.check {:mvn/version "RELEASE"}
-                        lambdaisland/kaocha {:mvn/version "0.0-554"}
-                        lambdaisland/kaocha-junit-xml {:mvn/version "0.0-70"}
+           :extra-deps {lambdaisland/kaocha {:mvn/version "0.0-554"}
                         lambdaisland/kaocha-cloverage {:mvn/version "0.0-41"}
                         lambdaisland/kaocha-cljs {:mvn/version "0.0-59"}}}
 

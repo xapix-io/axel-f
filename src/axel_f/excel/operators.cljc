@@ -1,6 +1,5 @@
 (ns axel-f.excel.operators
   (:require [axel-f.excel.coerce :as coerce]))
-(+ )
 
 (defn add*
   "Returns the sum of given nums."

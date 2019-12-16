@@ -1,0 +1,59 @@
+name: Run tests for all environments
+
+on: [push]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        clojure: [ 1.9, latest ]
+
+    steps:
+    - uses: actions/setup-java@v1
+      with:
+        java-version: '1.8'
+
+    - uses: actions/setup-node@v1
+      if: matrix.clojure == 'latest'
+      with:
+        node-version: '10.x'
+
+    - uses: DeLaGuardo/setup-clojure@2.0
+      with:
+        tools-deps: latest
+
+    - uses: actions/checkout@v1
+
+    - name: Prepare npm modules for tests
+      if: matrix.clojure == 'latest'
+      run: |
+        npm install ws isomorphic-ws
+
+    - name: Cache clojure dependencies
+      uses: actions/cache@v1
+      with:
+        path: ~/.m2/repository
+        key: ${{ matrix.clojure }}-clojure-${{ hashFiles('**/deps.edn') }}
+        restore-keys: |
+          ${{ matrix.clojure }}-clojure-
+
+    - name: Compile java classes
+      run: |
+        javac $(find . -name '*.java' -type f)
+
+    - name: Run tests
+      run: |
+        clojure -A:${{ matrix.clojure }}:kaocha:unit --plugin cloverage
+
+    - name: Run JS tests
+      if: matrix.clojure == 'latest'
+      run: |
+        clojure -A:${{ matrix.clojure }}:kaocha:unit-cljs
+
+    - name: Upload test coverage results
+      uses: codecov/codecov-action@v1.0.3
+      if: matrix.clojure == 'latest'
+      with:
+        token: ${{secrets.CODECOV_TOKEN}}
