@@ -107,6 +107,7 @@ jobs:
         cp js/min/axel_f.js.map npm-package/axel_f.js.map
         cp LICENSE npm-package/LICENSE
         cp release-js/* npm-package/
+        sed -i 's;%version%;${{ env.GIT_TAG }};' npm-package/package.json
 
     - name: NPM deploy
       env:
