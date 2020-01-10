@@ -50,6 +50,7 @@
   (t/is (= 3.14 ((af/compile "coerce.to-float(3.14)"))))
   (t/is (= true ((af/compile "coerce.to-boolean('true')"))))
   (t/is (= nil
+           ((af/compile "coerce.to-float(OBJECT.NEW({{'foo', 1}}))"))
            ((af/compile "coerce.to-integer('qwe')"))
            ((af/compile "coerce.to-float('qwe')"))
            ((af/compile "coerce.to-boolean('qwe')")))))
