@@ -153,8 +153,8 @@
   (let [entries (mapv (partial compile env) entries)]
     (with-meta
       (fn [ctx]
-        (for [x entries]
-          (x ctx)))
+        (vec (for [x entries]
+               (x ctx))))
       (merge {:free-variables (mapcat #(:free-variables (meta %)) entries)}
              (select-keys l [::lexer/begin ::lexer/end])))))
 

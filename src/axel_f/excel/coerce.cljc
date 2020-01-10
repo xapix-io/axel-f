@@ -58,8 +58,11 @@
   "Tries to coerce given value to float type. Returns null for empty value or values not reducible to float."
   [^{:doc "Any object to coerce to a float."} obj]
   (try
-    (if (float? obj)
+    (cond
+      (number? obj)
       (double obj)
+
+      (string? obj)
       #?(:clj (Double/parseDouble obj)
          :cljs (let [n (when (not-empty obj)
                          (js/Number obj))]
