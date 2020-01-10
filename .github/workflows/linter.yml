@@ -1,6 +1,8 @@
 name: Lint project with clj-kondo
 
-on: [push]
+on:
+  pull_request:
+    types: [synchronize, opened, edited]
 
 jobs:
   lint:
