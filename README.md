@@ -1,4 +1,4 @@
-# Axel-f [![codecov](https://codecov.io/gh/xapix-io/axel-f/branch/master/graph/badge.svg)](https://codecov.io/gh/xapix-io/axel-f) [![CircleCI](https://circleci.com/gh/xapix-io/axel-f/tree/master.svg?style=svg)](https://circleci.com/gh/xapix-io/axel-f/tree/master) [![cljdoc badge](https://cljdoc.org/badge/io.xapix/axel-f)](https://cljdoc.org/d/io.xapix/axel-f/CURRENT)
+# Axel-f [![codecov](https://codecov.io/gh/xapix-io/axel-f/branch/master/graph/badge.svg)](https://codecov.io/gh/xapix-io/axel-f) [![cljdoc badge](https://cljdoc.org/badge/io.xapix/axel-f)](https://cljdoc.org/d/io.xapix/axel-f/CURRENT) ![Code Style (clj-kondo)](https://github.com/xapix-io/axel-f/workflows/.github/workflows/lint.yml/badge.svg) ![Tests](https://github.com/xapix-io/axel-f/workflows/.github/workflows/tests.yml/badge.svg)
 
 > Expressions language for Clojure(Script) and JavaScript inspired by Microsoft Excel ™
 
