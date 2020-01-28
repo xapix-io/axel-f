@@ -78,10 +78,14 @@
 (defn to-boolean*
   "Tries to coerce given value to a boolean type. Returns null for empty value or values not reducible to boolean."
   [^{:doc "Any object to coerce to a boolean type."} obj]
-  (case obj
-    "true" true
-    "false" false
-    nil))
+  (cond
+    (string? obj)
+    (case obj
+      "true" true
+      "false" false
+      nil)
+
+    (boolean? obj) obj))
 
 (def to-boolean #'to-boolean*)
 
