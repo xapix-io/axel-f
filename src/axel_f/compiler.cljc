@@ -77,10 +77,9 @@
                   args (mapv (partial compile env) args)]
               (with-meta
                 (fn [ctx]
-                  (if-let [f (f ctx)]
-                    (apply (f ctx)
-                           (for [x args]
-                             (x ctx)))
+                  (if-let [f' (f ctx)]
+                    (apply f' (for [x args]
+                                (x ctx)))
                     (throw (ex-info (str "Unknown function " (string/join "." (first (:free-variables (meta f))))) {}))))
                 {:free-variables (mapcat #(:free-variables (meta %)) args)
                  :fn-name (:free-variables (meta f))})))
