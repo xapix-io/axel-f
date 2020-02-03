@@ -1,27 +1,40 @@
 (ns axel-f.excel.coerce
   #?(:clj (:require [clojure.edn :as edn])))
 
-(defn excel-number [maybe-number]
+(defn excel-type [x]
   (cond
-    (number? maybe-number)
-    maybe-number
+    (number? x) :number
+    (string? x) :string
+    (boolean? x) :boolean
+    (nil? x) :null
+    :else (type x)))
 
-    (string? maybe-number)
-    (try
-      (let [n (when (not-empty maybe-number)
-                (#?(:clj edn/read-string
-                    :cljs js/Number) maybe-number))]
-        (if (and (number? n) #?@(:cljs [(not (js/isNaN n)) (not= js/Infinity n) (not= (* -1 js/Infinity) n)]))
-          n
-          (throw (ex-info (str "Fail to coerce `" maybe-number "` to number.")
-                          {:type :argument-type}))))
-      (catch #?(:clj Throwable
-                :cljs js/Error) _
-        (throw (ex-info (str "Fail to coerce `" maybe-number "` to number.")
+(defmulti excel-number excel-type)
+
+(defmethod excel-number :default [value]
+  (throw (ex-info (str "Fail to coerce `" value "` to number.")
+                  {:type :argument-type})))
+
+(defmethod excel-number :number [n] n)
+
+(defmethod excel-number :string [s]
+  (try
+    (let [n (when (not-empty s)
+              (#?(:clj edn/read-string
+                  :cljs js/Number) s))]
+      (if (and (number? n) #?@(:cljs [(not (js/isNaN n)) (not= js/Infinity n) (not= (* -1 js/Infinity) n)]))
+        n
+        (throw (ex-info (str "Fail to coerce `" s "` to number.")
                         {:type :argument-type}))))
+    (catch #?(:clj Throwable
+              :cljs js/Error) _
+      (throw (ex-info (str "Fail to coerce `" s "` to number.")
+                      {:type :argument-type})))))
 
-    (boolean? maybe-number)
-    (if maybe-number 1 0)))
+(defmethod excel-number :boolean [b]
+  (if b 1 0))
+
+(defmethod excel-number :null [_] 0)
 
 (defn excel-str [item]
   (case item

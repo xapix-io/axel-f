@@ -1,6 +1,17 @@
 (ns axel-f.excel.date
   (:require #?(:clj [java-time :as jt])
-            [axel-f.excel.coerce :as coerce]))
+            [axel-f.excel.coerce :as coerce])
+  #?(:clj (:import java.time.ZoneOffset
+                   java.time.ZoneId)))
+
+#?(:clj (defmethod coerce/excel-number java.time.LocalDate [ld]
+          (.toEpochSecond (.atStartOfDay ld (ZoneId/ofOffset "UTC" (ZoneOffset/ofHours 0))))))
+
+#?(:clj (defmethod coerce/excel-number java.time.LocalDateTime [ldt]
+          (.toEpochSecond ldt ZoneOffset/UTC)))
+
+#?(:cljs (defmethod coerce/excel-number js/Date [jsd]
+           (Math/round (/ (.getTime jsd) 1000))))
 
 (defn NOW*
   "Returns the current date and time as a date value."
