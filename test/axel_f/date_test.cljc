@@ -55,3 +55,15 @@
     (t/is (= 1988
              (sut/YEAR (sut/DATE 1988 8 21))
              ((af/compile "YEAR(DATE(1988, 8, 21))"))))))
+
+(t/deftest comparable
+  (t/testing "local date"
+    (t/is ((af/compile "DATE(1988, 8, 21) > DATE(1988, 7, 21)")))
+    (t/is ((af/compile "DATE(1988, 8, 21) = DATE(1988, 8, 21)")))
+    (t/is ((af/compile "DATE(1988, 8, 21) < DATE(1988, 9, 21)")))
+    (t/is ((af/compile "TODAY() > DATE(1988, 8, 21)")))
+    (t/is ((af/compile "TODAY() > 0"))))
+
+  (t/testing "local date time"
+    (t/is ((af/compile "NOW() > 0")))
+    (t/is ((af/compile "NOW() > DATE(1988, 8, 21)")))))
