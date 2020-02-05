@@ -10,8 +10,9 @@
   (try
     ((af/compile "validate.presence(foo.bar)"))
     (catch #?(:clj ExceptionInfo :cljs js/Error) e
-      (t/is (= "Argument required" (#?(:clj .getMessage
-                                                                          :cljs .-message) e)))
+      (t/is (= "Argument required"
+               (#?(:clj .getMessage
+                   :cljs .-message) e)))
       (t/is (= {:type ::validate/validate-error
                 :subtype ::validate/presence
                 :axel-f.excel/context nil
