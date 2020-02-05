@@ -24,9 +24,17 @@
            (fn fname
              ([] (fname nil))
              ([ctx]
-              (let [res (f (assoc env :axel-f.runtime/context ctx))]
-                (when-not (contains? base-env-index res)
-                  res))))
+              (try
+                (let [res (f (assoc env :axel-f.runtime/context ctx))]
+                  (when-not (contains? base-env-index res)
+                    res))
+                (catch #?(:clj Exception
+                          :cljs js/Error) e
+                  (throw (ex-info (#?(:clj .getMessage :cljs .-message) e)
+                                  (merge (ex-data e)
+                                         {:axel-f.excel/formula formula
+                                          :axel-f.excel/context ctx})
+                                  e))))))
            (update (meta f) :free-variables distinct)))
        (catch #?(:clj ExceptionInfo
                  :cljs js/Error) e
