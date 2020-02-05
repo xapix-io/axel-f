@@ -201,7 +201,9 @@
     (catch #?(:clj ExceptionInfo
               :cljs js/Error) e
       (let [d (ex-data e)]
-        (t/is (= {:begin #:axel-f.lexer{:line 1 :col 3}}
+        (t/is (= {:begin #:axel-f.lexer{:line 1 :col 3}
+                  :axel-f.excel/context nil
+                  :axel-f.excel/formula "1 + 1"}
                  d))))))
 
 (t/deftest wrong-argument-symbol-for-fn

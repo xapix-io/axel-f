@@ -11,33 +11,40 @@
     ((af/compile "validate.presence(foo.bar)"))
     (catch #?(:clj ExceptionInfo :cljs js/Error) e
       (t/is (= "Argument required" (#?(:clj .getMessage
-                                       :cljs .-message) e)))
+                                                                          :cljs .-message) e)))
       (t/is (= {:type ::validate/validate-error
-                :subtype ::validate/presence}
+                :subtype ::validate/presence
+                :axel-f.excel/context nil
+                :axel-f.excel/formula "validate.presence(foo.bar)"}
                (ex-data e)))))
 
   (try
     ((af/compile "validate.presence(foo.bar, 'Query param missing')"))
     (catch #?(:clj ExceptionInfo :cljs js/Error) e
-      (t/is (= "Query param missing" (#?(:clj .getMessage
-                                         :cljs .-message) e)))))
+      (t/is (= "Query param missing"
+               (#?(:clj .getMessage
+                   :cljs .-message) e)))))
 
   (t/is (= 123 ((af/compile "validate.presence(foo.bar)") {"foo" {"bar" 123}})))
 
   (try
     ((af/compile "validate.not-empty(foo.bar)") {"foo" {"bar" ""}})
     (catch #?(:clj ExceptionInfo :cljs js/Error) e
-      (t/is (= "Argument can not be empty" (#?(:clj .getMessage
-                                               :cljs .-message) e)))
+      (t/is (= "Argument can not be empty"
+               (#?(:clj .getMessage
+                   :cljs .-message) e)))
       (t/is (= {:type ::validate/validate-error
-                :subtype ::validate/empty}
+                :subtype ::validate/empty
+                :axel-f.excel/context {"foo" {"bar" ""}}
+                :axel-f.excel/formula "validate.not-empty(foo.bar)"}
                (ex-data e)))))
 
   (try
     ((af/compile "validate.not-empty(foo.bar, 'Query param is empty')") {"foo" {"bar" {}}})
     (catch #?(:clj ExceptionInfo :cljs js/Error) e
-      (t/is (= "Query param is empty" (#?(:clj .getMessage
-                                          :cljs .-message) e)))))
+      (t/is (= "Query param is empty"
+               (#?(:clj .getMessage
+                   :cljs .-message) e)))))
 
   (t/is (= 123 ((af/compile "validate.not-empty(foo.bar)") {"foo" {"bar" 123}})))
 
@@ -65,8 +72,9 @@
   (try
     ((af/compile "walk(composition(validate.presence, coerce.to-integer), 0, foo.bar)") {"foo" {}})
     (catch #?(:clj ExceptionInfo :cljs js/Error) e
-      (t/is (= "Argument required" (#?(:clj .getMessage
-                                       :cljs .-message) e)))))
+      (t/is (= "Argument required"
+               (#?(:clj .getMessage
+                   :cljs .-message) e)))))
 
   (t/is (= [1 2 3]
            ((af/compile "walk(composition(coerce.to-integer), 1, foo[*].bar)")
@@ -88,8 +96,9 @@
      {"foo" [{"bar" ["1" "qwe" "3"]}
              {"bar" ["4" "5" "6"]}]})
     (catch #?(:clj ExceptionInfo :cljs js/Error) e
-      (t/is (= "Argument required" (#?(:clj .getMessage
-                                       :cljs .-message) e)))))
+      (t/is (= "Argument required"
+               (#?(:clj .getMessage
+                   :cljs .-message) e)))))
 
   (t/is (= [1 2 3]
            ((af/compile "walk(composition(validate.not-empty), 1, foo[*].bar)")
@@ -103,8 +112,9 @@
              {"barz" 2}
              {"barz" 3}]})
     (catch #?(:clj ExceptionInfo :cljs js/Error) e
-      (t/is (= "Argument can not be empty" (#?(:clj .getMessage
-                                               :cljs .-message) e)))))
+      (t/is (= "Argument can not be empty"
+               (#?(:clj .getMessage
+                   :cljs .-message) e)))))
 
   (t/is (= {"users" [{"id" 1
                       "projects" [{"name" nil
@@ -150,8 +160,9 @@
                 "projects" [{"name" "project1"
                              "ratings" ["5" "4"]}]}]})
     (catch #?(:clj ExceptionInfo :cljs js/Error) e
-      (t/is (= "Argument required" (#?(:clj .getMessage
-                                       :cljs .-message) e)))))
+      (t/is (= "Argument required"
+               (#?(:clj .getMessage
+                   :cljs .-message) e)))))
 
   (t/is (= 18 ((af/compile "walk(composition(validate.presence, coerce.to-integer), user.age)")
                {"user" {"age" "18"}})))
