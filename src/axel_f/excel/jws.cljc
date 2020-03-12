@@ -27,4 +27,5 @@
 
 (def env
   {"JWS" {"EXTRACT" jws-extract
-          "VERIFY" jws-verify}})
+          "VERIFY" jws-verify
+          "SIGN" jws-sign}})

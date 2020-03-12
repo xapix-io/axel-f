@@ -3,6 +3,7 @@
 
 (defn excel-type [x]
   (cond
+    #?@(:clj [(ratio? x) :ratio])
     (number? x) :number
     (string? x) :string
     (boolean? x) :boolean
@@ -16,6 +17,9 @@
                   {:type :argument-type})))
 
 (defmethod excel-number :number [n] n)
+
+#?(:clj
+   (defmethod excel-number :ratio [r] r))
 
 (defmethod excel-number :string [s]
   (try
@@ -36,11 +40,20 @@
 
 (defmethod excel-number :null [_] 0)
 
-(defn excel-str [item]
-  (case item
-    true "TRUE"
-    false "FALSE"
-    (str item)))
+(defmulti excel-str excel-type)
+
+(defmethod excel-str :default [x]
+  (str x))
+
+(defmethod excel-str :boolean [b]
+  (if b "TRUE" "FALSE"))
+
+(defmethod excel-str :null [_]
+  "NULL")
+
+#?(:clj
+   (defmethod excel-str :ratio [r]
+     (str (double r))))
 
 (defn to-string*
   "Tries to coerce given value to a string type. Returns null for empty value."

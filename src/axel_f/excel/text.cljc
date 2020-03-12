@@ -73,7 +73,7 @@
 (defn CONCATENATE*
   "Appends strings to one another."
   [st1 & stx]
-  (apply TEXTJOIN "" false st1 stx))
+  (apply TEXTJOIN "" true st1 stx))
 
 (def CONCATENATE #'CONCATENATE*)
 
@@ -350,13 +350,11 @@
 (defn TEXTJOIN*
   "Combines the text from multiple strings and/or arrays, with a specifiable delimiter separating the different texts."
   [delimeter ignore-empty & items]
-  (->> items
-       flatten
-       (map coerce/excel-str)
-       (filter (if ignore-empty
-                 not-empty
-                 identity))
-       (string/join delimeter)))
+  (let [items (flatten items)
+        items (if ignore-empty (keep identity items) items)]
+    (->> items
+         (map coerce/excel-str)
+         (string/join delimeter))))
 
 (def TEXTJOIN #'TEXTJOIN*)
 

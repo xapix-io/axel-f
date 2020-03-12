@@ -4,7 +4,7 @@
                :cljs [cljs.test :as t :include-macros true])))
 
 (t/deftest jws-hs256
-  #_(t/testing "Sign payload using HS256"
+  (t/testing "Sign payload using HS256"
     (t/is (= "eyJhbGciOiJIUzI1NiJ9.eyJmb28iOjEsImJhciI6WzQsNSwicXdlIl19.HU45XthYzICLPj8RvTeVQum2FLPdynx0MTsSCs5l-O0"
              ((af/compile "JWS.SIGN('HS256', JSON.ENCODE(OBJECT.NEW({{\"foo\", 1}, {\"bar\", {4, 5, 'qwe'}}})), 'password')")))))
 

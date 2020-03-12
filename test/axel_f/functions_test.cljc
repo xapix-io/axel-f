@@ -577,7 +577,7 @@
   (t/is (= "foo, baz"
            ((af/compile "TEXTJOIN(\", \", TRUE, _)") ["foo" nil "baz"])))
 
-  (t/is (= "foo, , baz"
+  (t/is (= "foo, NULL, baz"
            ((af/compile "TEXTJOIN(\", \", FALSE, _)") ["foo" nil "baz"]))))
 
 (t/deftest complex-example
