@@ -26,7 +26,8 @@
        (apply comp)))
 
 (defn query-select [items query]
-  (let [tag-getter (make-tag-getter query)]
+  (let [query (or query "")
+        tag-getter (make-tag-getter query)]
     (sequence tag-getter items)))
 
 (defn QUERYSELECT*
