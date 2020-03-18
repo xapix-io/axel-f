@@ -4,6 +4,7 @@
             [axel-f.excel.coerce :as coerce]
             [axel-f.excel.operators :as operators]
             [axel-f.excel.collections :as collections]
+            [axel-f.excel.query-select :as query-select]
             [axel-f.excel.geo :as geo]
             [axel-f.excel.logic :as logic]
             [axel-f.excel.math :as math]
@@ -17,6 +18,7 @@
 (def base-env
   (merge
    operators/env
+   query-select/env
    collections/env
    geo/env
    logic/env

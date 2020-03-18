@@ -29,6 +29,18 @@
   (let [tag-getter (make-tag-getter query)]
     (sequence tag-getter items)))
 
+(defn QUERYSELECT*
+  "Perform querySelector-like query on collection of items"
+  [^{:doc "Object representaiton of xml-like structure"} item
+   ^{:doc "Query to perform on `item`"} query]
+  (let [items (if (sequential? item) item [item])]
+    (query-select items query)))
+
+(def QUERYSELECT #'QUERYSELECT*)
+
+(def env
+  {"QUERYSELECT" QUERYSELECT})
+
 (let [_ "<?xml version=\"1.0\" encoding=\"UTF-8\"?><configuration>\n\n  <appender name=\"STDOUT\" class=\"ch.qos.logback.core.ConsoleAppender\">\n    <!-- encoders are assigned the type\n         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->\n    <encoder>\n      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>\n    </encoder>\n  </appender>\n\n  <root level=\"debug\">\n    <appender-ref ref=\"STDOUT\"/>\n  </root>\n</configuration>"
       _ "<?xml version= \"1.0\"?><response><id-number>2716902077</id-number><summary-result><key>id.success</key><message>PASS</message></summary-result><results><key>result.match</key><message>ID Located</message></results></response>"
       parsed {"tag" "configuration", "children" [{"tag" "appender", "children" [{"children" [" encoders are assigned the type\n         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default "]} {"tag" "encoder", "children" [{"tag" "pattern", "children" ["%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"]}]}], "attrs" {"name" "STDOUT", "class" "ch.qos.logback.core.ConsoleAppender"}} {"tag" "root", "children" [{"tag" "appender-ref", "attrs" {"ref" "STDOUT"}}], "attrs" {"level" "debug"}} {"tag" "something", "children" ["halo"]}]}
