@@ -1,6 +1,5 @@
 (ns axel-f.excel.collections
-  (:require [axel-f.excel.utils :as ut]
-            [clojure.string :as string]))
+  (:require [axel-f.excel.utils :as ut]))
 
 (defn MAP*
   "Applies partialy defined formula to every element in a collection and returns an array."
@@ -41,34 +40,6 @@
      (sequential? data) (map (partial walk f (dec level)) data)
      (map? data) (ut/map-vals (partial walk f (dec level)) data)
      :else (f data))))
-
-(def children (mapcat #(get % "children")))
-
-(defn tag= [{:keys [tag]}]
-  (filter #(= tag (get % "tag"))))
-
-(defn attr= [{:keys [attr value]}]
-  (if (some? attr)
-    (filter #(= value
-                (get-in % ["attrs" attr])))
-    identity))
-
-(defn ->tag-attr [tag]
-  (if-some [[_ tag attr value] (re-matches #"(.*)\[(.*)=(.*)\]" tag)]
-    {:tag tag
-     :attr attr
-     :value value}
-    {:tag tag}))
-
-(defn make-tag-getter [query]
-  (->> (string/split query #"\.")
-       (map ->tag-attr)
-       (map #(comp (tag= %) (attr= %) children))
-       (apply comp)))
-
-(defn query-select [items query]
-  (let [tag-getter (make-tag-getter query)]
-    (sequence tag-getter items)))
 
 (def env
   {"MAP"    MAP
