@@ -45,11 +45,20 @@
 (def children (mapcat #(get % "children")))
 
 (defn tag= [tag]
-  (comp (filter #(= tag (get % "tag")))
+  (comp (filter #(= (:tag tag)
+                    (get % "tag")))
         children))
+
+(defn extract-attr-getter [tag]
+  (if-some [[_ tag attr value] (re-matches #"(.*)\[(.*)=(.*)\]" tag)]
+    {:tag tag
+     :attr attr
+     :value value}
+    {:tag tag}))
 
 (defn make-tag-getter [query]
   (->> (string/split query #"\.")
+       (map extract-attr-getter)
        (map tag=)
        (apply comp)))
 
