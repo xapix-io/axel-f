@@ -13,3 +13,8 @@
   (t/testing "decrement number"
     (t/is (= 1 (sut/DEC 2)))
     (t/is (= 1 ((af/compile "DEC(2)"))))))
+
+(t/deftest REM
+  (t/testing "reminder"
+    (t/is (= 0 ((af/compile "REM('10', 5)"))))
+    (t/is (= 4 ((af/compile "REM(10, '6')"))))))

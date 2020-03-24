@@ -48,8 +48,18 @@
 
 (def DEC #'DEC*)
 
+(defn REM*
+  "REM[ainder] of dividing numerator by denominator."
+  [^{:doc "Numerator"} num
+   ^{:doc "Denominator"} div]
+  (rem (coerce/excel-number num)
+       (coerce/excel-number div)))
+
+(def REM #'REM*)
+
 (def env
   {"SUM" SUM
    "ROUND" ROUND
    "INC" INC
-   "DEC" DEC})
+   "DEC" DEC
+   "REM" REM})
