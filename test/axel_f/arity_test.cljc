@@ -50,14 +50,15 @@
         ExceptionInfo
         (f)))))
 
-  (t/testing "no meta"
+  #?(:clj
+     (t/testing "no meta"
 
-    (let [f (af/compile "FOO(1,2)" {"FOO" (fn [_x])})]
-      (t/is
-       (thrown-with-msg?
-        ExceptionInfo
-        #"Error during function call"
-        (f)))))
+       (let [f (af/compile "FOO(1,2)" {"FOO" (fn [_x])})]
+         (t/is
+          (thrown-with-msg?
+           ExceptionInfo
+           #"Error during function call"
+           (f))))))
 
   (t/testing "no function"
 
