@@ -14,28 +14,28 @@
   [^{:doc "String to caclulate sha384 digest"} msg]
   (codecs/bytes->hex (hash/sha384 msg)))
 
-(def sha384 sha384*)
+(def sha384 #'sha384*)
 
 (defn sha512*
   "Calculates a sha-512 based digest from a String"
   [^{:doc "String to caclulate sha512 digest"} msg]
   (codecs/bytes->hex (hash/sha512 msg)))
 
-(def sha512 sha512*)
+(def sha512 #'sha512*)
 
 (defn sha1*
   "Calculates a sha-1 based digest from a String"
   [^{:doc "String to caclulate sha1 digest"} msg]
   (codecs/bytes->hex (hash/sha1 msg)))
 
-(def sha1 sha1*)
+(def sha1 #'sha1*)
 
 (defn md5*
   "Calculates a md5 based digest from a String"
   [^{:doc "String to caclulate md5 digest"} msg]
   (codecs/bytes->hex (hash/md5 msg)))
 
-(def md5 md5*)
+(def md5 #'md5*)
 
 (def env
   {"HASH" {"SHA256" sha256

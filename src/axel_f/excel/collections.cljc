@@ -32,18 +32,20 @@
 
 (def CONCAT #'CONCAT*)
 
-(defn- walk
-  ([f data] (walk f -1 data))
+(defn WALK*
+  ([f data] (WALK* f -1 data))
   ([f level data]
    (cond
      (= 0 level) (f data)
-     (sequential? data) (map (partial walk f (dec level)) data)
-     (map? data) (ut/map-vals (partial walk f (dec level)) data)
+     (sequential? data) (map (partial WALK* f (dec level)) data)
+     (map? data) (ut/map-vals (partial WALK* f (dec level)) data)
      :else (f data))))
+
+(def WALK #'WALK*)
 
 (def env
   {"MAP"    MAP
    "KEEP"   FILTER
    "CONCAT" CONCAT
    "SORT"   SORT
-   "walk"   walk})
+   "walk"   WALK})
