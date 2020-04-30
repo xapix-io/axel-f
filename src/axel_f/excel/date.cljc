@@ -22,7 +22,9 @@
   * format string - \"YYYY/mm/DD\" \"YYY HH:MM\" etc."
   [fmt]
   (let [locale #?(:clj Locale/US
-                  :cljs (goog.object/get "US"))]
+                  :cljs (some->
+                         (goog.object/get js/JSJodaLocale "Locale")
+                         (goog.object/get "US")))]
     (.. DateTimeFormatter
         (ofPattern fmt)
         (withLocale locale))))
