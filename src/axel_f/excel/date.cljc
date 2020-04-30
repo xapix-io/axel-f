@@ -27,7 +27,9 @@
         (withLocale locale))))
 
 (defn format [dt fmt]
-  (.format (formatter fmt) dt))
+  (if fmt
+    (.format (formatter fmt) dt)
+    (str dt)))
 
 (defmethod coerce/excel-str java.time.LocalDate [ld & [fmt]]
   (format ld fmt))
