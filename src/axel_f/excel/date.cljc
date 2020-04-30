@@ -11,16 +11,16 @@
 (defmethod coerce/excel-number java.time.LocalDateTime [ldt]
   (.toEpochSecond ldt zone-offset/utc))
 
-#?(:clj (defn -format
-          ([d] (t/format d))
-          ([d fmt]
-           (t/format fmt d))))
+(defn -format
+  ([d] (t/format d))
+  ([d fmt]
+   (t/format fmt d)))
 
-#?(:clj (defmethod coerce/excel-str java.time.LocalDate [ld & [fmt]]
-          (apply (partial -format ld) (when fmt [fmt]))))
+(defmethod coerce/excel-str java.time.LocalDate [ld & [fmt]]
+  (apply (partial -format ld) (when fmt [fmt])))
 
-#?(:clj (defmethod coerce/excel-str java.time.LocalDateTime [ldt & [fmt]]
-          (apply (partial -format ldt) (when fmt [fmt]))))
+(defmethod coerce/excel-str java.time.LocalDateTime [ldt & [fmt]]
+  (apply (partial -format ldt) (when fmt [fmt])))
 
 (defn NOW*
   "Returns the current date and time as a date value."
