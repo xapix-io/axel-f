@@ -1,6 +1,6 @@
 {:deps {clj-fuzzy {:mvn/version "0.4.1"}
         cheshire {:mvn/version "5.8.1"}
-        tick {:mvn/version "0.4.23-alpha"}
+        cljc.java-time {:mvn/version "0.1.8"}
         org.bouncycastle/bcprov-jdk15on {:mvn/version "1.62"}
         org.bouncycastle/bcpkix-jdk15on {:mvn/version "1.62"}
         commons-codec/commons-codec {:mvn/version "1.12"}}

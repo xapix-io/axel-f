@@ -1,9 +1,14 @@
 (ns axel-f.excel.date
-  (:require [tick.alpha.api :as t]
-            [tick.locale-en-us]
-            [cljc.java-time.zone-id :as zone-id]
+  (:refer-clojure :exclude (format))
+  (:require [cljc.java-time.zone-id :as zone-id]
             [cljc.java-time.zone-offset :as zone-offset]
-            [axel-f.excel.coerce :as coerce]))
+            [cljc.java-time.local-date :as local-date]
+            [cljc.java-time.local-date-time :as local-date-time]
+            [axel-f.excel.coerce :as coerce]
+            #?(:cljs [java.time.format :refer [DateTimeFormatter]]))
+  #?(:clj
+     (:import [java.time.format DateTimeFormatter]
+              [java.util Locale])))
 
 (defmethod coerce/excel-number java.time.LocalDate [ld]
   (.toEpochSecond (.atStartOfDay ld (zone-id/of-offset "UTC" (zone-offset/of-hours 0)))))
@@ -11,28 +16,36 @@
 (defmethod coerce/excel-number java.time.LocalDateTime [ldt]
   (.toEpochSecond ldt zone-offset/utc))
 
-(defn -format
-  ([d] (t/format d))
-  ([d fmt]
-   (t/format fmt d)))
+(defn ^DateTimeFormatter formatter
+  "Constructs a DateTimeFormatter out of either a
+  * format string - \"YYYY/mm/DD\" \"YYY HH:MM\" etc."
+  [fmt]
+  (let [locale #?(:clj Locale/US
+                  :cljs (goog.object/get "US"))]
+    (.. DateTimeFormatter
+        (ofPattern fmt)
+        (withLocale locale))))
+
+(defn format [dt fmt]
+  (.format (formatter fmt) dt))
 
 (defmethod coerce/excel-str java.time.LocalDate [ld & [fmt]]
-  (apply (partial -format ld) (when fmt [fmt])))
+  (format ld fmt))
 
 (defmethod coerce/excel-str java.time.LocalDateTime [ldt & [fmt]]
-  (apply (partial -format ldt) (when fmt [fmt])))
+  (format ldt fmt))
 
 (defn NOW*
   "Returns the current date and time as a date value."
   []
-  (t/date-time))
+  (local-date-time/now))
 
 (def NOW #'NOW*)
 
 (defn TODAY*
   "Returns the current date as a date value."
   []
-  (t/date))
+  (local-date/now))
 
 (def TODAY #'TODAY*)
 
@@ -41,9 +54,9 @@
   [^{:doc "The year component of the date."} year
    ^{:doc "The month component of the date."} month
    ^{:doc "The day component of the date."} day]
-  (t/new-date (coerce/excel-number year)
-              (coerce/excel-number month)
-              (coerce/excel-number day)))
+  (local-date/of (coerce/excel-number year)
+                 (coerce/excel-number month)
+                 (coerce/excel-number day)))
 
 (def DATE #'DATE*)
 
@@ -51,21 +64,36 @@
   "Returns the day of the month that a specific date falls on, in numeric format."
   [^{:doc "The date from which to extract the day. Must be a reference containing a date, or a function returning a date type.
 "} date]
-  (t/day-of-month date))
+  (cond
+    (instance? java.time.LocalDate date)
+    (local-date/get-day-of-month date)
+
+    (instance? java.time.LocalDateTime date)
+    (local-date-time/get-day-of-month date)))
 
 (def DAY #'DAY*)
 
 (defn MONTH*
   "Returns the month of the year a specific date falls in, in numeric format."
   [^{:doc "The date from which to extract the month. Must be a reference containing a date, or a function returning a date type"} date]
-  (t/int (t/month date)))
+  (cond
+    (instance? java.time.LocalDate date)
+    (local-date/get-month-value date)
+
+    (instance? java.time.LocalDateTime date)
+    (local-date-time/get-month-value date)))
 
 (def MONTH #'MONTH*)
 
 (defn YEAR*
   "Returns the year specified by a given date."
   [^{:doc "The date from which to calculate the year. Must be a reference containing a date, or a function returning a date type."} date]
-  (t/int (t/year date)))
+  (cond
+    (instance? java.time.LocalDate date)
+    (local-date/get-year date)
+
+    (instance? java.time.LocalDateTime date)
+    (local-date-time/get-year date)))
 
 (def YEAR #'YEAR*)
 
