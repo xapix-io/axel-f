@@ -6,36 +6,29 @@
 
 (t/deftest now
   (t/testing "current date time"
-    (t/is (instance? #?(:clj java.time.LocalDateTime
-                        :cljs js/Date)
+    (t/is (instance? java.time.LocalDateTime
                      (sut/NOW)))
 
-    (t/is (instance? #?(:clj java.time.LocalDateTime
-                        :cljs js/Date)
+    (t/is (instance? java.time.LocalDateTime
                      ((af/compile "NOW()"))))))
 
 (t/deftest today
   (t/testing "current date"
-    (t/is (instance? #?(:clj java.time.LocalDate
-                        :cljs js/Date)
+    (t/is (instance? java.time.LocalDate
                      (sut/TODAY)))
 
-    (t/is (instance? #?(:clj java.time.LocalDate
-                        :cljs js/Date)
+    (t/is (instance? java.time.LocalDate
                      ((af/compile "TODAY()"))))))
 
 (t/deftest date
   (t/testing "desired date"
-    (t/is (instance? #?(:clj java.time.LocalDate
-                        :cljs js/Date)
+    (t/is (instance? java.time.LocalDate
                      (sut/DATE 1988 8 21)))
 
-    (t/is (instance? #?(:clj java.time.LocalDate
-                        :cljs js/Date)
+    (t/is (instance? java.time.LocalDate
                      ((af/compile "DATE(1988, 8, 21)"))))
 
-    (t/is (instance? #?(:clj java.time.LocalDate
-                        :cljs js/Date)
+    (t/is (instance? java.time.LocalDate
                      ((af/compile "DATE('1988', '8', '21')"))))))
 
 (t/deftest day
