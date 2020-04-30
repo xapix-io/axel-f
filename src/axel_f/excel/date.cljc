@@ -11,8 +11,11 @@
 #?(:clj (defmethod coerce/excel-number java.time.LocalDateTime [ldt]
           (.toEpochSecond ldt ZoneOffset/UTC)))
 
-#?(:cljs (defmethod coerce/excel-number js/Date [jsd]
-           (Math/round (/ (.getTime jsd) 1000))))
+#?(:cljs (defmethod coerce/excel-number js/LocalDate [jsld]
+           (.toEpocheSecond (.atStartOfDay jsld (js/ZoneId.ofOffset "UTC" (js/ZoneOffset.ofHours 0))))))
+
+#?(:cljs (defmethod coerce/excel-number js/LocalDateTime [jsldt]
+           (.toEpocheSecond jsldt (js/ZoneOffset.of "UTC"))))
 
 #?(:clj (defn -format
           ([d] (t/format d))
