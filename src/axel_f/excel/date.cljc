@@ -1,22 +1,15 @@
 (ns axel-f.excel.date
   (:require [tick.alpha.api :as t]
             [tick.locale-en-us]
-            [axel-f.excel.coerce :as coerce]
-            #?(:cljs [java.time :refer [ZoneId ZoneOffset]]))
-  #?(:clj (:import java.time.ZoneOffset
-                   java.time.ZoneId)))
+            [cljc.java-time.zone-id :as zone-id]
+            [cljc.java-time.zone-offset :as zone-offset]
+            [axel-f.excel.coerce :as coerce]))
 
-#?(:clj (defmethod coerce/excel-number java.time.LocalDate [ld]
-          (.toEpochSecond (.atStartOfDay ld (ZoneId/ofOffset "UTC" (ZoneOffset/ofHours 0))))))
+(defmethod coerce/excel-number java.time.LocalDate [ld]
+  (.toEpochSecond (.atStartOfDay ld (zone-id/of-offset "UTC" (zone-offset/of-hours 0)))))
 
-#?(:clj (defmethod coerce/excel-number java.time.LocalDateTime [ldt]
-          (.toEpochSecond ldt ZoneOffset/UTC)))
-
-#?(:cljs (defmethod coerce/excel-number java.time.LocalDate [jsld]
-           (.toEpocheSecond (.atStartOfDay jsld (js/ZoneId.ofOffset "UTC" (js/ZoneOffset.ofHours 0))))))
-
-#?(:cljs (defmethod coerce/excel-number java.time.LocalDateTime [jsldt]
-           (.toEpocheSecond jsldt (js/ZoneOffset.of "UTC"))))
+(defmethod coerce/excel-number java.time.LocalDateTime [ldt]
+  (.toEpochSecond ldt zone-offset/utc))
 
 #?(:clj (defn -format
           ([d] (t/format d))
