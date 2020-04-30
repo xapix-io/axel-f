@@ -10,6 +10,7 @@
                                        :kaocha/source-paths  ["src"]
                                        :kaocha/test-paths    ["test"]
                                        :cljs/repl-env        cljs.repl.node/repl-env
+                                       ;; :cljs/repl-env        cljs.repl.browser/repl-env
                                        :cljs/timeout         20000
                                        :kaocha.plugin.capture-output/capture-output? false}]
  :kaocha/fail-fast?                  false

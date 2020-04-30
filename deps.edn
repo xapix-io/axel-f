@@ -1,6 +1,6 @@
 {:deps {clj-fuzzy {:mvn/version "0.4.1"}
         cheshire {:mvn/version "5.8.1"}
-        clojure.java-time {:mvn/version "0.3.2"}
+        tick {:mvn/version "0.4.23-alpha"}
         org.bouncycastle/bcprov-jdk15on {:mvn/version "1.62"}
         org.bouncycastle/bcpkix-jdk15on {:mvn/version "1.62"}
         commons-codec/commons-codec {:mvn/version "1.12"}}
@@ -25,9 +25,9 @@
   :latest {:override-deps {org.clojure/clojure {:mvn/version "1.10.1"}}}
 
   :kaocha {:extra-paths ["test"]
-           :extra-deps {lambdaisland/kaocha {:mvn/version "0.0-554"}
-                        lambdaisland/kaocha-cloverage {:mvn/version "0.0-41"}
-                        lambdaisland/kaocha-cljs {:mvn/version "0.0-59"}}}
+           :extra-deps {lambdaisland/kaocha {:mvn/version "1.0-612"}
+                        lambdaisland/kaocha-cloverage {:mvn/version "1.0-45"}
+                        lambdaisland/kaocha-cljs {:mvn/version "0.0-71"}}}
 
   :unit {:main-opts ["-m" "kaocha.runner" "unit"]}
 
