@@ -32,7 +32,7 @@
   :unit {:main-opts ["-m" "kaocha.runner" "unit"]}
 
   :unit-cljs {:main-opts ["-m" "kaocha.runner" "unit-cljs"]
-              :extra-deps {org.clojure/clojurescript {:mvn/version "RELEASE"}}
+              :extra-deps {org.clojure/clojurescript {:mvn/version "1.10.597"}}
               :override-deps {org.clojure/clojure {:mvn/version "1.10.1"}}}
 
   :watch {:main-opts ["-m" "kaocha.runner" "unit" "--watch"]}}}
