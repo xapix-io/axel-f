@@ -1,7 +1,7 @@
 {:deps {clj-fuzzy {:mvn/version "0.4.1"}
         cheshire {:mvn/version "5.8.1"}
         cljc.java-time {:mvn/version "0.1.8"}
-        cljsjs/js-joda-locale-en-us {:mvn/version "3.1.1-0"}
+        cljsjs/js-joda-locale-en-us {:mvn/version "2.0.0-0"}
         org.bouncycastle/bcprov-jdk15on {:mvn/version "1.62"}
         org.bouncycastle/bcpkix-jdk15on {:mvn/version "1.62"}
         commons-codec/commons-codec {:mvn/version "1.12"}}
