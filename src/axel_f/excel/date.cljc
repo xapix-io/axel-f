@@ -5,7 +5,8 @@
             [cljc.java-time.local-date :as local-date]
             [cljc.java-time.local-date-time :as local-date-time]
             [axel-f.excel.coerce :as coerce]
-            #?(:cljs [java.time.format :refer [DateTimeFormatter]]))
+            #?@(:cljs [[java.time.format :refer [DateTimeFormatter]]
+                       [cljsjs.js-joda-locale-en-us]]))
   #?(:clj
      (:import [java.time.format DateTimeFormatter]
               [java.util Locale])))
