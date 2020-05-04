@@ -1,8 +1,12 @@
-{:deps {:aliases [:cljs]}
+{:deps true
  :nrepl {:port 3333}
  :builds
  {:package {:target :npm-module
             :output-dir "release-js/lib"
             :release {:compiler-options {:optimizations :advanced}
                       :infer-externs :auto
-                      :source-map true}}}}
+                      :source-map true}}
+  :ci-tests {:target :karma
+             :output-to  "test-js/ci.js"
+             :js-options {:js-provider :shadow}
+             :ns-regexp  "-test$"}}}
