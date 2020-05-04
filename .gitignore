@@ -20,5 +20,7 @@
 .tern-port
 **/.DS_Store
 
+/release-js/lib/
+
 
 # End of https://www.gitignore.io/api/clojure

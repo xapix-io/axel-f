@@ -94,17 +94,15 @@ jobs:
     - name: Install NodeJS
       uses: actions/setup-node@v1
       with:
-        node-version: 12.13.x
+        node-version: 13.9.x
 
     - name: Build JS
       run: |
-        clojure -A:1.10:cljs -m cljs.main -co axel_f.min.js.edn --compile
+        npm run build
 
     - name: Prepare package
       run: |
         mkdir -p npm-package
-        cp js/min/axel_f.min.js npm-package/axel_f.js
-        cp js/min/axel_f.js.map npm-package/axel_f.js.map
         cp LICENSE npm-package/LICENSE
         cp release-js/* npm-package/
         sed -i 's;%version%;${{ env.GIT_TAG }};' npm-package/package.json
