@@ -12,6 +12,7 @@
 /.cljs_node_repl/
 /.cpcache/
 /.clj-kondo/.cache
+/.shadow-cljs/
 /out/
 /test-results/
 /node_modules/

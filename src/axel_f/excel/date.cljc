@@ -1,12 +1,14 @@
 (ns axel-f.excel.date
   (:refer-clojure :exclude (format))
-  (:require [cljc.java-time.zone-id :as zone-id]
+  (:require #?@(:cljs [["@js-joda/core"]
+                       ["@js-joda/timezone"]
+                       ["@js-joda/locale_en-us" :as js-joda-locale]
+                       [java.time.format :refer [DateTimeFormatter]]])
+            [cljc.java-time.zone-id :as zone-id]
             [cljc.java-time.zone-offset :as zone-offset]
             [cljc.java-time.local-date :as local-date]
             [cljc.java-time.local-date-time :as local-date-time]
-            [axel-f.excel.coerce :as coerce]
-            #?@(:cljs [[java.time.format :refer [DateTimeFormatter]]
-                       [cljsjs.js-joda-locale-en-us]]))
+            [axel-f.excel.coerce :as coerce])
   #?(:clj
      (:import [java.time.format DateTimeFormatter]
               [java.util Locale])))
@@ -22,9 +24,7 @@
   * format string - \"YYYY/mm/DD\" \"YYY HH:MM\" etc."
   [fmt]
   (let [locale #?(:clj Locale/US
-                  :cljs (some->
-                         (goog.object/get js/JSJodaLocale "Locale")
-                         (goog.object/get "US")))]
+                  :cljs (.. js-joda-locale -Locale -US))]
     (.. DateTimeFormatter
         (ofPattern fmt)
         (withLocale locale))))

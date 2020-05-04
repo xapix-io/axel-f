@@ -1,0 +1,10 @@
+{:deps {:aliases [:cljs]}
+ :nrepl {:port 3333}
+ :builds
+ {:package {:target :npm-module
+            :output-dir "js/lib"
+            :output-to "js/index.js"
+            :exports-var axel-f.api/exports
+            :release {:compiler-options {:optimizations :advanced}
+                      :infer-externs :auto
+                      :source-map true}}}}
