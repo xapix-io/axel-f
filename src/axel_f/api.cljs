@@ -10,7 +10,10 @@
           (catch ExceptionInfo e
             (throw (js/Error. (js/JSON.stringify (clj->js
                                                   {:message (.-message e)
-                                                   :data (ex-data e)}))))))))
+                                                   :data (ex-data e)})))))
+          (catch js/Error e
+            (js/console.error e)
+            (throw e)))))
     (catch ExceptionInfo e
       (throw (js/Error. (js/JSON.stringify (clj->js
                                             {:message (.-message e)
