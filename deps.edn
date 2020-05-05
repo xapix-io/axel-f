@@ -8,8 +8,7 @@
  :paths ["src"]
 
  :aliases
- {:cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "1.10.758"}
-                      com.andrewmcveigh/cljs-time {:mvn/version "0.5.2"}}}
+ {:cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "1.10.758"}}}
 
   :cljs-repl {:main-opts ["-m" "cljs.main" "-co" "axel_f.dev.js.edn" "--repl"]}
 
