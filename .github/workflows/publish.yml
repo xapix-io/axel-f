@@ -94,11 +94,11 @@ jobs:
     - name: Install NodeJS
       uses: actions/setup-node@v1
       with:
-        node-version: 12.13.x
+        node-version: 13.9.x
 
     - name: Build JS
       run: |
-        clojure -A:1.10:cljs -m cljs.main -co axel_f.min.js.edn --compile
+        clojure -A:cljs:cljs-build
 
     - name: Prepare package
       run: |

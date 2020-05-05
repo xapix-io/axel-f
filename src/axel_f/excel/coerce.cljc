@@ -1,7 +1,7 @@
 (ns axel-f.excel.coerce
   #?(:clj (:require [clojure.edn :as edn])))
 
-(defn excel-type [x]
+(defn excel-type [x & _]
   (cond
     #?@(:clj [(ratio? x) :ratio])
     (number? x) :number
@@ -40,25 +40,26 @@
 
 (defmethod excel-number :null [_] 0)
 
-(defmulti excel-str excel-type)
+(defmulti excel-string excel-type)
 
-(defmethod excel-str :default [x]
+(defmethod excel-string :default [x & _]
   (str x))
 
-(defmethod excel-str :boolean [b]
+(defmethod excel-string :boolean [b & _]
   (if b "TRUE" "FALSE"))
 
-(defmethod excel-str :null [_]
+(defmethod excel-string :null [_ & _]
   "NULL")
 
 #?(:clj
-   (defmethod excel-str :ratio [r]
+   (defmethod excel-string :ratio [r & _]
      (str (double r))))
 
 (defn to-string*
   "Tries to coerce given value to a string type. Returns null for empty value."
-  [^{:doc "Any object to coerce to a string."} obj]
-  (when obj (str obj)))
+  [^{:doc "Any object to coerce to a string."} obj
+   & ^{:doc "Optional arguments"} opts]
+  (when obj (apply (partial excel-string obj) opts)))
 
 (def to-string #'to-string*)
 

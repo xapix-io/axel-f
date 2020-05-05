@@ -1,5 +1,6 @@
 (ns axel-f.excel.date
-  (:require #?(:clj [java-time :as jt])
+  (:require #?(:clj [java-time :as jt]
+               :cljs [goog.i18n.DateTimeFormat])
             [axel-f.excel.coerce :as coerce])
   #?(:clj (:import java.time.ZoneOffset
                    java.time.ZoneId)))
@@ -13,11 +14,38 @@
 #?(:cljs (defmethod coerce/excel-number js/Date [jsd]
            (Math/round (/ (.getTime jsd) 1000))))
 
+#?(:clj (defmethod coerce/excel-string java.time.LocalDate
+          ([ld] (str ld))
+          ([ld fmt] (jt/format fmt ld))))
+
+#?(:clj (defmethod coerce/excel-string java.time.LocalDateTime
+          ([ldt] (str ldt))
+          ([ldt fmt] (jt/format fmt ldt))))
+
+#?(:cljs (defmethod coerce/excel-string js/Date
+           ([jsd]
+            (coerce/excel-string jsd (case (.-AxelFType jsd)
+                                       :local-date "YYYY-MM-dd"
+                                       :local-date-time "YYYY-MM-dd'T'HH:mm:ss.SSS"
+                                       (throw (ex-info "Please specify format for date to string conversion" {})))))
+           ([jsd fmt]
+            (let [formatter (goog.i18n.DateTimeFormat. fmt)]
+              (.format formatter jsd)))))
+
 (defn NOW*
   "Returns the current date and time as a date value."
   []
   #?(:clj (jt/local-date-time)
-     :cljs (js/Date.)))
+     :cljs (let [n (js/Date.)
+                 ldt (js/Date. (js/Date.UTC (.getUTCFullYear n)
+                                            (.getUTCMonth n)
+                                            (.getUTCDate n)
+                                            (.getUTCHours n)
+                                            (.getUTCMinutes n)
+                                            (.getUTCSeconds n)
+                                            (.getUTCMilliseconds n)))]
+             (set! (.-AxelFType ldt) :local-date-time)
+             ldt)))
 
 (def NOW #'NOW*)
 
@@ -25,10 +53,12 @@
   "Returns the current date as a date value."
   []
   #?(:clj (jt/local-date)
-     :cljs (let [n (js/Date.)]
-             (js/Date. (js/Date.UTC (.getUTCFullYear n)
-                                    (.getUTCMonth n)
-                                    (.getUTCDate n))))))
+     :cljs (let [n (js/Date.)
+                 ld (js/Date. (js/Date.UTC (.getUTCFullYear n)
+                                           (.getUTCMonth n)
+                                           (.getUTCDate n)))]
+             (set! (.-AxelFType ld) :local-date)
+             ld)))
 
 (def TODAY #'TODAY*)
 
@@ -40,9 +70,11 @@
   #?(:clj (jt/local-date (coerce/excel-number year)
                          (coerce/excel-number month)
                          (coerce/excel-number day))
-     :cljs (js/Date. (js/Date.UTC (coerce/excel-number year)
-                                  (dec (coerce/excel-number month))
-                                  (coerce/excel-number day)))))
+     :cljs (let [d (js/Date. (js/Date.UTC (coerce/excel-number year)
+                                          (dec (coerce/excel-number month))
+                                          (coerce/excel-number day)))]
+             (set! (.-AxelFType d) :local-date)
+             d)))
 
 (def DATE #'DATE*)
 
