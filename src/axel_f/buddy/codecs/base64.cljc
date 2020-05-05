@@ -27,7 +27,10 @@
                (Base64/encodeBase64URLSafe ^bytes data)
                (Base64/encodeBase64 ^bytes data))
         :cljs (codecs/to-bytes
-               ((if urlsafe? trim-padding identity) (base64/encodeByteArray data urlsafe?)))))))
+               (base64/encodeByteArray data
+                                       (if urlsafe?
+                                         base64/Alphabet.WEBSAFE_NO_PADDING
+                                         base64/Alphabet.DEFAULT)))))))
 
 (defn decode
   "Decode base64 data into byte array.

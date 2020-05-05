@@ -97,8 +97,8 @@
   "Concatenate two strings."
   [^{:doc "String or number that can be coerced to string."} x
    ^{:doc "String or number that can be coerced to string."} y]
-  (str (coerce/excel-str x)
-       (coerce/excel-str y)))
+  (str (coerce/excel-string x)
+       (coerce/excel-string y)))
 
 (def concatenate #'concatenate*)
 

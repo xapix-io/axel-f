@@ -45,6 +45,10 @@ jobs:
         sed -i 's;<version/>;<version>${{ env.GIT_TAG }}</version>;' pom.xml
         sed -i 's;<tag/>;<tag>${{ github.sha }}</tag>;' pom.xml
 
+    - name: Compile java classes
+      run: |
+        javac $(find . -name '*.java' -type f)
+
     - name: Update pom.xml
       run: clojure -Srepro -Spom
 
@@ -94,11 +98,11 @@ jobs:
     - name: Install NodeJS
       uses: actions/setup-node@v1
       with:
-        node-version: 12.13.x
+        node-version: 13.9.x
 
     - name: Build JS
       run: |
-        clojure -A:1.10:cljs -m cljs.main -co axel_f.min.js.edn --compile
+        clojure -A:cljs:cljs-build
 
     - name: Prepare package
       run: |

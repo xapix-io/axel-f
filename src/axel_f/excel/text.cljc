@@ -62,7 +62,7 @@
 (defn CODE*
   "Returns the numeric Unicode map value of the first character in the string provided."
   [text]
-  (let [text (coerce/excel-str text)
+  (let [text (coerce/excel-string text)
         res #?(:clj (some-> text first int)
                :cljs (.charCodeAt text 0))]
     #?(:clj res
@@ -102,8 +102,8 @@
 (defn EXACT*
   "Tests whether two strings are identical."
   [str1 str2]
-  (= (coerce/excel-str str1)
-     (coerce/excel-str str2)))
+  (= (coerce/excel-string str1)
+     (coerce/excel-string str2)))
 
 (def EXACT #'EXACT*)
 
@@ -141,14 +141,14 @@
   (let [text (cond
                (string? text) text
                (seqable? text) (first text))]
-    (count (coerce/excel-str text))))
+    (count (coerce/excel-string text))))
 
 (def LEN #'LEN*)
 
 (defn LOWER*
   "Converts a specified string to lowercase."
   [text]
-  (string/lower-case (coerce/excel-str text)))
+  (string/lower-case (coerce/excel-string text)))
 
 (def LOWER #'LOWER*)
 
@@ -157,7 +157,7 @@
   [text start number]
   (let [start (coerce/excel-number start)
         number (coerce/excel-number number)
-        text (coerce/excel-str text)
+        text (coerce/excel-string text)
         text-end (count text)
         params-start (dec start)
         params-end (+ (dec start) number)
@@ -174,7 +174,7 @@
 (defn PROPER*
   "Capitalizes each word in a specified string."
   [text]
-  (string/replace (coerce/excel-str text) #"\w*" string/capitalize))
+  (string/replace (coerce/excel-string text) #"\w*" string/capitalize))
 
 (def PROPER #'PROPER*)
 
@@ -210,7 +210,7 @@
   (let [position (coerce/excel-number position)
         length (coerce/excel-number length)]
     (str (subs text 0 (dec position))
-         (coerce/excel-str new-text)
+         (coerce/excel-string new-text)
          (subs text (+ (dec position) length)))))
 
 (def REPLACE #'REPLACE*)
@@ -267,11 +267,11 @@
            remove-empty-text)
      not-empty
      identity)
-   (string/split (coerce/excel-str text)
+   (string/split (coerce/excel-string text)
                  (re-pattern (if split-by-each
                                (string/join "|" (map regex-escape
-                                                     (vec (coerce/excel-str delimeter))))
-                               (regex-escape (coerce/excel-str delimeter))))
+                                                     (vec (coerce/excel-string delimeter))))
+                               (regex-escape (coerce/excel-string delimeter))))
                  -1)))
 
 (def SPLIT #'SPLIT*)
@@ -298,9 +298,9 @@
   (let [occurrence (cond
                      (nil? occurrence) :all
                      :else (coerce/excel-number occurrence))]
-    (substitute-fn* (coerce/excel-str text)
-                    (coerce/excel-str old-text)
-                    (coerce/excel-str new-text)
+    (substitute-fn* (coerce/excel-string text)
+                    (coerce/excel-string old-text)
+                    (coerce/excel-string new-text)
                     occurrence)))
 
 (def SUBSTITUTE #'SUBSTITUTE*)
@@ -320,7 +320,7 @@
   "Removes leading, trailing, and repeated spaces in text."
   [& args]
   (string/trim
-   (string/replace (-> args first coerce/excel-str) #"\ +" " ")))
+   (string/replace (-> args first coerce/excel-string) #"\ +" " ")))
 
 (def TRIM #'TRIM*)
 
@@ -329,7 +329,7 @@
   [& args]
   (-> args
       first
-      coerce/excel-str
+      coerce/excel-string
       string/upper-case))
 
 (def UPPER #'UPPER*)
@@ -353,7 +353,7 @@
   (let [items (flatten items)
         items (if ignore-empty (keep identity items) items)]
     (->> items
-         (map coerce/excel-str)
+         (map coerce/excel-string)
          (string/join delimeter))))
 
 (def TEXTJOIN #'TEXTJOIN*)

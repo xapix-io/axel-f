@@ -67,3 +67,7 @@
   (t/testing "local date time"
     (t/is ((af/compile "NOW() > 0")))
     (t/is ((af/compile "NOW() > DATE(1988, 8, 21)")))))
+
+(t/deftest format-test
+  (t/is (= "1988-08-21" ((af/compile "coerce.to-string(DATE(1988, 8, 21))"))))
+  (t/is (= "Aug-88-21" ((af/compile "coerce.to-string(DATE(1988, 8, 21), 'MMM-yy-dd')")))))
