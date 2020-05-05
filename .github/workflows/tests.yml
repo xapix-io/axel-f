@@ -35,6 +35,10 @@ jobs:
         restore-keys: |
           ${{ matrix.clojure }}-clojure-
 
+    - name: Compile java classes
+      run: |
+        javac $(find . -name '*.java' -type f)
+
     - name: Run tests
       run: |
         ./bin/kaocha clj --plugin cloverage

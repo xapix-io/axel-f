@@ -45,6 +45,10 @@ jobs:
         sed -i 's;<version/>;<version>${{ env.GIT_TAG }}</version>;' pom.xml
         sed -i 's;<tag/>;<tag>${{ github.sha }}</tag>;' pom.xml
 
+    - name: Compile java classes
+      run: |
+        javac $(find . -name '*.java' -type f)
+
     - name: Update pom.xml
       run: clojure -Srepro -Spom
 
