@@ -57,7 +57,7 @@
          (t/is
           (thrown-with-msg?
            ExceptionInfo
-           #"Error during function call"
+           #"Wrong number of arguments"
            (f))))))
 
   (t/testing "no function"
