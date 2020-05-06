@@ -113,11 +113,11 @@
                         (if (enough-args? arglists args)
                           (apply f' args)
                           (throw (ex-info (str "Wrong number of arguments passed to a function " (:name (meta f'))) {})))
-                        (try
-                          (apply f' args)
-                          (catch #?(:clj Exception
-                                    :cljs js/Error) e
-                            (throw (ex-info "Error during function call" {} e))))))
+                        #?(:clj (try
+                                  (apply f' args)
+                                  (catch clojure.lang.ArityException _
+                                    (throw (ex-info "Wrong number of arguments" {}))))
+                           :cljs (apply f' args))))
                     (throw (ex-info (str "Unknown function " (string/join "." (first (:free-variables (meta f))))) {}))))
                 {:free-variables (mapcat #(:free-variables (meta %)) args)
                  :fn-name (:free-variables (meta f))})))
