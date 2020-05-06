@@ -67,6 +67,35 @@
                         {:begin begin}))))
     (select-keys op-ast [::lexer/begin ::lexer/end])))
 
+(defn min-args-count [arglist]
+  (reduce
+   (fn [acc i]
+     (if (= '& i)
+       (reduced acc)
+       (inc acc)))
+   0
+   arglist))
+
+(defn max-args-count [arglist]
+  (reduce
+   (fn [acc i]
+     (if (= '& i)
+       (reduced :unbound)
+       (inc acc)))
+   0
+   arglist))
+
+(defn enough-args? [arglists args]
+  (let [given (count args)]
+    (some (fn [arglist]
+            (let [min (min-args-count arglist)
+                  max (max-args-count arglist)]
+              (and (>= given min)
+                   (if (= :unbound max)
+                     true
+                     (= given (max-args-count arglist))))))
+          arglists)))
+
 (defn compile-application [env {{::parser/keys [parts] :as f} ::parser/function
                                 args ::parser/args
                                 :as ast}]
@@ -78,8 +107,17 @@
               (with-meta
                 (fn [ctx]
                   (if-let [f' (f ctx)]
-                    (apply f' (for [x args]
-                                (x ctx)))
+                    (let [args (for [x args]
+                                 (x ctx))]
+                      (if-let [arglists (:arglists (meta f'))]
+                        (if (enough-args? arglists args)
+                          (apply f' args)
+                          (throw (ex-info (str "Wrong number of arguments passed to a function " (:name (meta f'))) {})))
+                        (try
+                          (apply f' args)
+                          (catch #?(:clj Exception
+                                    :cljs js/Error) e
+                            (throw (ex-info "Error during function call" {} e))))))
                     (throw (ex-info (str "Unknown function " (string/join "." (first (:free-variables (meta f))))) {}))))
                 {:free-variables (mapcat #(:free-variables (meta %)) args)
                  :fn-name (:free-variables (meta f))})))

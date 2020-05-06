@@ -17,10 +17,12 @@
                       (butlast args))]
     (with-meta
       (fn [ctx]
-        (fn [& args]
-          (body (if-let [args (not-empty (mapcat identity (zipmap arglist args)))]
-                  (apply assoc ctx args)
-                  ctx))))
+        (with-meta
+          (fn [& args]
+            (body (if-let [args (not-empty (mapcat identity (zipmap arglist args)))]
+                    (apply assoc ctx args)
+                    ctx)))
+          {:arglists (list arglist)}))
       {:free-variables (filter (fn [[v & _]]
                                  (not (contains? (set arglist) v)))
                                (:free-variables (meta body)))
