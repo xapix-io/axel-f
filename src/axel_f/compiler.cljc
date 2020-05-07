@@ -38,8 +38,7 @@
           (map #(lookup (index-lookup % ctxs) path) (second p))
           (if (= ::parser/select-all (second p))
             (let [ctxs (index-lookup (second p) ctxs)]
-              (when (and (sequential? ctxs)
-                         (indexed? ctxs))
+              (when (sequential? ctxs)
                 (map #(lookup % path) ctxs)))
             (lookup (or (index-lookup (second p) ctxs)
                         (map-lookup (second p) ctxs))
