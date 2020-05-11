@@ -20,10 +20,10 @@
      :cljs (js/Date. millis)))
 
 (defmethod coerce/excel-number "LocalDate" [[_ millis]]
-  millis)
+  (Math/round (double (/ millis 1000))))
 
 (defmethod coerce/excel-number "LocalDateTime" [[_ millis]]
-  millis)
+  (Math/round (double (/ millis 1000))))
 
 (defmethod coerce/excel-string "LocalDate"
   ([d] (format d "YYYY-MM-dd"))

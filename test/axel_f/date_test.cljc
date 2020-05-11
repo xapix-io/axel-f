@@ -67,7 +67,12 @@
 
   (t/testing "local date time"
     (t/is ((af/compile "NOW() > 0")))
-    (t/is ((af/compile "NOW() > DATE(1988, 8, 21)")))))
+    (t/is ((af/compile "NOW() > DATE(1988, 8, 21)"))))
+
+  (t/testing "complex"
+    (t/is ((af/compile " AND({'LocalDateTime', 1589256144123} >= .nbf, {'LocalDateTime', 1589256144123} < .exp)")
+           {"exp" 1589296144
+            "nbf" 1589209744}))))
 
 (t/deftest format-test
   (t/is (= "1988-08-21" ((af/compile "coerce.to-string(DATE(1988, 8, 21))"))))
