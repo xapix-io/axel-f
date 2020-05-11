@@ -1,64 +1,66 @@
 (ns axel-f.excel.date
+  (:refer-clojure :exclude [format])
   (:require #?(:clj [java-time :as jt]
                :cljs [goog.i18n.DateTimeFormat])
             [axel-f.excel.coerce :as coerce])
   #?(:clj (:import java.time.ZoneOffset
                    java.time.ZoneId)))
 
-#?(:clj (defmethod coerce/excel-number java.time.LocalDate [ld]
-          (.toEpochSecond (.atStartOfDay ld (ZoneId/ofOffset "UTC" (ZoneOffset/ofHours 0))))))
+(defn format [date fmt]
+  #?(:clj (jt/format fmt (coerce/inst date))
+     :cljs (let [formatter (goog.i18n.DateTimeFormat. fmt)]
+             (.format formatter (coerce/inst date)))))
 
-#?(:clj (defmethod coerce/excel-number java.time.LocalDateTime [ldt]
-          (.toEpochSecond ldt ZoneOffset/UTC)))
+(defmethod coerce/inst "LocalDate" [[_ millis]]
+  #?(:clj (.. (java.time.Instant/ofEpochMilli millis) (atZone (java.time.ZoneId/systemDefault)) toLocalDate)
+     :cljs (js/Date. millis)))
 
-#?(:cljs (defmethod coerce/excel-number js/Date [jsd]
-           (Math/round (/ (.getTime jsd) 1000))))
+(defmethod coerce/inst "LocalDateTime" [[_ millis]]
+  #?(:clj (.. (java.time.Instant/ofEpochMilli millis) (atZone (java.time.ZoneId/systemDefault)) toLocalDateTime)
+     :cljs (js/Date. millis)))
 
-#?(:clj (defmethod coerce/excel-string java.time.LocalDate
-          ([ld] (str ld))
-          ([ld fmt] (jt/format fmt ld))))
+(defmethod coerce/excel-number "LocalDate" [[_ millis]]
+  (Math/round (double (/ millis 1000))))
 
-#?(:clj (defmethod coerce/excel-string java.time.LocalDateTime
-          ([ldt] (str ldt))
-          ([ldt fmt] (jt/format fmt ldt))))
+(defmethod coerce/excel-number "LocalDateTime" [[_ millis]]
+  (Math/round (double (/ millis 1000))))
 
-#?(:cljs (defmethod coerce/excel-string js/Date
-           ([jsd]
-            (coerce/excel-string jsd (case (.-AxelFType jsd)
-                                       :local-date "YYYY-MM-dd"
-                                       :local-date-time "YYYY-MM-dd'T'HH:mm:ss.SSS"
-                                       (throw (ex-info "Please specify format for date to string conversion" {})))))
-           ([jsd fmt]
-            (let [formatter (goog.i18n.DateTimeFormat. fmt)]
-              (.format formatter jsd)))))
+(defmethod coerce/excel-string "LocalDate"
+  ([d] (format d "YYYY-MM-dd"))
+  ([d fmt] (format d fmt)))
+
+(defmethod coerce/excel-string "LocalDateTime"
+  ([d] (format d "YYYY-MM-dd'T'HH:mm:ss.SSS"))
+  ([d fmt] (format d fmt)))
 
 (defn NOW*
   "Returns the current date and time as a date value."
   []
-  #?(:clj (jt/local-date-time)
-     :cljs (let [n (js/Date.)
-                 ldt (js/Date. (js/Date.UTC (.getUTCFullYear n)
-                                            (.getUTCMonth n)
-                                            (.getUTCDate n)
-                                            (.getUTCHours n)
-                                            (.getUTCMinutes n)
-                                            (.getUTCSeconds n)
-                                            (.getUTCMilliseconds n)))]
-             (set! (.-AxelFType ldt) :local-date-time)
-             ldt)))
+  ["LocalDateTime"
+   #?(:clj (.toEpochMilli (.toInstant (.atZone (jt/local-date-time) (ZoneId/ofOffset "UTC" (ZoneOffset/ofHours 0)))))
+      :cljs (let [n (js/Date.)
+                  ldt (js/Date. (js/Date.UTC (.getUTCFullYear n)
+                                             (.getUTCMonth n)
+                                             (.getUTCDate n)
+                                             (.getUTCHours n)
+                                             (.getUTCMinutes n)
+                                             (.getUTCSeconds n)
+                                             (.getUTCMilliseconds n)))]
+              ;; (Math/round (/ (.getTime ldt) 1000))
+              (.getTime ldt)))])
 
 (def NOW #'NOW*)
 
 (defn TODAY*
   "Returns the current date as a date value."
   []
-  #?(:clj (jt/local-date)
-     :cljs (let [n (js/Date.)
-                 ld (js/Date. (js/Date.UTC (.getUTCFullYear n)
-                                           (.getUTCMonth n)
-                                           (.getUTCDate n)))]
-             (set! (.-AxelFType ld) :local-date)
-             ld)))
+  ["LocalDate"
+   #?(:clj (.toEpochMilli (.toInstant (.atStartOfDay (jt/local-date) (ZoneId/ofOffset "UTC" (ZoneOffset/ofHours 0)))))
+      :cljs (let [n (js/Date.)
+                  ld (js/Date. (js/Date.UTC (.getUTCFullYear n)
+                                            (.getUTCMonth n)
+                                            (.getUTCDate n)))]
+              (.getTime ld)))])
 
 (def TODAY #'TODAY*)
 
@@ -67,14 +69,15 @@
   [^{:doc "The year component of the date."} year
    ^{:doc "The month component of the date."} month
    ^{:doc "The day component of the date."} day]
-  #?(:clj (jt/local-date (coerce/excel-number year)
-                         (coerce/excel-number month)
-                         (coerce/excel-number day))
-     :cljs (let [d (js/Date. (js/Date.UTC (coerce/excel-number year)
-                                          (dec (coerce/excel-number month))
-                                          (coerce/excel-number day)))]
-             (set! (.-AxelFType d) :local-date)
-             d)))
+  ["LocalDate"
+   #?(:clj (.toEpochMilli (.toInstant (.atStartOfDay (jt/local-date (coerce/excel-number year)
+                                                                    (coerce/excel-number month)
+                                                                    (coerce/excel-number day))
+                                                     (ZoneId/ofOffset "UTC" (ZoneOffset/ofHours 0)))))
+      :cljs (let [d (js/Date. (js/Date.UTC (coerce/excel-number year)
+                                           (dec (coerce/excel-number month))
+                                           (coerce/excel-number day)))]
+              (.getTime d)))])
 
 (def DATE #'DATE*)
 
@@ -82,24 +85,24 @@
   "Returns the day of the month that a specific date falls on, in numeric format."
   [^{:doc "The date from which to extract the day. Must be a reference containing a date, or a function returning a date type.
 "} date]
-  #?(:clj (jt/as date :day-of-month)
-     :cljs (.getUTCDate date)))
+  #?(:clj (jt/as (coerce/inst date) :day-of-month)
+     :cljs (.getUTCDate (coerce/inst date))))
 
 (def DAY #'DAY*)
 
 (defn MONTH*
   "Returns the month of the year a specific date falls in, in numeric format."
   [^{:doc "The date from which to extract the month. Must be a reference containing a date, or a function returning a date type"} date]
-  #?(:clj (jt/as date :month-of-year)
-     :cljs (inc (.getUTCMonth date))))
+  #?(:clj (jt/as (coerce/inst date) :month-of-year)
+     :cljs (inc (.getUTCMonth (coerce/inst date)))))
 
 (def MONTH #'MONTH*)
 
 (defn YEAR*
   "Returns the year specified by a given date."
   [^{:doc "The date from which to calculate the year. Must be a reference containing a date, or a function returning a date type."} date]
-  #?(:clj (jt/as date :year)
-     :cljs (.getUTCFullYear date)))
+  #?(:clj (jt/as (coerce/inst date) :year)
+     :cljs (.getUTCFullYear (coerce/inst date))))
 
 (def YEAR #'YEAR*)
 

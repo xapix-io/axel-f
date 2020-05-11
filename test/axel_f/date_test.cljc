@@ -6,37 +6,38 @@
 
 (t/deftest now
   (t/testing "current date time"
-    (t/is (instance? #?(:clj java.time.LocalDateTime
-                        :cljs js/Date)
-                     (sut/NOW)))
+    (let [[t m] (sut/NOW)]
+      (t/is (= "LocalDateTime" t))
+      (t/is (integer? m)))
 
-    (t/is (instance? #?(:clj java.time.LocalDateTime
-                        :cljs js/Date)
-                     ((af/compile "NOW()"))))))
+    (let [[t m] ((af/compile "NOW()"))]
+      (t/is (= "LocalDateTime" t))
+      (t/is (integer? m)))))
 
 (t/deftest today
   (t/testing "current date"
-    (t/is (instance? #?(:clj java.time.LocalDate
-                        :cljs js/Date)
-                     (sut/TODAY)))
+    (t/testing "current date time"
+      (let [[t m] (sut/TODAY)]
+        (t/is (= "LocalDate" t))
+        (t/is (integer? m)))
 
-    (t/is (instance? #?(:clj java.time.LocalDate
-                        :cljs js/Date)
-                     ((af/compile "TODAY()"))))))
+      (let [[t m] ((af/compile "TODAY()"))]
+        (t/is (= "LocalDate" t))
+        (t/is (integer? m))))))
 
 (t/deftest date
   (t/testing "desired date"
-    (t/is (instance? #?(:clj java.time.LocalDate
-                        :cljs js/Date)
-                     (sut/DATE 1988 8 21)))
+    (let [[t m] (sut/DATE 1988 8 21)]
+      (t/is (= t "LocalDate"))
+      (t/is (integer? m)))
 
-    (t/is (instance? #?(:clj java.time.LocalDate
-                        :cljs js/Date)
-                     ((af/compile "DATE(1988, 8, 21)"))))
+    (let [[t m] ((af/compile "DATE(1988, 8, 21)"))]
+      (t/is (= t "LocalDate"))
+      (t/is (integer? m)))
 
-    (t/is (instance? #?(:clj java.time.LocalDate
-                        :cljs js/Date)
-                     ((af/compile "DATE('1988', '8', '21')"))))))
+    (let [[t m] ((af/compile "DATE('1988', '8', '21')"))]
+      (t/is (= t "LocalDate"))
+      (t/is (integer? m)))))
 
 (t/deftest day
   (t/testing "get day"
@@ -66,7 +67,12 @@
 
   (t/testing "local date time"
     (t/is ((af/compile "NOW() > 0")))
-    (t/is ((af/compile "NOW() > DATE(1988, 8, 21)")))))
+    (t/is ((af/compile "NOW() > DATE(1988, 8, 21)"))))
+
+  (t/testing "complex"
+    (t/is ((af/compile " AND({'LocalDateTime', 1589256144123} >= .nbf, {'LocalDateTime', 1589256144123} < .exp)")
+           {"exp" 1589296144
+            "nbf" 1589209744}))))
 
 (t/deftest format-test
   (t/is (= "1988-08-21" ((af/compile "coerce.to-string(DATE(1988, 8, 21))"))))

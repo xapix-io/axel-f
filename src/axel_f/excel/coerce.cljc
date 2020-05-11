@@ -1,6 +1,8 @@
 (ns axel-f.excel.coerce
   #?(:clj (:require [clojure.edn :as edn])))
 
+(defmulti inst (fn [[t & _args]] t))
+
 (defn excel-type [x & _]
   (cond
     #?@(:clj [(ratio? x) :ratio])
@@ -8,6 +10,7 @@
     (string? x) :string
     (boolean? x) :boolean
     (nil? x) :null
+    (sequential? x) (first x)
     :else (type x)))
 
 (defmulti excel-number excel-type)
