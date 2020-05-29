@@ -1,5 +1,6 @@
 (ns axel-f.api
-  (:require [axel-f.excel :as excel]))
+  (:require [axel-f.excel :as excel]
+            [axel-f.merger :as m]))
 
 (defn ^:export compile [formula-str]
   (try
@@ -30,3 +31,6 @@
 (defn ^:export autocomplete [incomplete-formula context]
   (let [context (js->clj context)]
     (clj->js (excel/suggestions incomplete-formula context))))
+
+(defn ^:export make-merger [attributes]
+  (clj->js (m/merger excel/compile (js->clj attributes))))

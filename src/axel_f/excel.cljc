@@ -3,6 +3,7 @@
   (:require [axel-f.excel.base64 :as base64]
             [axel-f.excel.hash :as hash]
             [axel-f.excel.json :as json]
+            [axel-f.excel.search :as search]
             [axel-f.excel.date :as date]
             [axel-f.excel.jws :as jws]
             [axel-f.excel.jwt :as jwt]
@@ -16,6 +17,7 @@
    base64/env
    hash/env
    json/env
+   search/env
    date/env
    jws/env
    jwt/env
