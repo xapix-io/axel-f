@@ -71,13 +71,13 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Cache maven dependencies
-      uses: actions/cache@v1
-      with:
-        path: ~/.m2/repository
-        key: npm-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          npm-
+    # - name: Cache maven dependencies
+    #   uses: actions/cache@v1
+    #   with:
+    #     path: ~/.m2/repository
+    #     key: npm-${{ hashFiles('**/pom.xml') }}
+    #     restore-keys: |
+    #       npm-
 
     - name: Set TAG value from refs/tags/TAG
       run: echo ::set-env name=GIT_TAG::${GITHUB_REF#refs/tags/}
