@@ -1,35 +1,16 @@
 (ns axel-f.excel.search
-  (:require [matchete.core :as m]
-            [axel-f.excel.json :as json]))
+  (:require [matchete.data-form :as df]
+            [matchete.core :as m]
+            [#?(:clj clojure.tools.reader.edn
+                :cljs cljs.tools.reader.edn) :as edn]))
 
-(defn- json->pattern [jo]
-  (cond
-    (map? jo)
-    (into {}
-          (map (fn [[k v]]
-                 [(json->pattern k)
-                  (json->pattern v)]))
-          jo)
-
-    (and (vector? jo)
-         (#{"@cat" "@alt" "@scan" "@scan-indexed" "@def-rule"} (first jo)))
-    (list* (symbol (subs (first jo) 1)) (map json->pattern (rest jo)))
-
-    (vector? jo)
-    (into []
-          (map json->pattern)
-          jo)
-
-    (and (string? jo)
-         (#{\? \! \$} (first jo)))
-    (symbol jo)
-
-    :else jo))
+(defn edn->pattern [edn-string]
+  (df/make-pattern (edn/read-string edn-string)))
 
 (defn json-search*
   ""
-  [data json-pattern]
-  (let [pattern (json->pattern (json/decode* json-pattern))]
+  [data edn-pattern]
+  (let [pattern (edn->pattern edn-pattern)]
     (into []
           (map (fn [matches]
                  (into {}
