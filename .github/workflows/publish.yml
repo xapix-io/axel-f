@@ -49,9 +49,6 @@ jobs:
       run: |
         javac $(find . -name '*.java' -type f)
 
-    - name: Update pom.xml
-      run: clojure -Srepro -Spom
-
     - name: Debug pom.xml
       run: cat pom.xml
 
