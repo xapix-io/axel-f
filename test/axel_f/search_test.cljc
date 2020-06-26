@@ -6,7 +6,9 @@
 
 (t/deftest search
 
-  (let [pattern "[\"@def-rule\", \"$find-leafs\", [\"@alt\", [\"@scan-indexed\", \"!path\", \"$find-leafs\"], \"?node\"]]"
+  (let [pattern (str '[:or {:id "tree-walk"}
+                       [:scan !path [:ref "tree-walk"]]
+                       ?node])
         data {"foo" [{"bar" "qwe"} 3 4 5]}]
 
     (t/is (= [{"path" ["foo" 0 "bar"], "node" "qwe"}
