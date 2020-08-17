@@ -6,10 +6,13 @@
 
 (t/deftest json
   (t/testing "Encode object"
-    (t/is (= "{\"foo\":1}" (sut/json-encode {:foo 1}))))
+    (t/is (= "{\"foo\":1}" (sut/encode {:foo 1}))))
 
   (t/testing "Decode string"
-    (t/is (= {"foo" 1} (sut/json-decode "{\"foo\":1}")))))
+    (t/is (= {"foo" 1} (sut/decode "{\"foo\":1}"))))
+
+  (t/testing "Decode array"
+    (t/is (= [1 2 3] (sut/decode "[1,2,3]")))))
 
 (t/deftest JSONENCODE
   (let [f (af/compile "JSON.ENCODE(_)")]

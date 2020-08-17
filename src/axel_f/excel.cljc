@@ -3,6 +3,7 @@
   (:require [axel-f.excel.base64 :as base64]
             [axel-f.excel.hash :as hash]
             [axel-f.excel.json :as json]
+            [axel-f.excel.search :as search]
             [axel-f.excel.date :as date]
             [axel-f.excel.jws :as jws]
             [axel-f.excel.jwt :as jwt]
@@ -11,15 +12,16 @@
             [axel-f.runtime :as runtime]))
 
 (def base-env
-  (merge
-   excel-lite/base-env
-   base64/env
-   hash/env
-   json/env
-   date/env
-   jws/env
-   jwt/env
-   keys/env))
+  (merge-with merge
+              excel-lite/base-env
+              base64/env
+              hash/env
+              json/env
+              search/env
+              date/env
+              jws/env
+              jwt/env
+              keys/env))
 
 (defn compile
   ([formula] (compile formula nil))

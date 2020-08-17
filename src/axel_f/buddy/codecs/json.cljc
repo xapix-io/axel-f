@@ -1,6 +1,5 @@
 (ns axel-f.buddy.codecs.json
-  #?(:clj (:require [cheshire.core :as json]
-                    [cheshire.exact :as exact-json])))
+  #?(:clj (:require [cheshire.core :as json])))
 
 (defn- update-keys [m f]
   (cond
@@ -27,7 +26,8 @@
 (defn parse-string
   ([s] (parse-string s identity))
   ([s key-fn]
-   #?(:clj (exact-json/parse-string s key-fn)
+   #?(:clj (let [res (json/parse-string s key-fn)]
+             (if (sequential? res) (vec res) res))
       :cljs (let [key-fn (or (if (and (boolean? key-fn) key-fn) ::keywordize-keys key-fn) identity)
                   data (js->clj (js/JSON.parse s) :keywordize-keys (= key-fn ::keywordize-keys))]
               (if (= key-fn ::keywordize-keys)
