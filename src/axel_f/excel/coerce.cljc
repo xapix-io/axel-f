@@ -69,22 +69,24 @@
 (defn to-integer*
   "Tries to coerce given value to an integer type. Returns null for empty value or values not reducible to integer."
   [^{:doc "Any object to coerce to an integer."} obj]
-  (try
-    (long (excel-number obj))
-    (catch #?(:clj Throwable
-              :cljs js/Error) _
-      nil)))
+  (when obj
+    (try
+      (long (excel-number obj))
+      (catch #?(:clj Throwable
+                :cljs js/Error) _
+        nil))))
 
 (def to-integer #'to-integer*)
 
 (defn to-float*
   "Tries to coerce given value to float type. Returns null for empty value or values not reducible to float."
   [^{:doc "Any object to coerce to a float."} obj]
-  (try
-    (double (excel-number obj))
-    (catch #?(:clj Throwable
-              :cljs js/Error) _
-      nil)))
+  (when obj
+    (try
+      (double (excel-number obj))
+      (catch #?(:clj Throwable
+                :cljs js/Error) _
+        nil))))
 
 (def to-float #'to-float*)
 
