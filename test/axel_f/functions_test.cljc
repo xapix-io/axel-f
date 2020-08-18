@@ -336,7 +336,7 @@
 (t/deftest regexextract-function-test
   (t/testing "REGEXEXTRACT function"
     (t/is (= "826.25"
-             ((af/compile "REGEXEXTRACT('The price today is $826.25', '[0-9]*\\\\.[0-9]+[0-9]+')"))))
+             ((af/compile "REGEXEXTRACT('The price today is $826.25', '[0-9]*\\.[0-9]+[0-9]+')"))))
 
     (t/is (= "Content"
              ((af/compile "REGEXEXTRACT('(Content) between brackets', '\\(([A-Za-z]+)\\)')"))))
@@ -358,10 +358,10 @@
 (t/deftest regexreplace-function-test
   (t/testing "REGEXREPLACE function"
     (t/is (= "The price today is $0.00"
-             ((af/compile "REGEXREPLACE('The price today is $826.25', '[0-9]*\\\\.[0-9]+[0-9]+', '0.00')"))))
+             ((af/compile "REGEXREPLACE('The price today is $826.25', '[0-9]*\\.[0-9]+[0-9]+', '0.00')"))))
 
     (t/is (= "Word between brackets"
-             ((af/compile "REGEXREPLACE('(Content) between brackets', '\\\\(([A-Za-z]+)\\\\)', 'Word')"))))
+             ((af/compile "REGEXREPLACE('(Content) between brackets', '\\(([A-Za-z]+)\\)', 'Word')"))))
 
     (t/is (= "FOO"
              ((af/compile "REGEXREPLACE('FOO', '[a-z]+', 'OOF')"))))))

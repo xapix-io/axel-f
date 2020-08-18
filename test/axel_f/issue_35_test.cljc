@@ -8,22 +8,22 @@
 
   (t/testing "fields with unicode symbols inside"
 
-    (t/are [x] (= 1 ((af/compile x) {(keyword (string/replace x #"\\" "")) 1}))
+    (t/are [x] (= 1 ((af/compile (str ".'" x "'")) {(keyword x) 1}))
       "ꙮ"
       "fooꙮbar"
-      "foo\\-bar"))
+      "foo-bar"))
 
   (t/testing "quoted fields with operators inside"
 
-    (t/are [x] (= 1 ((af/compile x) {(keyword (string/replace x #"\\" "")) 1}))
-      "foo\\/bar"
-      "foo\\+"
-      "foo\\*bar"
-      "foo\\>bar"
-      "foo\\ \\>\\ bar"
-      "foo\\^bar"
-      "foo\\%bar"
-      "foo\\&bar"))
+    (t/are [x] (= 1 ((af/compile (str ".'" x "'")) {(keyword x) 1}))
+      "foo/bar"
+      "foo+"
+      "foo*bar"
+      "foo>bar"
+      "foo > bar"
+      "foo^bar"
+      "foo%bar"
+      "foo&bar"))
 
   #_(t/testing "fields with special symbols throw an error without quoting"
 
