@@ -1,8 +1,7 @@
 (ns axel-f.issue-35-test
   (:require #?(:clj [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])
-            [axel-f.excel :as af]
-            [clojure.string :as string]))
+            [axel-f.excel :as af]))
 
 (t/deftest object-references-could-be-anything
 
