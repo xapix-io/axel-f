@@ -54,6 +54,7 @@
                            (map (fn [[path desc]]
                                   (-> desc
                                       (assoc :position position
+                                             :to-replace (last var)
                                              :value (autocomplete/->string (last path)))
                                       (dissoc :distance)))
                                 (autocomplete/search-index

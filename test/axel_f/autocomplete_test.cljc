@@ -13,18 +13,21 @@
                 :desc "Field in the context"
                 :position
                 #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 1},
-                               :end #:axel-f.lexer{:line 1, :col 3}}}]}
+                               :end #:axel-f.lexer{:line 1, :col 3}}
+                :to-replace "foo"}]}
              (sut/suggestions "foo" {"foo" {"bar" 1}})))
 
     (t/is (= {:suggestions
               [{:type :REF, :desc "Field in the context", :value "baz"
                 :position
                 #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 5},
-                               :end #:axel-f.lexer{:line 1, :col 5}}}
+                               :end #:axel-f.lexer{:line 1, :col 5}}
+                :to-replace ""}
                {:type :REF, :desc "Field in the context", :value "bar"
                 :position
                 #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 5},
-                               :end #:axel-f.lexer{:line 1, :col 5}}}]}
+                               :end #:axel-f.lexer{:line 1, :col 5}}
+                :to-replace ""}]}
              (sut/suggestions "foo." {"foo" {"bar" 1
                                              "baz" 2}})))
 
@@ -32,7 +35,8 @@
               [{:type :REF, :desc "Field in the context", :value "foo"
                 :position
                 #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 1},
-                               :end #:axel-f.lexer{:line 1, :col 2}}}]}
+                               :end #:axel-f.lexer{:line 1, :col 2}}
+                :to-replace "fo"}]}
              (sut/suggestions "fo" {"foo" {"bar" 1}}) ))
 
     #_(t/is (= {:suggestions
@@ -540,11 +544,13 @@
                 [{:type :REF, :desc "Field in the context", :value "bar"
                   :position
                   #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 9},
-                                 :end #:axel-f.lexer{:line 1, :col 10}}}
+                                 :end #:axel-f.lexer{:line 1, :col 10}}
+                  :to-replace "ba"}
                  {:type :REF, :desc "Field in the context", :value "baz"
                   :position
                   #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 9},
-                                 :end #:axel-f.lexer{:line 1, :col 10}}}]}
+                                 :end #:axel-f.lexer{:line 1, :col 10}}
+                  :to-replace "ba"}]}
                (sut/suggestions "foo.[*].ba" {"foo" [{"bar" 1} {"baz" 2}]}))))))
 
 (t/deftest function-call-test
@@ -567,7 +573,8 @@
                 :value "bar"
                 :position
                 #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 15},
-                               :end #:axel-f.lexer{:line 1, :col 16}}}]}
+                               :end #:axel-f.lexer{:line 1, :col 16}}
+                :to-replace "ba"}]}
              (sut/suggestions "SUM(1, 2, foo.ba" {:foo {:bar 3}})))))
 
 (t/deftest core-test
@@ -585,10 +592,12 @@
             :suggestions
             [{:desc "Field in the context", :type :REF, :value "baz"
               :position #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 15},
-                                       :end #:axel-f.lexer{:line 1, :col 15}}}
+                                       :end #:axel-f.lexer{:line 1, :col 15}}
+              :to-replace ""}
              {:desc "Field in the context", :type :REF, :value "bar"
               :position #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 15},
-                                       :end #:axel-f.lexer{:line 1, :col 15}}}]}
+                                       :end #:axel-f.lexer{:line 1, :col 15}}
+              :to-replace ""}]}
            (sut/suggestions "SUM(1, 2, foo." {"foo" {"bar" 1 "baz" 2}}) )))
 
 (t/deftest lowercase
@@ -604,6 +613,7 @@
                :position
                #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 1},
                               :end #:axel-f.lexer{:line 1, :col 2}},
+               :to-replace "su"
                :value "SUM"}
               {:type :FN,
                :desc "Replaces existing text with new text in a string.",
@@ -611,11 +621,24 @@
                :position
                #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 1},
                               :end #:axel-f.lexer{:line 1, :col 2}},
+               :to-replace "su"
                :value "SUBSTITUTE"}
               {:type :REF,
                :desc "Field in the context",
                :value "suspension",
                :position
                #:axel-f.lexer{:begin #:axel-f.lexer{:line 1, :col 1},
-                              :end #:axel-f.lexer{:line 1, :col 2}}})}
+                              :end #:axel-f.lexer{:line 1, :col 2}}
+               :to-replace "su"})}
            (sut/suggestions "su" {"suspension" {"foo" 1}}))))
+
+(t/deftest array-suggestions
+
+  (t/is (= {:suggestions
+            '({:desc "Field in the context",
+               :position {:axel-f.lexer/begin {:axel-f.lexer/col 6, :axel-f.lexer/line 1},
+                          :axel-f.lexer/end {:axel-f.lexer/col 7, :axel-f.lexer/line 1}},
+               :type :REF,
+               :value "body"
+               :to-replace "bo"})}
+           (sut/suggestions ".foo.bo" {"foo" {"body" [{"x" 1} {"x" 2}]}}))))
