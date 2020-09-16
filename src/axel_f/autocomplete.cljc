@@ -40,7 +40,7 @@
            (and (sequential? m)
                 (indexed? m))
            (concat
-            [[(concat keyseq (list "*")) m]]
+            [[keyseq m] [(concat keyseq (list "*")) m]]
             (mapcat
              (fn [i v]
                (concat
