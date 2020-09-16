@@ -41,13 +41,4 @@ jobs:
 
     - name: Run tests
       run: |
-        ./bin/kaocha clj --plugin cloverage
-
-    - name: Run JS tests
-      run: |
-        ./bin/kaocha cljs
-
-    - name: Upload test coverage results
-      uses: codecov/codecov-action@v1.0.3
-      with:
-        token: ${{secrets.CODECOV_TOKEN}}
+        ./bin/kaocha
