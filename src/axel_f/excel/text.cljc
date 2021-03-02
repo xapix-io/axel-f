@@ -178,6 +178,28 @@
 
 (def PROPER #'PROPER*)
 
+(defn REGEX*
+  "Compile string to regular expression."
+  ([st] (REGEX* st nil))
+  ([st flags]
+   #?(:clj
+      (if (seq flags)
+        (let [flags (sequence
+                     (comp
+                      (map {\i java.util.regex.Pattern/CASE_INSENSITIVE
+                            \s java.util.regex.Pattern/DOTALL
+                            \m java.util.regex.Pattern/MULTILINE})
+                      (filter identity))
+                     flags)
+              flags (if (> (count flags) 1)
+                      (apply bit-or flags)
+                      (first flags))]
+          (. java.util.regex.Pattern (compile st flags)))
+        (. java.util.regex.Pattern (compile st)))
+      :cljs (js/RegExp. st flags))))
+
+(def REGEX #'REGEX*)
+
 (defn REGEXEXTRACT*
   "Extracts matching substrings according to a regular expression."
   [text regular-expression]
@@ -380,6 +402,7 @@
    "LOWER" LOWER
    "MID" MID
    "PROPER" PROPER
+   "REGEX" REGEX
    "REGEXEXTRACT" REGEXEXTRACT
    "REGEXMATCH" REGEXMATCH
    "REGEXREPLACE" REGEXREPLACE

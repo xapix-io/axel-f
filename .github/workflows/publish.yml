@@ -15,12 +15,12 @@ jobs:
       run: exit 1
 
     - name: checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2.3.4
       with:
         fetch-depth: 1
 
     - name: Cache maven dependencies
-      uses: actions/cache@v1
+      uses: actions/cache@v2.1.4
       with:
         path: ~/.m2/repository
         key: maven-${{ hashFiles('**/pom.xml') }}
@@ -36,7 +36,7 @@ jobs:
         java-version: '1.8'
 
     - name: Install clojure
-      uses: DeLaGuardo/setup-clojure@2.0
+      uses: DeLaGuardo/setup-clojure@3.1
       with:
         tools-deps: 'latest'
 
@@ -67,12 +67,12 @@ jobs:
       run: exit 1
 
     - name: checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2.3.4
       with:
         fetch-depth: 1
 
     - name: Cache maven dependencies
-      uses: actions/cache@v1
+      uses: actions/cache@v2.1.4
       with:
         path: ~/.m2/repository
         key: npm-${{ hashFiles('**/pom.xml') }}
@@ -88,12 +88,12 @@ jobs:
         java-version: '1.8'
 
     - name: Install clojure
-      uses: DeLaGuardo/setup-clojure@2.0
+      uses: DeLaGuardo/setup-clojure@3.1
       with:
         tools-deps: 'latest'
 
     - name: Install NodeJS
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v2.1.5
       with:
         node-version: 13.9.x
 

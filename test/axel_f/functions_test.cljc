@@ -344,6 +344,20 @@
     (t/is (= nil
              ((af/compile "REGEXEXTRACT('FOO', '[a-z]+')"))))))
 
+(t/deftest regex-function-test
+  (t/testing "REGEX and REGEXEXTRACT functions"
+    (t/is (= "Test"
+             ((af/compile "REGEXEXTRACT('foo Test bar', REGEX('test', 'i'))"))))
+
+    (t/is (= "Foo"
+             ((af/compile "REGEXEXTRACT('X
+Foo
+bar', REGEX('^foo$', 'im'))"))))
+
+    (t/is (= "Foo\n"
+             ((af/compile "REGEXEXTRACT('Foo
+', REGEX('.*', 's'))"))))))
+
 (t/deftest regexmatch-function-test
   (t/testing "REGEXMATCH function"
     (t/is (= true
