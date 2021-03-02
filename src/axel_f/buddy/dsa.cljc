@@ -23,9 +23,9 @@
 #?(:cljs
    (deftype StubEngine [alg]
      IEngine
-     (-init [it {:keys [key verify]}])
-     (-update [it input _offset _length])
-     (-end [it signature?]
+     (-init [_it {:keys [_key _verify]}])
+     (-update [_it _input _offset _length])
+     (-end [_it signature?]
        (if signature?
          (do
            (js/console.warn (str "Signing for algorithm " (name alg) " is not yet implemented and will return fixed string"))
