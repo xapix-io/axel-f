@@ -84,7 +84,9 @@
 (defn TODAY*
   "Returns the current date as a date value."
   []
-  ["LocalDate" (epoch-milli (local-date))])
+  ["LocalDate"
+   #?(:clj (.toEpochMilli (.toInstant (.atStartOfDay (jt/local-date) (ZoneId/ofOffset "UTC" (ZoneOffset/ofHours 0)))))
+      :cljs (epoch-milli (local-date)))])
 
 (def TODAY #'TODAY*)
 
