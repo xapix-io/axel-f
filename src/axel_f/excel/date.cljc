@@ -46,11 +46,13 @@
                         :local-date-time jt/local-date-time)
                       pattern date-string))
                    :cljs
-                   (.strictParse (goog.i18n.DateTimeParse. pattern)
-                                 date-string
-                                 (case type
-                                   :local-date-time (local-date-time)
-                                   :local-date (local-date)))))])
+                   (let [date (case type
+                                :local-date-time (local-date-time)
+                                :local-date (local-date))]
+                     (.strictParse (goog.i18n.DateTimeParse. pattern)
+                                   date-string
+                                   date)
+                     (epoch-milli date))))])
 
 (defmethod coerce/inst "LocalDate" [[_ millis]]
   #?(:clj (.. (java.time.Instant/ofEpochMilli millis) (atZone (java.time.ZoneId/systemDefault)) toLocalDate)
