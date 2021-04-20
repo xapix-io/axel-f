@@ -80,4 +80,4 @@
 
 (t/deftest parse-test
   (t/is (= ["LocalDateTime" 1596193200000]
-           ((af/compile "PARSE.DATETIME('2020-07-31T11:00:00.000', \"yyyy-MM-dd'T'HH:mm:ss.SSS\")")))))
+           ((af/compile "PARSE.DATETIME('2020-07-31T11:00', \"yyyy-MM-dd'T'HH:mm\")")))))

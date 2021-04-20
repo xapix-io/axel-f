@@ -46,9 +46,7 @@
                         :local-date-time jt/local-date-time)
                       pattern date-string))
                    :cljs
-                   (let [date (case type
-                                :local-date (local-date)
-                                :local-date-time (local-date-time))]
+                   (let [date (js/Date. (js/Date.UTC 0 0 0 0 0 0 0))]
                      (.strictParse (goog.i18n.DateTimeParse. pattern)
                                    date-string
                                    date)
