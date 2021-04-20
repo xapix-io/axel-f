@@ -1,15 +1,56 @@
 (ns axel-f.excel.date
   (:refer-clojure :exclude [format])
-  (:require #?(:clj [java-time :as jt]
-               :cljs [goog.i18n.DateTimeFormat])
+  (:require #?@(:clj [[java-time :as jt]
+                      [java-time.format :as jtf]]
+                :cljs [[goog.i18n.DateTimeFormat]
+                       [goog.i18n.DateTimeParse]])
             [axel-f.excel.coerce :as coerce])
   #?(:clj (:import java.time.ZoneOffset
                    java.time.ZoneId)))
+
+(defn epoch-milli [date]
+  #?(:clj (.toEpochMilli (.toInstant (.atZone date (ZoneId/ofOffset "UTC" (ZoneOffset/ofHours 0)))))
+     :cljs (.getTime date)))
+
+(defn local-date-time []
+  #?(:clj (jt/local-date-time)
+     :cljs (let [n (js/Date.)]
+             (js/Date. (js/Date.UTC (.getUTCFullYear n)
+                                    (.getUTCMonth n)
+                                    (.getUTCDate n)
+                                    (.getUTCHours n)
+                                    (.getUTCMinutes n)
+                                    (.getUTCSeconds n)
+                                    (.getUTCMilliseconds n))))))
+
+(defn local-date []
+  #?(:clj (jt/local-date)
+     :cljs (let [n (js/Date.)]
+             (js/Date. (js/Date.UTC (.getUTCFullYear n)
+                                    (.getUTCMonth n)
+                                    (.getUTCDate n))))))
 
 (defn format [date fmt]
   #?(:clj (jt/format fmt (coerce/inst date))
      :cljs (let [formatter (goog.i18n.DateTimeFormat. fmt)]
              (.format formatter (coerce/inst date)))))
+
+(defn parse [type date-string pattern]
+  [(case type
+     :local-date "LocalDate"
+     :local-date-time "LocalDateTime")
+   (epoch-milli #?(:clj
+                   (let [pattern (jtf/formatter pattern)]
+                     ((case type
+                        :local-date jt/local-date
+                        :local-date-time jt/local-date-time)
+                      pattern date-string))
+                   :cljs
+                   (.strictParse (goog.i18n.DateTimeParse. pattern)
+                                 date-string
+                                 (case type
+                                   :local-date-time (local-date-time)
+                                   :local-date (local-date)))))])
 
 (defmethod coerce/inst "LocalDate" [[_ millis]]
   #?(:clj (.. (java.time.Instant/ofEpochMilli millis) (atZone (java.time.ZoneId/systemDefault)) toLocalDate)
@@ -36,31 +77,14 @@
 (defn NOW*
   "Returns the current date and time as a date value."
   []
-  ["LocalDateTime"
-   #?(:clj (.toEpochMilli (.toInstant (.atZone (jt/local-date-time) (ZoneId/ofOffset "UTC" (ZoneOffset/ofHours 0)))))
-      :cljs (let [n (js/Date.)
-                  ldt (js/Date. (js/Date.UTC (.getUTCFullYear n)
-                                             (.getUTCMonth n)
-                                             (.getUTCDate n)
-                                             (.getUTCHours n)
-                                             (.getUTCMinutes n)
-                                             (.getUTCSeconds n)
-                                             (.getUTCMilliseconds n)))]
-              ;; (Math/round (/ (.getTime ldt) 1000))
-              (.getTime ldt)))])
+  ["LocalDateTime" (epoch-milli (local-date-time))])
 
 (def NOW #'NOW*)
 
 (defn TODAY*
   "Returns the current date as a date value."
   []
-  ["LocalDate"
-   #?(:clj (.toEpochMilli (.toInstant (.atStartOfDay (jt/local-date) (ZoneId/ofOffset "UTC" (ZoneOffset/ofHours 0)))))
-      :cljs (let [n (js/Date.)
-                  ld (js/Date. (js/Date.UTC (.getUTCFullYear n)
-                                            (.getUTCMonth n)
-                                            (.getUTCDate n)))]
-              (.getTime ld)))])
+  ["LocalDate" (epoch-milli (local-date))])
 
 (def TODAY #'TODAY*)
 
@@ -106,30 +130,28 @@
 
 (def YEAR #'YEAR*)
 
+(defn PARSE-DATE*
+  "Returns the date of the date and time if parsed from first argument using pattern as a second argument."
+  [^{:doc "A string"} date-string
+   ^{:doc "A pattern sutable to parse date/time strings. Should follow java.time.format.DateTimeFormatter specification"} pattern]
+  (parse :local-date date-string pattern))
+
+(def PARSE-DATE #'PARSE-DATE*)
+
+(defn PARSE-DATE-TIME*
+  "Returns the date of the date and time if parsed from first argument using pattern as a second argument."
+  [^{:doc "A string"} date-string
+   ^{:doc "A pattern sutable to parse date/time strings. Should follow java.time.format.DateTimeFormatter specification"} pattern]
+  (parse :local-date-time date-string pattern))
+
+(def PARSE-DATE-TIME #'PARSE-DATE-TIME*)
+
 (def env
   {"YEAR" YEAR
    "MONTH" MONTH
    "NOW" NOW
-   ;; "NETWORKDAYS" NETWORKDAYS
-   ;; "DAYS" DAYS
    "DATE" DATE
-   ;; "DAYS360" DAYS360
-   ;; "YEARFRAC" YEARFRAC
-   ;; "WEEKDAY" WEEKDAY
-   ;; "TIME" TIME
-   ;; "WORKDAY" WORKDAY
-   ;; "EDATE" EDATE
-   ;; "WEEKNUM" WEEKNUM
-   ;; "EOMONTH" EOMONTH
-   ;; "ISOWEEKNUM" ISOWEEKNUM
    "DAY" DAY
-   ;; "MINUTE" MINUTE
-   ;; "WORKDAY.INTL" WORKDAY.INTL
-   ;; "NETWORKDAYS.INTL" NETWORKDAYS.INTL
-   ;; "DATEDIF" DATEDIF
-   ;; "HOUR" HOUR
-   ;; "TIMEVALUE" TIMEVALUE
-   ;; "DATEVALUE" DATEVALUE
-   ;; "SECOND" SECOND
    "TODAY" TODAY
-   })
+   "PARSE" {"DATE" PARSE-DATE
+            "DATETIME" PARSE-DATE-TIME}})

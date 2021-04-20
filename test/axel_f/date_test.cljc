@@ -77,3 +77,7 @@
 (t/deftest format-test
   (t/is (= "1988-08-21" ((af/compile "coerce.to-string(DATE(1988, 8, 21))"))))
   (t/is (= "Aug-88-21" ((af/compile "coerce.to-string(DATE(1988, 8, 21), 'MMM-yy-dd')")))))
+
+(t/deftest parse-test
+  (t/is (= ["LocalDateTime" 1596193200000]
+           ((af/compile "PARSE.DATETIME('2020-07-31T11:00', \"yyyy-MM-dd'T'HH:mm\")")))))
