@@ -52,7 +52,7 @@
                      (.strictParse (goog.i18n.DateTimeParse. pattern)
                                    date-string
                                    date)
-                     (epoch-milli date))))])
+                     date)))])
 
 (defmethod coerce/inst "LocalDate" [[_ millis]]
   #?(:clj (.. (java.time.Instant/ofEpochMilli millis) (atZone (java.time.ZoneId/systemDefault)) toLocalDate)
