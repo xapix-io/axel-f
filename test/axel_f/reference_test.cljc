@@ -69,3 +69,9 @@
 (t/deftest reference-can-start-with-number
   (t/is (= 1
            ((af/compile "1to1.foo") {"1to1" {:foo 1}}))))
+
+(t/deftest falsy-values
+  (t/is (= [false true 1]
+           ((af/compile "foo.[].bar") {"foo" [{:bar false}
+                                              {"bar" true}
+                                              {"bar" 1}]}))))
