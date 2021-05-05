@@ -24,9 +24,12 @@
   (reduce
    (fn [_ x]
      (when (map? x)
-       (when-let [v (or (get x idx)
-                        (get x (switch-type idx)))]
-         (reduced v))))
+       (let [idx' (switch-type idx)]
+         (cond
+           (and (contains? x idx) (some? (get x idx)))
+           (reduced (get x idx))
+           (and (contains? x idx') (some? (get x idx')))
+           (reduced (get x idx'))))))
    nil ctxs))
 
 (defn lookup [ctx [p & path]]
