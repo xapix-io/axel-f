@@ -31,9 +31,6 @@
 (defn- escape-char? [{::keys [type]}]
   (= type ::escaped))
 
-(defn- escape-str [args]
-  (string/replace (apply str args) #"\\(.)" "$1"))
-
 (defmulti read-next* (fn [[e & _]]
                        (cond
                          (whitespace? e) ::whitespace
@@ -113,7 +110,7 @@
       (if (and (= v literal-t)
                (not (escape-char? (last acc))))
         [{::type ::string
-          ::value (->> acc (map ::v) escape-str)
+          ::value (apply str (map ::v acc))
           ::begin {::line line
                    ::col col}
           ::end {::line l
@@ -226,7 +223,7 @@
                  (not (escape-char? (last acc))))
           (let [{l' ::l c' ::c} (last acc)]
             [{::type ::symbol
-              ::value (->> acc (map ::v) escape-str)
+              ::value (apply str (map ::v acc))
               ::begin {::line l
                        ::col c}
               ::end {::line l'
