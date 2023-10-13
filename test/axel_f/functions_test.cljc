@@ -495,6 +495,9 @@ bar', REGEX('^foo$', 'im'))"))))
     (t/is (= 1
              ((af/compile "SEARCH(\"ba\", \"bar\")"))))))
 
+    (t/is (= -1
+         ((af/compile "SEARCH(\"xyz\", \"Statements\")"))))
+
 (t/deftest split-function-test
   (t/testing "SPLIT function"
     (t/is (= ["foo" "bar" "baz"]
